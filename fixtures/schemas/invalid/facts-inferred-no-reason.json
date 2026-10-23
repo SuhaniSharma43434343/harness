@@ -1,0 +1,30 @@
+{
+  "project": "harbor-home",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Harbor Home Renovations",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.md:1"
+      },
+      "assumption": false
+    },
+    {
+      "field": "constraints.deviceFloor",
+      "status": "inferred",
+      "value": "low",
+      "source": {
+        "kind": "recommendation",
+        "questionId": "q-device-floor"
+      },
+      "assumption": true
+    },
+    {
+      "field": "constraints.deadline",
+      "status": "unknown"
+    }
+  ]
+}

@@ -23,7 +23,7 @@ const COMMANDS = {
     },
   },
   validate: {
-    summary: 'Validate a JSON file: forge validate <task|plugin|gateResult|ledgerEntry|config> <file>',
+    summary: 'Validate a JSON file: forge validate <schema> <file> (run without arguments to list schemas)',
     run: (args) => validateFile(args[0], args[1]),
   },
 };

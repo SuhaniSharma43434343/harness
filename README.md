@@ -8,6 +8,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
+- T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
 Nothing else in the plan is built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
@@ -44,7 +45,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge doctor [--json]` | Checks Node, npm, Git, Claude Code, the config, `.env` and the workspace |
 | `forge validate <schema> <file>` | Validates a JSON file against a schema. A `.jsonl` file is validated line by line |
 
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry` and `config`.
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry` and `config` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
 
 ## Tests
 
@@ -52,7 +53,7 @@ The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry` and `config`.
 npm test
 ```
 
-The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also run the CLI commands.
+The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands.
 
 ## Layout
 
@@ -62,9 +63,10 @@ src/cli/                  command router, doctor, validate
 src/core/                 config loader, schema validation, typed errors
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
+samples/briefs/           one sample brief per project type (7)
 tests/unit/               node:test suites
 scripts/                  setup.sh, setup.ps1
-docs/interfaces.md        M1 interface draft for review with Nidhi
+docs/interfaces.md        M1 interface draft, runtime and project sides
 workspace/                projects are created here (git-ignored)
 ```
 

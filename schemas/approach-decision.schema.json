@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/approach-decision.schema.json",
+  "title": "Approach decision record (design/approach-decision.json)",
+  "description": "Output of selectApproaches(brief). One decision per approach, selected or not, each with its reason. Every selected approach except APP-01 names its fallback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project", "registryVersion", "decidedAt", "decisions"],
+  "properties": {
+    "project": { "$ref": "common.schema.json#/definitions/projectId" },
+    "registryVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "decisions": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": { "$ref": "#/definitions/decision" }
+    }
+  },
+  "definitions": {
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approach", "selected", "matrixStatus", "reason"],
+      "properties": {
+        "approach": { "$ref": "common.schema.json#/definitions/approachId" },
+        "selected": { "type": "boolean" },
+        "matrixStatus": { "type": "string", "enum": ["default", "optional", "experimental", "excluded"] },
+        "reason": { "type": "string", "minLength": 5 },
+        "matchedRules": { "type": "array", "items": { "type": "string" } },
+        "fallback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["description"],
+          "properties": {
+            "approach": { "$ref": "common.schema.json#/definitions/approachId" },
+            "description": { "type": "string", "minLength": 5 }
+          }
+        },
+        "needsApproval": { "$ref": "common.schema.json#/definitions/approvalCode" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "selected": { "const": true }, "approach": { "not": { "const": "APP-01" } } }
+          },
+          "then": { "required": ["fallback"] }
+        },
+        {
+          "if": { "properties": { "selected": { "const": true }, "matrixStatus": { "const": "experimental" } } },
+          "then": {
+            "required": ["needsApproval"],
+            "properties": { "needsApproval": { "enum": ["B1", "B2"] } }
+          }
+        },
+        {
+          "if": { "properties": { "matrixStatus": { "const": "excluded" } } },
+          "then": { "properties": { "selected": { "const": false } } }
+        },
+        {
+          "if": { "properties": { "approach": { "const": "APP-01" } } },
+          "then": { "properties": { "selected": { "const": true } } }
+        }
+      ]
+    }
+  }
+}

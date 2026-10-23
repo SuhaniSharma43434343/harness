@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/facts.schema.json",
+  "title": "Intake facts (intake/facts.json)",
+  "description": "What intake knows about each brief field and where it came from. selectQuestions never asks about a known fact. Every 'use your recommendation' answer becomes an inferred fact with assumption true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project", "schemaVersion", "facts"],
+  "properties": {
+    "project": { "$ref": "common.schema.json#/definitions/projectId" },
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "facts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/fact" }
+    }
+  },
+  "definitions": {
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "status"],
+      "properties": {
+        "field": { "$ref": "condition.schema.json#/definitions/fieldPath" },
+        "status": { "type": "string", "enum": ["known", "inferred", "unknown"] },
+        "value": {},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["material", "answer", "recommendation", "default", "research"] },
+            "ref": { "type": "string", "description": "File and line, question id or research source id." },
+            "questionId": { "type": "string" }
+          }
+        },
+        "assumption": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "recordedAt": { "type": "string", "format": "date-time" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "known" } } },
+          "then": {
+            "required": ["value", "source"],
+            "properties": {
+              "source": { "properties": { "kind": { "enum": ["material", "answer"] } } },
+              "assumption": { "const": false }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "inferred" } } },
+          "then": {
+            "required": ["value", "source", "reason", "assumption"],
+            "properties": { "assumption": { "const": true } }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "unknown" } } },
+          "then": { "not": { "anyOf": [{ "required": ["value"] }, { "required": ["source"] }] } }
+        }
+      ]
+    }
+  }
+}

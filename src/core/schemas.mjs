@@ -14,6 +14,15 @@ export const SCHEMAS = {
   gateResult: 'gate-result.schema.json',
   ledgerEntry: 'ledger-entry.schema.json',
   config: 'forge-config.schema.json',
+  // Project side (Nidhi, T13).
+  brief: 'brief.schema.json',
+  facts: 'facts.schema.json',
+  questionBank: 'question-bank.schema.json',
+  approach: 'approach-registry.schema.json',
+  selectionMatrix: 'selection-matrix.schema.json',
+  approachDecision: 'approach-decision.schema.json',
+  designDecision: 'design-decision.schema.json',
+  condition: 'condition.schema.json',
 };
 
 let ajv;

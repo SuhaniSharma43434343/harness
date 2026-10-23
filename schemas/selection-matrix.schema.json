@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/selection-matrix.schema.json",
+  "title": "Selection matrix (registry/selection-matrix.json)",
+  "description": "Per project type, whether each approach is default, optional, experimental (operator approval at B1 or B2) or excluded. An approach becomes default or optional only after its acceptance tests pass on real projects.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "registryVersion", "matrix"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "registryVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["business", "launch", "showroom", "portfolio", "event", "nonprofit", "flagship"],
+      "properties": {
+        "business": { "$ref": "#/definitions/row" },
+        "launch": { "$ref": "#/definitions/row" },
+        "showroom": { "$ref": "#/definitions/row" },
+        "portfolio": { "$ref": "#/definitions/row" },
+        "event": { "$ref": "#/definitions/row" },
+        "nonprofit": { "$ref": "#/definitions/row" },
+        "flagship": { "$ref": "#/definitions/row" }
+      }
+    },
+    "promotions": {
+      "type": "array",
+      "description": "Evidence for moving an approach out of experimental.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["approach", "projectType", "to", "evidence"],
+        "properties": {
+          "approach": { "$ref": "common.schema.json#/definitions/approachId" },
+          "projectType": { "$ref": "common.schema.json#/definitions/projectType" },
+          "to": { "type": "string", "enum": ["default", "optional"] },
+          "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "status": { "type": "string", "enum": ["default", "optional", "experimental", "excluded"] },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["APP-01", "APP-02", "APP-03", "APP-04", "APP-05", "APP-06", "APP-07", "APP-08"],
+      "properties": {
+        "APP-01": { "const": "default", "description": "APP-01 is the build method for every project." },
+        "APP-02": { "$ref": "#/definitions/status" },
+        "APP-03": { "$ref": "#/definitions/status" },
+        "APP-04": { "$ref": "#/definitions/status" },
+        "APP-05": { "$ref": "#/definitions/status" },
+        "APP-06": { "$ref": "#/definitions/status" },
+        "APP-07": { "$ref": "#/definitions/status" },
+        "APP-08": { "$ref": "#/definitions/status" }
+      }
+    }
+  }
+}

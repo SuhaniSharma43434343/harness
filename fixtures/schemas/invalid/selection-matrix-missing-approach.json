@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "0.1.0",
+  "registryVersion": "0.1.0",
+  "matrix": {
+    "business": {
+      "APP-01": "default",
+      "APP-02": "optional",
+      "APP-03": "excluded",
+      "APP-04": "excluded",
+      "APP-05": "optional",
+      "APP-06": "excluded",
+      "APP-07": "excluded",
+      "APP-08": "excluded"
+    },
+    "launch": {
+      "APP-01": "default",
+      "APP-02": "default",
+      "APP-03": "optional",
+      "APP-04": "experimental",
+      "APP-05": "optional",
+      "APP-06": "experimental",
+      "APP-07": "excluded",
+      "APP-08": "optional"
+    },
+    "showroom": {
+      "APP-01": "default",
+      "APP-02": "optional",
+      "APP-03": "default",
+      "APP-04": "experimental",
+      "APP-05": "optional",
+      "APP-06": "experimental",
+      "APP-07": "excluded",
+      "APP-08": "optional"
+    },
+    "portfolio": {
+      "APP-01": "default",
+      "APP-02": "optional",
+      "APP-03": "excluded",
+      "APP-04": "experimental",
+      "APP-05": "optional",
+      "APP-06": "excluded",
+      "APP-07": "excluded",
+      "APP-08": "optional"
+    },
+    "event": {
+      "APP-01": "default",
+      "APP-02": "optional",
+      "APP-03": "excluded",
+      "APP-04": "experimental",
+      "APP-06": "experimental",
+      "APP-07": "excluded",
+      "APP-08": "optional"
+    },
+    "nonprofit": {
+      "APP-01": "default",
+      "APP-02": "optional",
+      "APP-03": "excluded",
+      "APP-04": "experimental",
+      "APP-05": "optional",
+      "APP-06": "experimental",
+      "APP-07": "excluded",
+      "APP-08": "optional"
+    },
+    "flagship": {
+      "APP-01": "default",
+      "APP-02": "default",
+      "APP-03": "optional",
+      "APP-04": "experimental",
+      "APP-05": "optional",
+      "APP-06": "experimental",
+      "APP-07": "optional",
+      "APP-08": "optional"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "lumen-launch",
+  "projectType": "launch",
+  "tier": "M",
+  "client": {
+    "name": "Lumen Audio",
+    "industry": "consumer electronics",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "waitlist",
+      "statement": "Grow the pre-order waitlist before launch day"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Audio enthusiasts",
+      "need": "See what makes the headphones different"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Tell the product story in a scroll sequence",
+      "cta": "Join the waitlist"
+    },
+    {
+      "slug": "/specs",
+      "title": "Specs",
+      "purpose": "Technical details",
+      "cta": "Join the waitlist"
+    }
+  ],
+  "features": {
+    "forms": [
+      {
+        "id": "waitlist",
+        "purpose": "Waitlist sign-up",
+        "fields": [
+          "email"
+        ],
+        "destination": "form-function"
+      }
+    ],
+    "interactive": [
+      "scroll-story"
+    ]
+  },
+  "brand": {
+    "tone": [
+      "premium",
+      "confident"
+    ],
+    "motionIntensity": 3
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA",
+    "deadline": "2026-12-01"
+  },
+  "integrations": [
+    "form-function"
+  ],
+  "assumptions": []
+}

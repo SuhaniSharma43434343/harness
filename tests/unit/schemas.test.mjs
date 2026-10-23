@@ -15,6 +15,14 @@ const PREFIX = [
   ['plugin', 'plugin'],
   ['config', 'config'],
   ['task', 'task'],
+  ['brief', 'brief'],
+  ['facts', 'facts'],
+  ['question-bank', 'questionBank'],
+  ['approach-registry', 'approach'],
+  ['approach-decision', 'approachDecision'],
+  ['selection-matrix', 'selectionMatrix'],
+  ['design-decision', 'designDecision'],
+  ['condition', 'condition'],
 ];
 
 function schemaFor(file) {
@@ -44,6 +52,22 @@ for (const file of readdirSync(join(FIX, 'invalid'))) {
     for (const doc of load('invalid', file)) {
       assert.equal(check(schemaFor(file), doc).valid, false);
     }
+  });
+}
+
+// T13 acceptance: the project schemas validate the 7 sample briefs, one per project type.
+const BRIEFS = join(FIX, '..', '..', 'samples', 'briefs');
+const PROJECT_TYPES = ['business', 'launch', 'showroom', 'portfolio', 'event', 'nonprofit', 'flagship'];
+
+test('there is one sample brief per project type', () => {
+  const types = readdirSync(BRIEFS).map((f) => JSON.parse(readFileSync(join(BRIEFS, f), 'utf8')).projectType);
+  assert.deepEqual([...types].sort(), [...PROJECT_TYPES].sort());
+});
+
+for (const file of readdirSync(BRIEFS)) {
+  test(`sample brief is valid: ${file}`, () => {
+    const { valid, errors } = check('brief', JSON.parse(readFileSync(join(BRIEFS, file), 'utf8')));
+    assert.equal(valid, true, errors.join('\n'));
   });
 }
 

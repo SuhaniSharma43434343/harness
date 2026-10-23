@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-device-floor",
+      "fills": [
+        "constraints.deviceFloor"
+      ],
+      "prompt": "What is the oldest or cheapest phone your visitors are likely to use?",
+      "why": "Decides whether 3D and heavy motion are safe.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "low",
+          "label": "Older or budget phones"
+        },
+        {
+          "value": "mid",
+          "label": "Mid-range phones from the last 3 years"
+        },
+        {
+          "value": "high",
+          "label": "Recent flagship phones"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": "mid",
+        "reason": "Safe default for most audiences."
+      },
+      "followUps": [
+        {
+          "when": {
+            "field": "constraints.deviceFloor",
+            "op": "eq",
+            "value": "low"
+          },
+          "ask": [
+            "q-motion-intensity"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q-play-is-the-point",
+      "fills": [
+        "features.playIsThePoint"
+      ],
+      "prompt": "Is playing the interactive section the main point of the visit, rather than a bonus?",
+      "kind": "boolean",
+      "appliesTo": {
+        "projectTypes": [
+          "nonprofit",
+          "launch",
+          "event",
+          "flagship"
+        ],
+        "tiers": [
+          "M",
+          "L"
+        ]
+      },
+      "askWhen": {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "game"
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": false,
+        "reason": "A game is only worth its cost when play is the goal."
+      }
+    }
+  ]
+}

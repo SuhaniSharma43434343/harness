@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "atelier-chairs",
+  "projectType": "showroom",
+  "tier": "M",
+  "client": {
+    "name": "Atelier Seating",
+    "industry": "furniture",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "dealer-leads",
+      "statement": "Let buyers explore chairs in 3D and contact a dealer"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Interior designers",
+      "need": "Inspect materials and proportions"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Showcase the collection",
+      "cta": "Explore the collection"
+    },
+    {
+      "slug": "/collection",
+      "title": "Collection",
+      "purpose": "Interactive 3D product views",
+      "cta": "Find a dealer"
+    },
+    {
+      "slug": "/dealers",
+      "title": "Dealers",
+      "purpose": "Dealer finder",
+      "cta": "Contact a dealer"
+    }
+  ],
+  "features": {
+    "interactive": [
+      "3d-product"
+    ],
+    "forms": [
+      {
+        "id": "dealer",
+        "purpose": "Dealer contact",
+        "fields": [
+          "name",
+          "email",
+          "city"
+        ],
+        "destination": "email"
+      }
+    ]
+  },
+  "brand": {
+    "tone": [
+      "refined",
+      "minimal"
+    ],
+    "motionIntensity": 2,
+    "existingAssets": {
+      "models3d": true
+    }
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA"
+  },
+  "assumptions": [
+    "brand.motionIntensity"
+  ]
+}

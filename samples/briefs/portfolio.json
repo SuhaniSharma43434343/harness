@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "mira-studio",
+  "projectType": "portfolio",
+  "tier": "S",
+  "client": {
+    "name": "Mira Rao",
+    "industry": "photography",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "commissions",
+      "statement": "Win editorial and wedding commissions"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Art directors",
+      "need": "Browse recent work quickly"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Selected work",
+      "cta": "View portfolio"
+    },
+    {
+      "slug": "/work",
+      "title": "Work",
+      "purpose": "Full gallery by series",
+      "cta": "Book a shoot"
+    },
+    {
+      "slug": "/about",
+      "title": "About",
+      "purpose": "Background and clients",
+      "cta": "Get in touch"
+    }
+  ],
+  "features": {
+    "forms": [
+      {
+        "id": "booking",
+        "purpose": "Booking enquiry",
+        "fields": [
+          "name",
+          "email",
+          "date",
+          "message"
+        ],
+        "destination": "form-function"
+      }
+    ]
+  },
+  "brand": {
+    "tone": [
+      "quiet",
+      "editorial"
+    ],
+    "motionIntensity": 1,
+    "existingAssets": {
+      "photography": true
+    }
+  },
+  "constraints": {
+    "deviceFloor": "low",
+    "accessibility": "WCAG 2.2 AA"
+  },
+  "assumptions": []
+}
