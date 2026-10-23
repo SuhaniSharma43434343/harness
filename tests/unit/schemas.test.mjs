@@ -13,6 +13,7 @@ const PREFIX = [
   ['gate-result', 'gateResult'],
   ['ledger', 'ledgerEntry'],
   ['plugin', 'plugin'],
+  ['project-state', 'projectState'],
   ['config', 'config'],
   ['task', 'task'],
 ];

@@ -8,8 +8,9 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
+- T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 
-Nothing else in the plan is built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The plugin host, Claude Code hooks and the worker adapter are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -43,8 +44,14 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge --version` | Prints the harness version |
 | `forge doctor [--json]` | Checks Node, npm, Git, Claude Code, the config, `.env` and the workspace |
 | `forge validate <schema> <file>` | Validates a JSON file against a schema. A `.jsonl` file is validated line by line |
+| `forge new <project> [--brief <file>]` | Creates `workspace/<project>/` with its state file and ledger |
+| `forge approve <project> <code>` | Records an operator approval (A0 to A3, B1 to B7) in the ledger |
+| `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
+| `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry` and `config`.
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState`.
+
+`forge run` needs the claude-code worker adapter (T06), so it is still listed as planned. The runner itself is in `src/core/runner.mjs` and takes the worker as an argument.
 
 ## Tests
 
@@ -59,7 +66,8 @@ The tests validate every fixture in `fixtures/schemas/valid` and check that ever
 ```text
 forge, forge.cmd          launchers (macOS/Linux, Windows)
 src/cli/                  command router, doctor, validate
-src/core/                 config loader, schema validation, typed errors
+src/core/                 config, schemas, typed errors, project state, ledger,
+                          task board, runner, locks, recovery
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
 tests/unit/               node:test suites

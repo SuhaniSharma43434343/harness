@@ -1,0 +1,9 @@
+{
+  "id": "harbor-home",
+  "phase": "INTAKE",
+  "repairLoops": 0,
+  "brief": "samples/briefs/business.md",
+  "createdAt": "2026-10-23T09:00:00Z",
+  "updatedAt": "2026-10-23T09:31:00Z",
+  "harnessVersion": "0.1.0"
+}
