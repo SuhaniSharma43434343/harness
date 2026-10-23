@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/plugin-manifest.schema.json",
+  "title": "Plugin manifest (plugin.json)",
+  "description": "Every plugin is off by default, declares the environment variables and permissions it needs, and discloses cost.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "category", "version", "enabledByDefault", "env", "permissions", "cost", "docs"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "maxLength": 60 },
+    "category": {
+      "type": "string",
+      "enum": [
+        "model",
+        "research",
+        "testing",
+        "design",
+        "media",
+        "git",
+        "seo",
+        "deploy",
+        "forms",
+        "data",
+        "assets"
+      ]
+    },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
+    "enabledByDefault": { "const": false },
+    "env": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "required"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+          "required": { "type": "boolean" },
+          "secret": { "type": "boolean", "default": true },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "filesystem", "actions"],
+      "properties": {
+        "network": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z0-9.*-]+(:\\d+)?$" },
+          "description": "Hosts this plugin may call. Empty means no network."
+        },
+        "filesystem": {
+          "type": "string",
+          "enum": ["none", "project-read", "project-write"]
+        },
+        "actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["read", "write", "deploy", "spend"] }
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^B[1-7]$" },
+      "description": "Approvals that must be recorded in the ledger before this plugin's gated actions run."
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paid"],
+      "properties": {
+        "paid": { "type": "boolean" },
+        "disclosure": { "type": "string" },
+        "pricingUrl": { "type": "string", "format": "uri" }
+      },
+      "if": { "properties": { "paid": { "const": true } } },
+      "then": { "required": ["disclosure", "pricingUrl"] }
+    },
+    "docs": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "implemented-unverified", "implemented-tested"],
+      "default": "planned"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "permissions": { "properties": { "actions": { "contains": { "const": "spend" } } } } }
+      },
+      "then": { "required": ["approvals"], "properties": { "approvals": { "contains": { "const": "B4" } } } }
+    },
+    {
+      "if": {
+        "properties": { "permissions": { "properties": { "actions": { "contains": { "const": "deploy" } } } } }
+      },
+      "then": { "required": ["approvals"] }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/ledger-entry.schema.json",
+  "title": "Ledger entry (one line of ledger.jsonl)",
+  "description": "Append-only project record. Approvals, refusals, task transitions and gate results are all written here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["seq", "ts", "project", "actor", "type", "data"],
+  "properties": {
+    "seq": { "type": "integer", "minimum": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "project": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "actor": {
+      "type": "string",
+      "description": "operator, cli, or an agent id such as builder or qa-verifier."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "project_created",
+        "phase_transition",
+        "approval",
+        "refusal",
+        "task_status",
+        "gate_result",
+        "plugin_call",
+        "error",
+        "note"
+      ]
+    },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "approval" } } },
+      "then": {
+        "properties": {
+          "actor": { "const": "operator" },
+          "data": {
+            "type": "object",
+            "required": ["approval"],
+            "properties": { "approval": { "type": "string", "pattern": "^(A[0-3]|B[1-7])$" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "refusal" } } },
+      "then": {
+        "properties": {
+          "data": { "type": "object", "required": ["action", "reason"] }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "phase_transition" } } },
+      "then": {
+        "properties": {
+          "data": { "type": "object", "required": ["from", "to"] }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "task_status" } } },
+      "then": {
+        "properties": {
+          "data": { "type": "object", "required": ["task", "from", "to"] }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "forge-harness",
+  "version": "0.1.0",
+  "description": "Forge: portable AI website production harness",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "forge": "src/cli/index.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "forge": "node src/cli/index.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}

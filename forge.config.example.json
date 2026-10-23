@@ -1,0 +1,7 @@
+{
+  "concurrency": 2,
+  "workspaceDir": "workspace",
+  "taskTimeoutMinutes": 30,
+  "heartbeatStaleMinutes": 10,
+  "plugins": {}
+}

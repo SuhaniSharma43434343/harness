@@ -1,0 +1,10 @@
+{
+  "seq": 2,
+  "ts": "2026-10-23T09:30:00Z",
+  "project": "harbor-home",
+  "actor": "builder",
+  "type": "approval",
+  "data": {
+    "approval": "B1"
+  }
+}

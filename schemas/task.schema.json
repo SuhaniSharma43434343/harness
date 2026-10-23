@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/task.schema.json",
+  "title": "Task contract",
+  "description": "One unit of work handed to one agent. A task reaches done only when its verify command passes and its evidence paths are recorded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "agent",
+    "approach_modules",
+    "inputs",
+    "owns_files",
+    "must_not_touch",
+    "depends_on",
+    "acceptance",
+    "verify",
+    "budget",
+    "idempotency_key",
+    "status",
+    "evidence"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "maxLength": 80 },
+    "agent": {
+      "type": "string",
+      "enum": [
+        "project-manager",
+        "research-strategy",
+        "content-ux",
+        "creative-director",
+        "asset-rights",
+        "lead-developer",
+        "builder",
+        "qa-verifier"
+      ]
+    },
+    "approach_modules": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^APP-0[1-8]$" }
+    },
+    "inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "owns_files": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/definitions/relativePath" }
+    },
+    "must_not_touch": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/definitions/relativePath" }
+    },
+    "depends_on": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+    },
+    "acceptance": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "verify": { "type": "string", "minLength": 1, "description": "Command whose exit code 0 means the acceptance criteria pass." },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minutes", "retries"],
+      "properties": {
+        "minutes": { "type": "integer", "minimum": 1, "maximum": 240 },
+        "retries": { "type": "integer", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "idempotency_key": { "type": "string", "minLength": 8 },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "ready", "running", "submitted", "verifying", "done", "retry", "blocked"]
+    },
+    "evidence": { "type": "array", "items": { "$ref": "#/definitions/relativePath" } },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "heartbeat_at": { "type": "string", "format": "date-time" },
+    "blocked_reason": { "type": "string" }
+  },
+  "definitions": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "(^/|^[A-Za-z]:|\\.\\.)" },
+      "description": "Project-relative path or glob. Absolute paths and parent traversal are rejected."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "done" } } },
+      "then": { "properties": { "evidence": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "blocked" } } },
+      "then": { "required": ["blocked_reason"] }
+    }
+  ]
+}

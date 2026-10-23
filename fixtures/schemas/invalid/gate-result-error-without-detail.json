@@ -1,0 +1,26 @@
+{
+  "gate": "accessibility",
+  "gateVersion": "0.1.0",
+  "project": "harbor-home",
+  "status": "error",
+  "startedAt": "2026-10-23T10:00:00Z",
+  "finishedAt": "2026-10-23T10:01:10Z",
+  "thresholds": {
+    "maxSeriousOrCritical": 0
+  },
+  "metrics": {
+    "seriousOrCritical": 1
+  },
+  "findings": [
+    {
+      "id": "color-contrast",
+      "severity": "serious",
+      "message": "Contrast 3.1:1 on .cta",
+      "location": "/ @ 390px",
+      "evidence": "evidence/a11y/home-390.json"
+    }
+  ],
+  "evidence": [
+    "evidence/a11y/home-390.json"
+  ]
+}

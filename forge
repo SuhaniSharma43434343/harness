@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Forge launcher for macOS and Linux.
+DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+exec node "$DIR/src/cli/index.mjs" "$@"
