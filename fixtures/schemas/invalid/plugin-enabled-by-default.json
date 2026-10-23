@@ -1,0 +1,32 @@
+{
+  "id": "vercel",
+  "category": "deploy",
+  "version": "0.1.0",
+  "enabledByDefault": true,
+  "env": [
+    {
+      "name": "VERCEL_TOKEN",
+      "required": true,
+      "secret": true
+    }
+  ],
+  "permissions": {
+    "network": [
+      "api.vercel.com"
+    ],
+    "filesystem": "project-read",
+    "actions": [
+      "read",
+      "deploy"
+    ]
+  },
+  "approvals": [
+    "B5",
+    "B7"
+  ],
+  "cost": {
+    "paid": false
+  },
+  "docs": "docs/plugins.md#vercel",
+  "status": "planned"
+}

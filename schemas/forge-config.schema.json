@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/forge-config.schema.json",
+  "title": "forge.config.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["concurrency", "plugins"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "concurrency": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "workspaceDir": { "type": "string", "default": "workspace" },
+    "taskTimeoutMinutes": { "type": "integer", "minimum": 1, "maximum": 240, "default": 30 },
+    "heartbeatStaleMinutes": { "type": "integer", "minimum": 1, "maximum": 60, "default": 10 },
+    "plugins": {
+      "type": "object",
+      "description": "Plugin id to enabled flag. Plugins not listed are off.",
+      "additionalProperties": { "type": "boolean" }
+    }
+  }
+}

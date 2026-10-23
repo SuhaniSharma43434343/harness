@@ -1,0 +1,4 @@
+{"seq": 1, "ts": "2026-10-23T09:00:00Z", "project": "harbor-home", "actor": "cli", "type": "project_created", "data": {"brief": "samples/briefs/business.md"}}
+{"seq": 2, "ts": "2026-10-23T09:30:00Z", "project": "harbor-home", "actor": "operator", "type": "approval", "data": {"approval": "B1"}}
+{"seq": 3, "ts": "2026-10-23T09:31:00Z", "project": "harbor-home", "actor": "cli", "type": "phase_transition", "data": {"from": "BRIEF_REVIEW", "to": "RESEARCH"}}
+{"seq": 4, "ts": "2026-10-23T09:40:00Z", "project": "harbor-home", "actor": "cli", "type": "refusal", "data": {"action": "deploy --production", "reason": "B7 not recorded"}}

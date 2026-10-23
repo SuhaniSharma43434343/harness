@@ -1,0 +1,10 @@
+{
+  "seq": 4,
+  "ts": "2026-10-23T09:40:00Z",
+  "project": "harbor-home",
+  "actor": "cli",
+  "type": "refusal",
+  "data": {
+    "action": "deploy"
+  }
+}
