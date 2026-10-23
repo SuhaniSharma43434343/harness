@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/project-state.schema.json",
+  "title": "Project state (workspace/<project>/project.json)",
+  "description": "Runtime-owned snapshot of a project's phase. The ledger is the record of what happened; this file can be rebuilt from it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "phase", "repairLoops", "createdAt", "updatedAt", "harnessVersion"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "INTAKE",
+        "RESEARCH",
+        "APPROACH_SELECTION",
+        "CREATIVE_DIRECTIONS",
+        "UX_DESIGN_SYSTEM",
+        "CONTENT",
+        "ASSETS_LICENSING",
+        "TECHNICAL_PLAN",
+        "BUILD",
+        "INTEGRATION_TESTS",
+        "QUALITY_REVIEW",
+        "REPAIR",
+        "PREVIEW_REPORT",
+        "PRODUCTION_DEPLOY",
+        "HANDOFF"
+      ]
+    },
+    "repairLoops": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "brief": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "harnessVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" }
+  }
+}
