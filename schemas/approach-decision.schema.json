@@ -14,7 +14,18 @@
       "type": "array",
       "minItems": 8,
       "maxItems": 8,
-      "items": { "$ref": "#/definitions/decision" }
+      "items": { "$ref": "#/definitions/decision" },
+      "description": "Exactly one decision per approach: 8 items, each approach present.",
+      "allOf": [
+        { "contains": { "properties": { "approach": { "const": "APP-01" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-02" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-03" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-04" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-05" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-06" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-07" } } } },
+        { "contains": { "properties": { "approach": { "const": "APP-08" } } } }
+      ]
     }
   },
   "definitions": {
