@@ -1,0 +1,8 @@
+{
+  "id": "harbor-home",
+  "phase": "SHIPPED",
+  "repairLoops": 0,
+  "createdAt": "2026-10-23T09:00:00Z",
+  "updatedAt": "2026-10-23T09:31:00Z",
+  "harnessVersion": "0.1.0"
+}
