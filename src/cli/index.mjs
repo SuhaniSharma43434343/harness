@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ForgeError } from '../core/errors.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
+import { cmdApprove, cmdNew, cmdResume, cmdStatus } from './project.mjs';
 import { validateFile } from './validate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -26,16 +27,16 @@ const COMMANDS = {
     summary: 'Validate a JSON file: forge validate <schema> <file> (run without arguments to list schemas)',
     run: (args) => validateFile(args[0], args[1]),
   },
+  new: { summary: 'Create a project: forge new <project> [--brief <file>]', run: (args) => cmdNew(ROOT, args) },
+  approve: { summary: 'Record an operator approval: forge approve <project> <B1-B7>', run: (args) => cmdApprove(ROOT, args) },
+  status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
+  resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).
 const PLANNED = {
-  new: 'M2',
   intake: 'M2',
-  approve: 'M2',
-  status: 'M2',
   run: 'M3',
-  resume: 'M2',
   preview: 'M3',
   deploy: 'M3',
   report: 'M3',

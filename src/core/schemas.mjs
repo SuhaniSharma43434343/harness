@@ -14,6 +14,7 @@ export const SCHEMAS = {
   gateResult: 'gate-result.schema.json',
   ledgerEntry: 'ledger-entry.schema.json',
   config: 'forge-config.schema.json',
+  projectState: 'project-state.schema.json',
   // Project side (Nidhi, T13).
   brief: 'brief.schema.json',
   facts: 'facts.schema.json',
