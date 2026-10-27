@@ -6,6 +6,7 @@ import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
+import { cmdSite } from './site.mjs';
 import { validateFile } from './validate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -34,6 +35,10 @@ const COMMANDS = {
   run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
   agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
+  site: {
+    summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
+    run: (args) => cmdSite(ROOT, args),
+  },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).

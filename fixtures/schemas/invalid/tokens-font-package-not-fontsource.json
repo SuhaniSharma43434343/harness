@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "0.1.0",
+  "source": "starter-default",
+  "mode": "light",
+  "color": {
+    "bg": "#ffffff",
+    "fg": "#1b1d21",
+    "primary": "#1d4ed8",
+    "accent": "#b45309",
+    "muted": "#55595f",
+    "surface": "#f4f5f6",
+    "border": "#d5d7da",
+    "onPrimary": "#ffffff",
+    "onAccent": "#ffffff",
+    "link": "#1d4ed8"
+  },
+  "font": {
+    "display": {
+      "family": "system-ui",
+      "stack": "system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+      "weights": [
+        700
+      ]
+    },
+    "body": {
+      "family": "system-ui",
+      "stack": "system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+      "weights": [
+        400,
+        700
+      ],
+      "package": "google-fonts/inter"
+    }
+  },
+  "type": {
+    "base": 1.125,
+    "scaleRatio": 1.25,
+    "lineHeight": 1.6,
+    "measure": "68ch"
+  },
+  "space": "1rem",
+  "radius": "0.5rem",
+  "motion": {
+    "intensity": 1
+  }
+}

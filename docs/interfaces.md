@@ -32,6 +32,8 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 | Approach decision record | `approachDecision` | `schemas/approach-decision.schema.json` | `selectApproaches` (P3) | Creative Director, Lead Developer; reviewed at B2 |
 | Design decision | `designDecision` | `schemas/design-decision.schema.json` | Creative Director (P4) | Content & UX, builders; chosen at B2 |
 | Rule condition | `condition` | `schemas/condition.schema.json` | (shared language) | Question rules, selection rules, design rules |
+| Design tokens | `tokens` | `schemas/tokens.schema.json` | Creative Director (P4), `forge site` (T18) | The starter site, builders |
+| Site config | `siteConfig` | `schemas/site-config.schema.json` | `forge site` (T18); the form plugin sets form actions | The starter site, builders |
 
 `schemas/common.schema.json` holds the shared enumerations (project types, tiers, approach ids, approval codes, motion intensity, device floor, fallback triggers). It is referenced by the others and is not validated on its own.
 
@@ -68,6 +70,8 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 |
 | `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix) => ApproachDecision` | M2 |
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
+| `tokensFromDirection` | Nidhi | `tokensFromDirection(direction: Direction) => Tokens`; throws `SchemaInvalid` on failing contrast | M2 (built, T18) |
+| `scaffoldSite` | Nidhi | `scaffoldSite(project: string, opts?: { brief?: Brief, tokens?: Tokens, force?: boolean, workspace?: string }) => { siteDir, tokens, pages, forms, fonts }` | M2 (built, T18) |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object }) => Promise<GateResult>` | M3 |
 
 ### What each runtime function promises
@@ -83,6 +87,8 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 - **`validateBrief`** runs the brief schema, then the checks a schema cannot make across files. Every required brief field has a `known` or `inferred` fact. Every inferred field is listed in `brief.assumptions`. `missing` lists the fields that still need an answer. The P1 exit gate is `valid && missing.length === 0`.
 - **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`.
 - **`proposeDirections`** may call the model through Suhani's worker adapter. It applies the design rules (T17) and returns at least 3 directions that pass the schema.
+- **`tokensFromDirection`** is pure. It copies the direction's colours, derives `surface`, `border`, `onPrimary`, `onAccent` and `link`, and refuses tokens whose rendered pairs fail WCAG contrast.
+- **`scaffoldSite`** copies `starters/astro-base/` into `site/` and writes the brief, tokens and content into it (see [starter.md](starter.md)). It reads `intake/brief.json` when no brief is passed, prefers `design/tokens.json`, then the chosen direction, then the starter defaults, and uses a locked page from `content/pages/` over the scaffold. It refuses to replace an existing `site/` without `force`, and records a `site_scaffolded` note in the ledger.
 - **`runGate`** never throws for a site problem: a failing site returns `status: 'fail'` with findings. A missing tool or plugin returns `status: 'error'` with the typed error code, which is never counted as a pass.
 
 
@@ -99,7 +105,7 @@ Every component throws one of the typed errors in `src/core/errors.mjs`: `Config
 | 1 | Where do the harness, registry and schema versions live? | In `project.json`: `harnessVersion` from project creation, plus `registryVersion`, `questionBankVersion` and `schemaVersion` set at intake. A gate result carries only its own `gateVersion`. The ledger records every change, so no version needs repeating per entry. |
 | 2 | Is `budget.minutes` per attempt or across all attempts? | Per attempt, covering the worker and the verify command together. With 2 retries, a task can use at most three times its budget. |
 | 3 | `workspace/<project>/` layout | As below. The runtime owns `project.json`, `ledger.jsonl`, `board/` and `locks/`. Each other folder belongs to the agent named in the plan's agent table. |
-| 4 | Starter template contract | Accepted as proposed: tokens in `site/src/styles/tokens.json`, page content in `site/src/content/pages/<slug>.md`, approach sections in `site/src/sections/<approach>/`. |
+| 4 | Starter template contract | Accepted as proposed: tokens in `site/src/styles/tokens.json`, page content in `site/src/content/pages/<slug>.md`, approach sections in `site/src/sections/<approach>/`. Detailed in [starter.md](starter.md). |
 | 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then. |
 | 6 | Project types and tiers | The seven types and the tiers S, M and L above are frozen. |
 | 7 | YAML or JSON registry files | JSON (see Data formats). |

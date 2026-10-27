@@ -1,0 +1,68 @@
+---
+// A form from site.json (`forms.<id>`). Props: form (the id), heading, intro.
+// Without an `action` the form still validates, then says it is not connected yet, so a
+// missing endpoint is visible in QA instead of silently dropping the submission.
+import site from '../../site.json';
+
+const { form: id, heading, intro } = Astro.props;
+const form = site.forms?.[id];
+if (!form) throw new Error(`Form "${id}" is not defined in src/site.json.`);
+const titleId = `${id}-title`;
+---
+<section class="section" id={id}>
+  <div class="wrap">
+    {heading && <h2 id={titleId}>{heading}</h2>}
+    {intro && <p>{intro}</p>}
+    <form
+      class="form"
+      method="post"
+      action={form.action ?? undefined}
+      data-forge-form={id}
+      aria-labelledby={heading ? titleId : undefined}
+      aria-label={heading ? undefined : form.purpose}
+    >
+      {form.fields.map((f) => (
+        <div class="field">
+          <label for={`${id}-${f.name}`}>{f.label}{f.required ? '' : ' (optional)'}</label>
+          {f.type === 'textarea' ? (
+            <textarea id={`${id}-${f.name}`} name={f.name} required={f.required} autocomplete={f.autocomplete} />
+          ) : (
+            <input id={`${id}-${f.name}`} name={f.name} type={f.type} required={f.required} autocomplete={f.autocomplete} />
+          )}
+        </div>
+      ))}
+      <div><button class="button" type="submit">{form.submitLabel}</button></div>
+      <p class="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  for (const form of document.querySelectorAll<HTMLFormElement>('form[data-forge-form]')) {
+    const status = form.querySelector<HTMLElement>('.form-status')!;
+    const show = (state: 'success' | 'error' | 'sending', text: string) => {
+      status.dataset.state = state;
+      status.textContent = text;
+    };
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!form.getAttribute('action')) {
+        show('error', 'This form is not connected yet, so nothing was sent.');
+        return;
+      }
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+      button.disabled = true;
+      show('sending', 'Sending…');
+      try {
+        const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(String(res.status));
+        form.reset();
+        show('success', 'Thank you. Your message was sent.');
+      } catch {
+        show('error', 'Sorry, your message could not be sent. Please try again.');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>

@@ -12,6 +12,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
+- T18: the starter website (APP-01) in `starters/astro-base/`, and `forge site`, which writes a project's brief, design tokens and content into it and builds it ([docs/starter.md](docs/starter.md))
 
 The plugin host and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
@@ -53,8 +54,9 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
+| `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `tokens` and `siteConfig` (project).
 
 `forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
@@ -64,7 +66,7 @@ The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and
 npm test
 ```
 
-The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands.
+The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands. The build tests in `tests/build/` build a site from every sample brief; they need the starter's dependencies, which `setup` installs, and are skipped with the reason without them.
 
 ## Layout
 
@@ -76,12 +78,17 @@ agents/                   the 8 agent roles (source of truth)
 src/cli/                  command router, doctor, validate, project commands
 src/core/                 config, schemas, typed errors, project state, ledger,
                           task board, runner, locks, recovery
+src/site/                 brief -> pages, design tokens, scaffold and build (T18)
+starters/astro-base/      the starter website (APP-01)
+skills/app01/             APP-01 module instructions for builders
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
 samples/briefs/           one sample brief per project type (7)
 tests/unit/               node:test suites
+tests/build/              starter build tests
 scripts/                  setup.sh, setup.ps1
 docs/interfaces.md        M1 interfaces (frozen), runtime and project sides
+docs/starter.md           starter template contract
 workspace/                projects are created here (git-ignored)
 ```
 

@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T18: starter website and APP-01 module. `starters/astro-base/` is a static Astro site styled only from design tokens, with pages from Markdown content and sections resolved from `src/sections/<approach>/`. `forge site` writes a project's brief, tokens (from `design/tokens.json` or the chosen direction, contrast-checked) and content into it; `--build` builds it and checks the 150 KB JavaScript budget. New `tokens` and `siteConfig` schemas, `docs/starter.md`, `skills/app01/`, and build tests for all 7 sample briefs.
 - T05: the 8 agent roles in `agents/<role>.md`, `forge agents generate` and `forge agents check` for the Claude Code subagents and Cursor rules, and phase routing: `forge run` starts only the tasks whose agent works in the current phase, and each worker gets its role instructions.
 - T06: Claude Code worker adapter. Each task runs as a headless `claude -p` session with read and edit tools, its reply's evidence line is parsed, and failures map to typed errors (sign-in, rate limit, missing binary). Every attempt is recorded with the files it changed, and the replay worker plays recordings back identically, including failed attempts. `forge run [--replay <dir>]`.
 - M1 interface freeze: open questions decided and recorded in `docs/interfaces.md`. The task board moves from `tasks/` to `board/`, verify logs move to `evidence/tasks/`, and `project.json` gains optional registry, question bank and schema versions.

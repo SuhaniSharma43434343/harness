@@ -24,6 +24,9 @@ export const SCHEMAS = {
   approachDecision: 'approach-decision.schema.json',
   designDecision: 'design-decision.schema.json',
   condition: 'condition.schema.json',
+  // Starter template (Nidhi, T18).
+  tokens: 'tokens.schema.json',
+  siteConfig: 'site-config.schema.json',
 };
 
 let ajv;

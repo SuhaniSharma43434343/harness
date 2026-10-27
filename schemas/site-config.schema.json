@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/site-config.schema.json",
+  "title": "Site config (site/src/site.json)",
+  "description": "Site-wide settings for the starter template: name, language, navigation and forms. Written from the brief by forge site; the form plugin fills in each form's action.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "description", "lang", "url", "nav", "forms", "approaches"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "lang": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+    "url": { "type": ["string", "null"], "format": "uri", "description": "The production URL, or null until hosting is decided." },
+    "nav": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "href"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "pattern": "^/" }
+        }
+      }
+    },
+    "forms": {
+      "type": "object",
+      "propertyNames": { "$ref": "common.schema.json#/definitions/slug" },
+      "additionalProperties": { "$ref": "#/definitions/form" }
+    },
+    "approaches": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/definitions/approachId" },
+      "contains": { "const": "APP-01" }
+    }
+  },
+  "definitions": {
+    "form": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "destination", "action", "page", "submitLabel", "fields"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "destination": { "type": "string", "enum": ["form-function", "email", "none-yet"] },
+        "action": { "type": ["string", "null"], "description": "The endpoint the form posts to; null until the form plugin is connected." },
+        "page": { "type": "string", "pattern": "^/" },
+        "submitLabel": { "type": "string", "minLength": 1 },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "label", "type", "required"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+              "label": { "type": "string", "minLength": 1 },
+              "type": { "type": "string", "enum": ["text", "email", "tel", "date", "number", "url", "textarea"] },
+              "required": { "type": "boolean" },
+              "autocomplete": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
