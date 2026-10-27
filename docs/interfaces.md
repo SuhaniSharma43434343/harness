@@ -73,6 +73,7 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 ### What each runtime function promises
 
 - **`runTask`** runs one task through `ready`, `running`, `submitted`, `verifying` and `done`, retrying up to `budget.retries` times before `blocked`. `RunOptions` carries the `worker` (the claude-code adapter from T06), an optional `verifier`, and `workspace`. It resolves to `TaskResult`: `{ task, status: 'done' | 'blocked', attempts, evidence, reason? }`. A done or blocked task is returned as it is, with `reused: true`, and never run again.
+- **Worker** (what `RunOptions.worker` must be): `worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat }) => Promise<{ evidence: string[] }>`. It works only in `projectDir`, stops when `signal` aborts, and throws a typed error on failure. The claude-code adapter (`src/workers/claude-code.mjs`) and the replay worker both follow it.
 - **`ledger.append`** assigns `seq` and `ts`, checks the entry against the ledger schema, and appends one line. Callers cannot set `seq`, `ts` or `project`.
 
 ### What each project-side function promises

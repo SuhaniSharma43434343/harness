@@ -23,7 +23,7 @@ test('forge --version prints the package version', () => {
 });
 
 test('planned commands say they are not built yet instead of pretending', () => {
-  const r = forge('run', 'demo');
+  const r = forge('preview', 'demo');
   assert.equal(r.status, 2);
   assert.match(r.stderr, /planned for milestone M3 and is not built yet/);
 });
