@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T06: Claude Code worker adapter. Each task runs as a headless `claude -p` session with read and edit tools, its reply's evidence line is parsed, and failures map to typed errors (sign-in, rate limit, missing binary). Every attempt is recorded with the files it changed, and the replay worker plays recordings back identically, including failed attempts. `forge run [--replay <dir>]`.
 - M1 interface freeze: open questions decided and recorded in `docs/interfaces.md`. The task board moves from `tasks/` to `board/`, verify logs move to `evidence/tasks/`, and `project.json` gains optional registry, question bank and schema versions.
 - T03: project state machine (P0 to P15) with atomic `project.json` saves, an append-only ledger with torn-line repair, and approval enforcement: B1, B2, B3, B6 and B7 gate phase exits, and `requireApproval` refuses and records any action without its approval. `forge new`, `forge approve` and `forge status`.
 - T04: task board and runner: dependency-ordered queue with a concurrency limit, per-file locks, a run lock per project, per-attempt timeouts, heartbeats, up to two retries before `blocked`, and `forge resume`, which requeues tasks with a stale heartbeat, discards their uncommitted changes and re-verifies submitted work without re-running the worker.

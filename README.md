@@ -9,9 +9,10 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
+- T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
-The plugin host, Claude Code hooks and the worker adapter are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The plugin host, the agent definitions and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -48,11 +49,12 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge new <project> [--brief <file>]` | Creates `workspace/<project>/` with its state file and ledger |
 | `forge approve <project> <code>` | Records an operator approval (A0 to A3, B1 to B7) in the ledger |
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
+| `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
 
-`forge run` needs the claude-code worker adapter (T06), so it is still listed as planned. The runner itself is in `src/core/runner.mjs` and takes the worker as an argument.
+`forge run` starts one headless `claude -p` session per task in the project folder, limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
 ## Tests
 

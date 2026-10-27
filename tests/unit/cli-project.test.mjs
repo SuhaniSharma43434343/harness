@@ -5,7 +5,11 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cmdApprove, cmdNew, cmdResume, cmdStatus } from '../../src/cli/project.mjs';
+import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from '../../src/cli/project.mjs';
+import { addTask, getTask } from '../../src/core/board.mjs';
+import { runProject } from '../../src/core/runner.mjs';
+import { createClaudeCodeWorker } from '../../src/workers/claude-code.mjs';
+import { task } from './helpers.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
 import { loadProject } from '../../src/core/project.mjs';
 
@@ -59,4 +63,23 @@ test('forge status on a missing project is a typed error with a hint', () => {
   assert.equal(r.status, 1);
   assert.match(r.stderr, /CONFIG_MISSING: Project "no-such-project-xyz" does not exist/);
   assert.match(r.stderr, /forge new no-such-project-xyz/);
+});
+
+test('forge run --replay plays a recorded run back into a project', async () => {
+  const { root, workspace } = tmpRoot();
+  const fake = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'fake-claude.mjs');
+  quiet(() => cmdNew(root, ['recorded']));
+  addTask('recorded', task('hero', { verify: 'exit 0' }), { workspace });
+  await runProject('recorded', { workspace, worker: createClaudeCodeWorker({ command: [process.execPath, fake] }) });
+
+  quiet(() => cmdNew(root, ['replayed']));
+  addTask('replayed', task('hero', { verify: 'exit 0' }), { workspace });
+  const { log } = console;
+  console.log = () => {};
+  try {
+    assert.equal(await cmdRun(root, ['replayed', '--replay', join(workspace, 'recorded', 'evidence', 'recordings')]), 0);
+  } finally {
+    console.log = log;
+  }
+  assert.equal(getTask('replayed', 'hero', { workspace }).status, 'done');
 });
