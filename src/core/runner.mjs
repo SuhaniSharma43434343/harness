@@ -173,7 +173,7 @@ export async function runTask(project, taskId, options = {}) {
         } finally {
           t.clear();
         }
-        const log = `logs/tasks/${taskId}/attempt-${attempt}-verify.log`;
+        const log = `evidence/tasks/${taskId}/attempt-${attempt}-verify.log`;
         mkdirSync(dirname(join(paths.dir, log)), { recursive: true });
         writeFileSync(join(paths.dir, log), `$ ${task.verify}\nexit ${outcome.code}\n\n${outcome.output ?? ''}`);
         if (outcome.ok) {
