@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "devfest-pune",
+  "projectType": "event",
+  "tier": "S",
+  "client": {
+    "name": "DevFest Pune",
+    "industry": "technology conference",
+    "location": "Pune, India",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "tickets",
+      "statement": "Drive ticket registrations"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Developers",
+      "need": "Agenda, speakers and venue at a glance"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Event summary and date",
+      "cta": "Register"
+    },
+    {
+      "slug": "/agenda",
+      "title": "Agenda",
+      "purpose": "Talks by track",
+      "cta": "Register"
+    },
+    {
+      "slug": "/speakers",
+      "title": "Speakers",
+      "purpose": "Speaker profiles",
+      "cta": "Register"
+    }
+  ],
+  "features": {
+    "forms": [
+      {
+        "id": "register",
+        "purpose": "Registration interest",
+        "fields": [
+          "name",
+          "email"
+        ],
+        "destination": "none-yet"
+      }
+    ],
+    "interactive": [
+      "shader-background"
+    ]
+  },
+  "brand": {
+    "tone": [
+      "energetic",
+      "techy"
+    ],
+    "motionIntensity": 2
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA",
+    "deadline": "2026-11-20"
+  },
+  "assumptions": [
+    "features.forms"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "project": "lumen-launch",
+  "registryVersion": "0.1.0",
+  "decidedAt": "2026-10-24T10:00:00Z",
+  "decisions": [
+    {
+      "approach": "APP-01",
+      "selected": true,
+      "matrixStatus": "default",
+      "reason": "Build method for every project"
+    },
+    {
+      "approach": "APP-02",
+      "selected": true,
+      "matrixStatus": "default",
+      "reason": "Brief asks for a scroll story at motion intensity 3",
+      "matchedRules": [
+        "selectWhen.any[1]"
+      ],
+      "fallback": {
+        "description": "Static stacked layout with CSS reveals"
+      }
+    },
+    {
+      "approach": "APP-02",
+      "selected": true,
+      "matrixStatus": "default",
+      "reason": "Brief asks for a scroll story at motion intensity 3",
+      "matchedRules": [
+        "selectWhen.any[1]"
+      ],
+      "fallback": {
+        "description": "Static stacked layout with CSS reveals"
+      }
+    },
+    {
+      "approach": "APP-04",
+      "selected": false,
+      "matrixStatus": "experimental",
+      "reason": "No Spline scene supplied"
+    },
+    {
+      "approach": "APP-05",
+      "selected": false,
+      "matrixStatus": "optional",
+      "reason": "No shader background requested"
+    },
+    {
+      "approach": "APP-06",
+      "selected": false,
+      "matrixStatus": "experimental",
+      "reason": "Play is not the point of this site"
+    },
+    {
+      "approach": "APP-07",
+      "selected": false,
+      "matrixStatus": "excluded",
+      "reason": "Not a tier L flagship"
+    },
+    {
+      "approach": "APP-08",
+      "selected": false,
+      "matrixStatus": "optional",
+      "reason": "No frame sequence assets"
+    }
+  ]
+}

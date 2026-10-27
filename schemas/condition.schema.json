@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/condition.schema.json",
+  "title": "Rule condition",
+  "description": "Shared condition language for question rules, approach selection rules and design rules. A leaf tests one brief field by dot path; all, any and not combine leaves.",
+  "oneOf": [
+    { "$ref": "#/definitions/leaf" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all"],
+      "properties": { "all": { "type": "array", "minItems": 1, "items": { "$ref": "#" } } }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["any"],
+      "properties": { "any": { "type": "array", "minItems": 1, "items": { "$ref": "#" } } }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["not"],
+      "properties": { "not": { "$ref": "#" } }
+    }
+  ],
+  "definitions": {
+    "fieldPath": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9]*(\\.[a-zA-Z][a-zA-Z0-9]*)*$",
+      "description": "Dot path into the brief, for example brand.motionIntensity."
+    },
+    "leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "op"],
+      "properties": {
+        "field": { "$ref": "#/definitions/fieldPath" },
+        "op": {
+          "type": "string",
+          "enum": ["eq", "neq", "in", "notIn", "gte", "lte", "includes", "exists", "missing"]
+        },
+        "value": {}
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "op": { "enum": ["exists", "missing"] } } },
+          "then": { "not": { "required": ["value"] } },
+          "else": { "required": ["value"] }
+        },
+        {
+          "if": { "properties": { "op": { "enum": ["in", "notIn"] } } },
+          "then": { "properties": { "value": { "type": "array", "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "op": { "enum": ["gte", "lte"] } } },
+          "then": { "properties": { "value": { "type": "number" } } }
+        }
+      ]
+    }
+  }
+}

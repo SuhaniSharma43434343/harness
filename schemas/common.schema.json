@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/common.schema.json",
+  "title": "Shared project-side definitions",
+  "description": "Enumerations shared by the brief, facts, question bank, registry, selection and design schemas. Change these only through a pull request approved by both owners.",
+  "definitions": {
+    "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "maxLength": 60 },
+    "projectType": {
+      "type": "string",
+      "enum": ["business", "launch", "showroom", "portfolio", "event", "nonprofit", "flagship"],
+      "description": "The seven project types. Each has one sample brief in samples/briefs."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["S", "M", "L"],
+      "description": "Complexity tier. S: up to 5 pages, no custom interaction. M: up to 12 pages or one advanced approach. L: larger, or several advanced approaches together."
+    },
+    "approachId": { "type": "string", "pattern": "^APP-0[1-8]$" },
+    "approvalCode": { "type": "string", "pattern": "^B[1-7]$" },
+    "motionIntensity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "0 none, 1 subtle, 2 expressive, 3 cinematic."
+    },
+    "deviceFloor": {
+      "type": "string",
+      "enum": ["low", "mid", "high"],
+      "description": "Lowest device class the site must run well on."
+    },
+    "fallbackTrigger": {
+      "type": "string",
+      "enum": ["reduced-motion", "no-webgl", "plugin-missing", "low-end-device", "load-failed", "slow-network"]
+    },
+    "semver": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "maxLength": 80 },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "(^/|^[A-Za-z]:|\\.\\.)" }
+    }
+  }
+}

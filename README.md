@@ -9,6 +9,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
+- T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
 The plugin host, Claude Code hooks and the worker adapter are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
@@ -49,7 +50,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState`.
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
 
 `forge run` needs the claude-code worker adapter (T06), so it is still listed as planned. The runner itself is in `src/core/runner.mjs` and takes the worker as an argument.
 
@@ -59,7 +60,7 @@ The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and
 npm test
 ```
 
-The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also run the CLI commands.
+The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands.
 
 ## Layout
 
@@ -70,9 +71,10 @@ src/core/                 config, schemas, typed errors, project state, ledger,
                           task board, runner, locks, recovery
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
+samples/briefs/           one sample brief per project type (7)
 tests/unit/               node:test suites
 scripts/                  setup.sh, setup.ps1
-docs/interfaces.md        M1 interface draft for review with Nidhi
+docs/interfaces.md        M1 interface draft, runtime and project sides
 workspace/                projects are created here (git-ignored)
 ```
 

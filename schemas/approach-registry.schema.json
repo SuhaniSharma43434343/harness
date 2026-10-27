@@ -1,0 +1,279 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/approach-registry.schema.json",
+  "title": "Approach registry entry (registry/approaches/APP-0N.json)",
+  "description": "One of the eight website approaches. A registry entry alone does not make an approach working: it also needs its module, passing selector, build, fallback and budget tests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "registryVersion",
+    "verification",
+    "module",
+    "selectWhen",
+    "rejectWhen",
+    "budget",
+    "dependencies",
+    "tests"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/definitions/approachId"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "summary": {
+      "type": "string"
+    },
+    "registryVersion": {
+      "$ref": "common.schema.json#/definitions/semver"
+    },
+    "verification": {
+      "type": "string",
+      "enum": [
+        "not-started",
+        "in-development",
+        "implemented",
+        "verified"
+      ],
+      "description": "Plan status vocabulary. Changes only with test evidence."
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill",
+        "recipes"
+      ],
+      "properties": {
+        "skill": {
+          "$ref": "common.schema.json#/definitions/relativePath"
+        },
+        "recipes": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/definitions/relativePath"
+          }
+        }
+      }
+    },
+    "composedOf": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common.schema.json#/definitions/approachId"
+      },
+      "description": "For composite approaches such as APP-07."
+    },
+    "selectWhen": {
+      "$ref": "condition.schema.json",
+      "description": "The brief qualifies when this holds and rejectWhen does not."
+    },
+    "rejectWhen": {
+      "$ref": "condition.schema.json"
+    },
+    "requiresPlugins": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      }
+    },
+    "requiresApproval": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common.schema.json#/definitions/approvalCode"
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "triggers"
+      ],
+      "properties": {
+        "approach": {
+          "$ref": "common.schema.json#/definitions/approachId"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 5
+        },
+        "triggers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "common.schema.json#/definitions/fallbackTrigger"
+          }
+        }
+      },
+      "description": "Required for every approach except APP-01, which is the build method itself."
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Targets, to be confirmed on test devices.",
+      "properties": {
+        "mobileLcpMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "jsKbGzip": {
+          "type": "number",
+          "minimum": 0
+        },
+        "extraJsKbGzip": {
+          "type": "number",
+          "minimum": 0
+        },
+        "assetsMb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cls": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minFps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gpuMsPerFrame": {
+          "type": "number",
+          "minimum": 0
+        },
+        "loadAfterLcp": {
+          "type": "boolean"
+        }
+      },
+      "minProperties": 1
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "licence",
+          "licenceVerified"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string"
+          },
+          "licence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "licenceVerified": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "positiveBriefs",
+        "negativeBriefs"
+      ],
+      "properties": {
+        "positiveBriefs": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "common.schema.json#/definitions/relativePath"
+          }
+        },
+        "negativeBriefs": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "common.schema.json#/definitions/relativePath"
+          }
+        },
+        "build": {
+          "$ref": "common.schema.json#/definitions/relativePath"
+        },
+        "fallback": {
+          "$ref": "common.schema.json#/definitions/relativePath"
+        },
+        "budget": {
+          "$ref": "common.schema.json#/definitions/relativePath"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "id": {
+            "not": {
+              "const": "APP-01"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "fallback"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "id": {
+            "const": "APP-07"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "composedOf"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verification": {
+            "enum": [
+              "implemented",
+              "verified"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "tests": {
+            "required": [
+              "build",
+              "fallback",
+              "budget"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

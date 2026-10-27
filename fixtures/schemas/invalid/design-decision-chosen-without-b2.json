@@ -1,0 +1,191 @@
+{
+  "project": "harbor-home",
+  "schemaVersion": "0.1.0",
+  "status": "chosen",
+  "chosen": "dir-craft",
+  "directions": [
+    {
+      "id": "dir-craft",
+      "name": "Craft",
+      "rationale": "Craft direction tied to the brief's warm, trustworthy tone.",
+      "typography": {
+        "display": {
+          "family": "Fraunces",
+          "category": "serif",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "body": {
+          "family": "Inter",
+          "category": "sans",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "scaleRatio": 1.25
+      },
+      "colour": {
+        "mode": "light",
+        "tokens": {
+          "bg": "#FBF7F2",
+          "fg": "#1F1B16",
+          "primary": "#8A3B12",
+          "accent": "#2F6F5E",
+          "muted": "#6B625A"
+        },
+        "contrast": [
+          {
+            "fg": "fg",
+            "bg": "bg",
+            "ratio": 12.6,
+            "use": "body"
+          },
+          {
+            "fg": "primary",
+            "bg": "bg",
+            "ratio": 4.8,
+            "use": "ui"
+          }
+        ]
+      },
+      "motionIntensity": 1,
+      "layout": "editorial",
+      "approaches": [
+        "APP-01"
+      ],
+      "renders": {
+        "desktop": "design/renders/dir-craft-desktop.png",
+        "mobile": "design/renders/dir-craft-mobile.png"
+      }
+    },
+    {
+      "id": "dir-blueprint",
+      "name": "Blueprint",
+      "rationale": "Blueprint direction tied to the brief's warm, trustworthy tone.",
+      "typography": {
+        "display": {
+          "family": "Space Grotesk",
+          "category": "sans",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "body": {
+          "family": "IBM Plex Sans",
+          "category": "sans",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "scaleRatio": 1.25
+      },
+      "colour": {
+        "mode": "light",
+        "tokens": {
+          "bg": "#F4F7FA",
+          "fg": "#0E1A2B",
+          "primary": "#1D4ED8",
+          "accent": "#F59E0B",
+          "muted": "#5B6B7F"
+        },
+        "contrast": [
+          {
+            "fg": "fg",
+            "bg": "bg",
+            "ratio": 12.6,
+            "use": "body"
+          },
+          {
+            "fg": "primary",
+            "bg": "bg",
+            "ratio": 4.8,
+            "use": "ui"
+          }
+        ]
+      },
+      "motionIntensity": 1,
+      "layout": "grid",
+      "approaches": [
+        "APP-01"
+      ],
+      "renders": {
+        "desktop": "design/renders/dir-blueprint-desktop.png",
+        "mobile": "design/renders/dir-blueprint-mobile.png"
+      }
+    },
+    {
+      "id": "dir-home",
+      "name": "Home",
+      "rationale": "Home direction tied to the brief's warm, trustworthy tone.",
+      "typography": {
+        "display": {
+          "family": "DM Serif Display",
+          "category": "display",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "body": {
+          "family": "Source Sans 3",
+          "category": "sans",
+          "source": "fontsource",
+          "licence": "OFL-1.1",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "scaleRatio": 1.25
+      },
+      "colour": {
+        "mode": "light",
+        "tokens": {
+          "bg": "#FFFFFF",
+          "fg": "#222222",
+          "primary": "#B4472C",
+          "accent": "#E9C46A",
+          "muted": "#767676"
+        },
+        "contrast": [
+          {
+            "fg": "fg",
+            "bg": "bg",
+            "ratio": 12.6,
+            "use": "body"
+          },
+          {
+            "fg": "primary",
+            "bg": "bg",
+            "ratio": 4.8,
+            "use": "ui"
+          }
+        ]
+      },
+      "motionIntensity": 0,
+      "layout": "split",
+      "approaches": [
+        "APP-01"
+      ],
+      "renders": {
+        "desktop": "design/renders/dir-home-desktop.png",
+        "mobile": "design/renders/dir-home-mobile.png"
+      }
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/brief.schema.json",
+  "title": "Project brief (intake/brief.json)",
+  "description": "The structured client brief the Project Manager writes in P1. Every required field is either known from the client material or answers, or recorded as an assumption in facts.json. B1 approves it together with the plan and estimate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "schemaVersion",
+    "status",
+    "projectType",
+    "tier",
+    "client",
+    "goals",
+    "audience",
+    "pages",
+    "brand",
+    "constraints",
+    "assumptions"
+  ],
+  "properties": {
+    "project": { "$ref": "common.schema.json#/definitions/projectId" },
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "ready", "approved"],
+      "description": "draft while intake runs; ready when validateBrief passes; approved only after B1 is in the ledger."
+    },
+    "projectType": { "$ref": "common.schema.json#/definitions/projectType" },
+    "tier": { "$ref": "common.schema.json#/definitions/tier" },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "industry"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "industry": { "type": "string", "minLength": 1 },
+        "location": { "type": "string" },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+          "description": "Release 1.0 builds single-language sites."
+        },
+        "existingSite": { "type": "string", "format": "uri" }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/definitions/slug" },
+          "statement": { "type": "string", "minLength": 5 },
+          "metric": { "type": "string" }
+        }
+      }
+    },
+    "audience": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["segment", "need"],
+        "properties": {
+          "segment": { "type": "string", "minLength": 1 },
+          "need": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "title", "purpose", "cta"],
+        "properties": {
+          "slug": { "type": "string", "pattern": "^(/|(/[a-z0-9][a-z0-9-]*)+)$" },
+          "title": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 1 },
+          "cta": { "type": "string", "minLength": 1, "description": "Every page has a call to action (P5 gate)." },
+          "sections": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "forms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "purpose", "fields", "destination"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/definitions/slug" },
+              "purpose": { "type": "string" },
+              "fields": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+              "destination": { "type": "string", "enum": ["form-function", "email", "none-yet"] }
+            }
+          }
+        },
+        "interactive": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["3d-product", "3d-scene", "spline-scene", "scroll-story", "shader-background", "game", "frame-sequence", "data-visualisation"]
+          },
+          "description": "Interaction the client asked for. The selector reads this; it does not pick approaches by itself."
+        },
+        "playIsThePoint": {
+          "type": "boolean",
+          "description": "True only when the client confirms that play is the goal. APP-06 requires it."
+        },
+        "splineSceneUrl": { "type": "string", "format": "uri" }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tone", "motionIntensity"],
+      "properties": {
+        "tone": { "type": "array", "minItems": 1, "maxItems": 5, "items": { "type": "string", "minLength": 1 } },
+        "motionIntensity": { "$ref": "common.schema.json#/definitions/motionIntensity" },
+        "existingAssets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "logo": { "type": "boolean" },
+            "colours": { "type": "array", "items": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" } },
+            "fonts": { "type": "array", "items": { "type": "string" } },
+            "photography": { "type": "boolean" },
+            "models3d": { "type": "boolean" }
+          }
+        },
+        "avoid": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "ref"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["url", "screenshot", "board"] },
+          "ref": { "type": "string", "minLength": 1 },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deviceFloor", "accessibility"],
+      "properties": {
+        "deviceFloor": { "$ref": "common.schema.json#/definitions/deviceFloor" },
+        "accessibility": { "type": "string", "enum": ["WCAG 2.2 AA", "WCAG 2.2 AAA"] },
+        "deadline": { "type": "string", "format": "date" },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["currency", "max"],
+          "properties": {
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+            "max": { "type": "number", "minimum": 0 }
+          }
+        },
+        "hosting": { "type": "string", "enum": ["vercel", "local-only", "undecided"] }
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+      "description": "Plugin ids the brief needs. Enabling them still needs B5."
+    },
+    "outOfScope": { "type": "array", "items": { "type": "string" } },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z][a-zA-Z0-9]*(\\.[a-zA-Z][a-zA-Z0-9]*)*$"
+      },
+      "uniqueItems": true,
+      "description": "Brief fields whose value is an assumption. Each one has an inferred fact in facts.json."
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "ledgerSeq"],
+      "properties": {
+        "code": { "const": "B1" },
+        "ledgerSeq": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "approved" } } },
+      "then": { "required": ["approval"] }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["draft", "ready"] } } },
+      "then": { "not": { "required": ["approval"] } }
+    }
+  ]
+}

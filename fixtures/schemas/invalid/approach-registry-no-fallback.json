@@ -1,0 +1,69 @@
+{
+  "id": "APP-02",
+  "name": "Cinematic Scroll Website",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "summary": "Pinned sections, scroll-scrubbed reveals and section transitions with synced smooth scroll.",
+  "module": {
+    "skill": "skills/app02/SKILL.md",
+    "recipes": [
+      "skills/app02/recipes/pinned-section.md"
+    ]
+  },
+  "selectWhen": {
+    "any": [
+      {
+        "field": "projectType",
+        "op": "in",
+        "value": [
+          "launch",
+          "business",
+          "flagship"
+        ]
+      },
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "scroll-story"
+      }
+    ]
+  },
+  "rejectWhen": {
+    "any": [
+      {
+        "field": "brand.motionIntensity",
+        "op": "lte",
+        "value": 1
+      }
+    ]
+  },
+  "budget": {
+    "extraJsKbGzip": 60,
+    "cls": 0.1
+  },
+  "dependencies": [
+    {
+      "name": "gsap",
+      "licence": "GSAP standard licence",
+      "licenceVerified": false,
+      "note": "Verify terms before release"
+    },
+    {
+      "name": "lenis",
+      "licence": "MIT",
+      "licenceVerified": true
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app02/pos-1.json",
+      "tests/decision/app02/pos-2.json",
+      "tests/decision/app02/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app02/neg-1.json",
+      "tests/decision/app02/neg-2.json",
+      "tests/decision/app02/neg-3.json"
+    ]
+  }
+}

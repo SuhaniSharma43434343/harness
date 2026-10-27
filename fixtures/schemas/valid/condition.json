@@ -1,0 +1,18 @@
+{
+  "all": [
+    {
+      "field": "tier",
+      "op": "in",
+      "value": [
+        "M",
+        "L"
+      ]
+    },
+    {
+      "not": {
+        "field": "features.splineSceneUrl",
+        "op": "missing"
+      }
+    }
+  ]
+}

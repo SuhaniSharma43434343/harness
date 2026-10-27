@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "orbit-motors",
+  "projectType": "flagship",
+  "tier": "L",
+  "client": {
+    "name": "Orbit Motors",
+    "industry": "electric vehicles",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "test-drives",
+      "statement": "Book test drives for the new model"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Premium car buyers",
+      "need": "Feel the car's design before visiting"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Cinematic reveal of the car",
+      "cta": "Book a test drive"
+    },
+    {
+      "slug": "/model",
+      "title": "Model",
+      "purpose": "3D configurator and specs",
+      "cta": "Book a test drive"
+    },
+    {
+      "slug": "/story",
+      "title": "Story",
+      "purpose": "Brand and engineering story",
+      "cta": "Book a test drive"
+    },
+    {
+      "slug": "/book",
+      "title": "Book",
+      "purpose": "Test-drive booking",
+      "cta": "Confirm booking"
+    }
+  ],
+  "features": {
+    "interactive": [
+      "3d-product",
+      "scroll-story",
+      "spline-scene"
+    ],
+    "splineSceneUrl": "https://prod.spline.design/example/scene.splinecode",
+    "forms": [
+      {
+        "id": "test-drive",
+        "purpose": "Test-drive booking",
+        "fields": [
+          "name",
+          "email",
+          "phone",
+          "date"
+        ],
+        "destination": "form-function"
+      }
+    ]
+  },
+  "brand": {
+    "tone": [
+      "bold",
+      "futuristic"
+    ],
+    "motionIntensity": 3,
+    "existingAssets": {
+      "logo": true,
+      "models3d": true
+    }
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA",
+    "hosting": "vercel"
+  },
+  "integrations": [
+    "spline",
+    "form-function",
+    "vercel"
+  ],
+  "assumptions": []
+}

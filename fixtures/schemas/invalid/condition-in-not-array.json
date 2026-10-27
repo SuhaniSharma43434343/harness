@@ -1,0 +1,5 @@
+{
+  "field": "tier",
+  "op": "in",
+  "value": "L"
+}

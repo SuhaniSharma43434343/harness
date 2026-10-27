@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/question-bank.schema.json",
+  "title": "Question bank (registry/questions/*.json)",
+  "description": "Questions intake can ask. selectQuestions scores the questions whose target fields are still unknown and asks 5 to 10 in the first round. A question is never asked when every field it fills is already known.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bankVersion", "questions"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "bankVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/question" }
+    }
+  },
+  "definitions": {
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fills", "prompt", "kind", "appliesTo", "weight", "recommendation"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^q-[a-z0-9][a-z0-9-]*$" },
+        "fills": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "condition.schema.json#/definitions/fieldPath" },
+          "description": "Brief fields the answer sets. Used for the 'never ask what is known' rule."
+        },
+        "prompt": { "type": "string", "minLength": 10, "maxLength": 300 },
+        "why": { "type": "string", "description": "One line shown to the operator on why it matters." },
+        "kind": { "type": "string", "enum": ["single", "multi", "text", "number", "boolean", "date", "url"] },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "label"],
+            "properties": {
+              "value": {},
+              "label": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "appliesTo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["projectTypes", "tiers"],
+          "properties": {
+            "projectTypes": {
+              "oneOf": [
+                { "const": "all" },
+                { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/projectType" } }
+              ]
+            },
+            "tiers": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "common.schema.json#/definitions/tier" }
+            }
+          }
+        },
+        "askWhen": {
+          "$ref": "condition.schema.json",
+          "description": "Extra condition on the brief so far. The question is only a candidate when this holds."
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Base score. Blocking questions (needed for a required field) should be 8 or more."
+        },
+        "round": { "type": "integer", "minimum": 1, "maximum": 3, "default": 1 },
+        "recommendation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason"],
+          "properties": {
+            "value": {},
+            "fromField": { "$ref": "condition.schema.json#/definitions/fieldPath" },
+            "reason": { "type": "string", "minLength": 1 }
+          },
+          "description": "Used when the operator says 'use your recommendation'. The answer is recorded as an inferred fact."
+        },
+        "followUps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["when", "ask"],
+            "properties": {
+              "when": { "$ref": "condition.schema.json" },
+              "ask": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "pattern": "^q-[a-z0-9][a-z0-9-]*$" }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "enum": ["single", "multi"] } } },
+          "then": { "required": ["options"] },
+          "else": { "not": { "required": ["options"] } }
+        }
+      ]
+    }
+  }
+}
