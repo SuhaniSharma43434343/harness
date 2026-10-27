@@ -27,8 +27,9 @@ export function shellVerifier(command, { cwd, signal }) {
 
 function withTimeout(ms, label) {
   const controller = new AbortController();
+  // Kept referenced: while an attempt is waiting on its worker, this timer may be the only thing
+  // keeping the event loop alive, and it must fire.
   const timer = setTimeout(() => controller.abort(new Unavailable(`${label} ran past its budget of ${Math.round(ms / 60000)} minutes`)), ms);
-  timer.unref?.();
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
@@ -218,9 +219,11 @@ export function orderTasks(tasks) {
 // Runs every task whose dependencies are done, in dependency order, up to `concurrency` at
 // once. Two tasks that own overlapping files never run together. Returns when nothing more
 // can start: every task is done, blocked, waiting on a blocked dependency, or still marked
-// running by a worker that has not been recovered (see forge resume).
+// running by a worker that has not been recovered (see forge resume). With `agents`, only
+// tasks for those agents start (forge run passes the agents of the current phase).
 export async function runProject(project, options = {}) {
-  const { concurrency = loadConfig(ROOT).config.concurrency, ...taskOptions } = options;
+  const { concurrency = loadConfig(ROOT).config.concurrency, agents, ...taskOptions } = options;
+  const allowed = agents ? new Set(agents) : null;
   assertProjectExists(project, taskOptions);
   acquireRunLock(project, taskOptions);
   const inFlight = new Map();
@@ -235,6 +238,7 @@ export async function runProject(project, options = {}) {
         if (inFlight.has(t.id) || failures.some((f) => f.task === t.id)) continue;
         if (!['pending', 'ready', 'retry', 'submitted', 'verifying'].includes(t.status)) continue;
         if (!t.depends_on.every((d) => status.get(d) === 'done')) continue;
+        if (allowed && !allowed.has(t.agent)) continue;
         const clash = [...inFlight.values()].some(({ task }) =>
           task.owns_files.some((a) => t.owns_files.some((b) => patternsOverlap(a, b))),
         );
@@ -258,7 +262,11 @@ export async function runProject(project, options = {}) {
     if (t.status === 'done') summary.done.push(t.id);
     else if (t.status === 'blocked') summary.blocked.push({ task: t.id, reason: t.blocked_reason });
     else if (ACTIVE.has(t.status)) summary.running.push(t.id);
-    else summary.waiting.push({ task: t.id, on: t.depends_on.filter((d) => status.get(d) !== 'done') });
+    else {
+      const w = { task: t.id, on: t.depends_on.filter((d) => status.get(d) !== 'done') };
+      if (allowed && !allowed.has(t.agent)) w.notInPhase = t.agent;
+      summary.waiting.push(w);
+    }
   }
   return summary;
 }

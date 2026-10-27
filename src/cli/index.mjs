@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ForgeError } from '../core/errors.mjs';
+import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { validateFile } from './validate.mjs';
@@ -31,6 +32,7 @@ const COMMANDS = {
   approve: { summary: 'Record an operator approval: forge approve <project> <B1-B7>', run: (args) => cmdApprove(ROOT, args) },
   status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
   run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
+  agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
 };
 

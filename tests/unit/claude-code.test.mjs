@@ -41,7 +41,9 @@ test('a task runs through the adapter, writes its file and records the attempt',
   assert.equal(rec.idempotencyKey, 'demo:hero:v1#1');
   assert.deepEqual(rec.evidence, ['site/hero.txt']);
   assert.deepEqual(rec.files, { 'site/hero.txt': { encoding: 'utf8', content: 'built hero\n' } });
-  assert.ok(rec.args.includes('--permission-mode') && !rec.args.join(' ').includes('Bash'), 'no shell tool');
+  assert.ok(rec.args.includes('--permission-mode'));
+  assert.equal(rec.args[rec.args.indexOf('--allowedTools') + 1], 'Read,Write,Edit,Glob,Grep', 'no shell tool');
+  assert.match(rec.args[rec.args.indexOf('--append-system-prompt') + 1], /^# Builder/, 'the builder role is given as a system prompt');
 });
 
 test('a recorded run replays identically in a fresh project, without calling Claude Code', async () => {

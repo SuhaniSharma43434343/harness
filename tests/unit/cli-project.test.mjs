@@ -11,7 +11,7 @@ import { runProject } from '../../src/core/runner.mjs';
 import { createClaudeCodeWorker } from '../../src/workers/claude-code.mjs';
 import { task } from './helpers.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { loadProject } from '../../src/core/project.mjs';
+import { advancePhase, loadProject } from '../../src/core/project.mjs';
 
 const CLI = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'src', 'cli', 'index.mjs');
 
@@ -67,13 +67,15 @@ test('forge status on a missing project is a typed error with a hint', () => {
 
 test('forge run --replay plays a recorded run back into a project', async () => {
   const { root, workspace } = tmpRoot();
+  const intakeTask = task('hero', { agent: 'project-manager', owns_files: ['intake/hero.txt'] });
   const fake = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'fake-claude.mjs');
   quiet(() => cmdNew(root, ['recorded']));
-  addTask('recorded', task('hero', { verify: 'exit 0' }), { workspace });
+  addTask('recorded', intakeTask, { workspace });
   await runProject('recorded', { workspace, worker: createClaudeCodeWorker({ command: [process.execPath, fake] }) });
 
   quiet(() => cmdNew(root, ['replayed']));
-  addTask('replayed', task('hero', { verify: 'exit 0' }), { workspace });
+  addTask('replayed', intakeTask, { workspace });
+  advancePhase('replayed', 'INTAKE', { workspace });
   const { log } = console;
   console.log = () => {};
   try {
@@ -82,4 +84,20 @@ test('forge run --replay plays a recorded run back into a project', async () => 
     console.log = log;
   }
   assert.equal(getTask('replayed', 'hero', { workspace }).status, 'done');
+});
+
+test('forge run starts only the tasks whose agent works in the current phase', async () => {
+  const { root, workspace } = tmpRoot();
+  quiet(() => cmdNew(root, ['phased']));
+  addTask('phased', task('build-hero'), { workspace });
+  const out = [];
+  const { log } = console;
+  console.log = (...a) => out.push(a.join(' '));
+  try {
+    assert.equal(await cmdRun(root, ['phased', '--replay', join(workspace, 'nowhere')]), 0);
+  } finally {
+    console.log = log;
+  }
+  assert.equal(getTask('phased', 'build-hero', { workspace }).status, 'pending');
+  assert.match(out.join('\n'), /waiting: build-hero \(builder does not work in CREATED\)/);
 });
