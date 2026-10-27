@@ -84,6 +84,7 @@
             "fromField": { "$ref": "condition.schema.json#/definitions/fieldPath" },
             "reason": { "type": "string", "minLength": 1 }
           },
+          "anyOf": [{ "required": ["value"] }, { "required": ["fromField"] }],
           "description": "Used when the operator says 'use your recommendation'. The answer is recorded as an inferred fact."
         },
         "followUps": {
