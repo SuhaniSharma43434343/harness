@@ -27,8 +27,9 @@ export function shellVerifier(command, { cwd, signal }) {
 
 function withTimeout(ms, label) {
   const controller = new AbortController();
+  // Kept referenced: while an attempt is waiting on its worker, this timer may be the only thing
+  // keeping the event loop alive, and it must fire.
   const timer = setTimeout(() => controller.abort(new Unavailable(`${label} ran past its budget of ${Math.round(ms / 60000)} minutes`)), ms);
-  timer.unref?.();
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
