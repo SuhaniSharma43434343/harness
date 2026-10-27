@@ -68,6 +68,21 @@ The plan names `registry/approaches/*.yaml`, `registry/questions/*.yaml` and `se
 | `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix) => ApproachDecision` | M2 |
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object }) => Promise<GateResult>` | M3 |
+| `loadRegistry` | Nidhi | `loadRegistry(root?: string) => { questions: QuestionBank, approaches: ApproachEntry[], matrix: SelectionMatrix }`; throws `ConfigMissing` or `SchemaInvalid` | M2 |
+| `draftBrief` | Nidhi | `draftBrief(facts: Facts, opts: { project: string, base?: Partial<Brief> }) => Brief` | M2 |
+| `estimateScope` | Nidhi | `estimateScope(brief: Brief, decision?: ApproachDecision) => Estimate` | M2 |
+| `runIntake` | Nidhi | `runIntake(project: string, opts: { worker: Worker, ask: (questions: Question[]) => Promise<Answer[]>, maxRounds?: number }) => Promise<IntakeResult>` | M2 |
+| `checkDesignRules` | Nidhi | `checkDesignRules(decision: DesignDecision, brief: Brief) => Finding[]` | M3 |
+| `scaffoldSite` | Nidhi | `scaffoldSite(siteDir: string, input: { brief: Brief, decision: ApproachDecision, tokens: object, pages: PageContent[] }) => Promise<void>` | M3 |
+| `buildSite` | Nidhi | `buildSite(siteDir: string, opts?: { signal?: AbortSignal }) => Promise<{ ok: boolean, outDir: string, log: string }>` | M3 |
+| `ApproachModule` | Nidhi (contract), both (modules) | `{ id: ApproachId, apply(siteDir, ctx: ModuleContext) => Promise<{ files: string[] }>, fallback(siteDir, ctx, trigger: FallbackTrigger) => Promise<{ files: string[] }> }` | M3 |
+| `runGates` | Nidhi | `runGates(siteDir: string, opts: { project: string, gates?: GateName[], signal?: AbortSignal }) => Promise<GateResult[]>` | M3 |
+| `qualityFloor` | Nidhi | `qualityFloor(results: GateResult[]) => { met: boolean, failing: GateName[] }` | M3 |
+| `qaReview` | Nidhi | `qaReview(project: string, opts?: { gates?: GateName[], worker?: Worker }) => Promise<DefectReport>` | M3 |
+| `verifyFix` | Nidhi | `verifyFix(project: string, defectId: string) => Promise<{ status: 'fixed' \| 'open', evidence: string[] }>` | M3 |
+| test-tool adapters | Nidhi (plugins on Suhani's host) | `playwright`, `axe-core` and `lighthouse` plugins: `run(siteDir: string, opts: { routes: string[], widths?: number[], signal?: AbortSignal }) => Promise<RawToolReport>` | M3 |
+
+The types are the schemas: `Brief`, `Facts`, `QuestionBank`, `ApproachEntry`, `SelectionMatrix`, `ApproachDecision`, `DesignDecision` and `GateResult` are the parsed objects those schemas validate. `Question` is one item of `QuestionBank.questions`, `Finding` is one item of `GateResult.findings`, `GateName` is the `gate` enum in `gate-result.schema.json`, and `FallbackTrigger` is the enum in `common.schema.json`. `Worker` is the adapter the runner already takes (`worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat })`), so intake and directions call the model through the same seam as builders. `Estimate`, `IntakeResult` and `DefectReport` are drafted below and get schemas when their task starts.
 
 ### What each project-side function promises
 
@@ -77,8 +92,19 @@ The plan names `registry/approaches/*.yaml`, `registry/questions/*.yaml` and `se
 - **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`.
 - **`proposeDirections`** may call the model through Suhani's worker adapter. It applies the design rules (T17) and returns at least 3 directions that pass the schema.
 - **`runGate`** never throws for a site problem: a failing site returns `status: 'fail'` with findings. A missing tool or plugin returns `status: 'error'` with the typed error code, which is never counted as a pass.
-
-
+- **`loadRegistry`** reads `registry/questions/`, `registry/approaches/` and `selection-matrix.*` (JSON now, YAML if T14 or T16 adds a parser) and validates each file. It is the only function that reads the registry from disk; the selectors take its output, so tests can pass fixtures in directly.
+- **`draftBrief`** is pure. It copies every `known` or `inferred` fact into the brief, lists every inferred field in `brief.assumptions`, and returns a `draft` brief. It never sets `approved`; only the operator does that at B1 through `approve`.
+- **`estimateScope`** is pure and deterministic. It returns `{ tier, pages, approaches, hours: { min, max }, cost: { min, max, currency }, assumptions: string[] }`. Without a decision it estimates from the brief alone and says so in `assumptions`. The rates come from config, never from the model.
+- **`runIntake`** is the Project Manager loop for P1. Each round it calls `selectQuestions`, hands the questions to `ask` (the CLI prompt, or a fixture in tests), and folds the answers in with `recordAnswer`. It then writes `intake/brief.json`, `intake/facts.json`, `intake/plan.md` and `intake/estimate.json`, appends ledger entries, and returns `{ status: 'ready' | 'needs-answers', brief, facts, estimate }`. It stops before B1 and never records an approval. The default is 3 rounds.
+- **`checkDesignRules`** is the T17 rule set that `proposeDirections` runs and the P4 and P5 exit gates call: open-licensed fonts, contrast floors, at least 3 directions, and distinctness between them (no two directions share both the font pair and the palette family). It returns findings and never throws for a rule failure.
+- **`scaffoldSite`** copies the starter template into `site/` and writes the content and tokens to the places the starter template contract names (below). It is idempotent: running it again on the same input leaves the same files. It does not run approach modules; the Lead Developer's tasks do.
+- **`buildSite`** runs the site's own build and returns its log. A build failure returns `ok: false`, so the runner's verify step and the routes gate can both use it.
+- **`ApproachModule`** is the contract every module in `src/approaches/<app-id>/` exports, whether Nidhi (APP-01, 02, 04, 06) or Suhani (APP-03, 05, 07, 08) writes it. `apply` only writes inside `site/src/sections/<app-id>/` and the files its task contract owns. `fallback` produces the version named in the registry entry's `fallback` for the given trigger. `ModuleContext` is `{ brief, decision, entry: ApproachEntry, tokens, getPlugin }`. The build, fallback and budget tests in T12, T19 and T20 call these two functions.
+- **`runGates`** runs the named gates (all of them by default) through `runGate`, writes each result to `evidence/gates/<gate>.json`, and returns them in a fixed order. It never stops early, so one report shows every failure.
+- **`qualityFloor`** is the P11 exit check. `met` is true only when every required gate is `pass`; `error` and `skipped` count as failing.
+- **`qaReview`** is the QA Verifier's P11 pass. It runs the gates and the review lenses and writes `reports/defects.json`: one defect per finding, each `{ id, gate, severity, message, evidence: string[], status: 'open' }`. A finding without evidence is discarded, not reported. It never edits `site/`.
+- **`verifyFix`** re-runs the gate behind a defect on the current site and attaches fresh evidence. It returns `fixed` only when that gate now passes for the defect's location; otherwise the defect stays `open`. The builder's own report is never enough. The runner owns the 3-loop repair limit and escalation.
+- **Test-tool adapters** are plugins loaded through `getPlugin`, disabled by default like any plugin. Each returns the tool's raw report; turning it into a `GateResult` is the gate's job, so the gate logic can be tested without a browser. A missing tool surfaces as `Unavailable` from the adapter and as `status: 'error'` from the gate.
 
 
 ## Shared error format
@@ -106,5 +132,6 @@ Every component throws one of the typed errors in `src/core/errors.mjs`: `Config
      reports/             status and final report
    ```
 
-4. Starter template contract (frozen at M1, working at M3): the project side proposes that design tokens live in `site/src/styles/tokens.json`, page content in `site/src/content/pages/*.md` keyed by page slug, and approach sections in `site/src/sections/<approach>/`. To be confirmed with Suhani before T12 starts.
-5. Should `estimate.json` (the client scope and cost estimate at B1) get its own schema at M1, or wait for T15?
+4. Starter template contract (frozen at M1, working at M3): the project side proposes that design tokens live in `site/src/styles/tokens.json`, page content in `site/src/content/pages/*.md` keyed by page slug, and approach sections in `site/src/sections/<approach>/`, written by the `ApproachModule` functions above. `npm run build` in `site/` writes to `site/dist/`, which every gate reads. To be confirmed with Suhani before T12 starts.
+5. Should `estimate.json` (the client scope and cost estimate at B1) get its own schema at M1, or wait for T15? The shape is drafted under `estimateScope` above.
+6. Should the QA Verifier be the runner's `verifier` for every task, or only run at P11 and P12 while tasks keep the shell `verify` command? The project side proposes the second: tasks keep their shell command, and `qaReview` and `verifyFix` run at P11 and P12.
