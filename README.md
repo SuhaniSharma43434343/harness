@@ -9,10 +9,11 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
+- T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
-The plugin host, the agent definitions and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The plugin host and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -50,11 +51,12 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge approve <project> <code>` | Records an operator approval (A0 to A3, B1 to B7) in the ledger |
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
+| `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
 
-`forge run` starts one headless `claude -p` session per task in the project folder, limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
+`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
 ## Tests
 
@@ -68,7 +70,10 @@ The tests validate every fixture in `fixtures/schemas/valid` and check that ever
 
 ```text
 forge, forge.cmd          launchers (macOS/Linux, Windows)
-src/cli/                  command router, doctor, validate
+agents/                   the 8 agent roles (source of truth)
+.claude/agents/           generated Claude Code subagents (forge agents generate)
+.cursor/rules/            generated Cursor rules (forge agents generate)
+src/cli/                  command router, doctor, validate, project commands
 src/core/                 config, schemas, typed errors, project state, ledger,
                           task board, runner, locks, recovery
 schemas/                  JSON Schemas (M1 interface contracts)

@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { loadAgents } from '../core/agents.mjs';
 import { AuthFailed, ConfigInvalid, ConfigMissing, RateLimited, Unavailable } from '../core/errors.mjs';
 import { matcher, walk } from '../core/glob.mjs';
 
@@ -133,13 +134,17 @@ function runClaude({ command, args, prompt, cwd, env, signal }) {
 //   record       true to write a recording of every attempt (default true)
 //   recordDir    where recordings go (default <projectDir>/evidence/recordings)
 //   env          environment for the child (default process.env)
+//   roles        agent id -> role instructions, added as a system prompt (default: agents/*.md)
 export function createClaudeCodeWorker(options = {}) {
   const { command = ['claude'], model, tools = DEFAULT_TOOLS, record = true, recordDir, env = process.env } = options;
+  let roles = options.roles;
 
   return async function claudeCodeWorker({ task, project, projectDir, attempt, idempotencyKey, signal }) {
     const prompt = buildPrompt(task, { project, attempt });
     const args = ['-p', '--output-format', 'json', '--permission-mode', 'acceptEdits', '--no-session-persistence', '--allowedTools', tools.join(',')];
     if (model) args.push('--model', model);
+    roles ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.body]));
+    if (roles[task.agent]) args.push('--append-system-prompt', roles[task.agent]);
 
     const before = snapshot(projectDir, task.owns_files);
     const run = await runClaude({ command, args, prompt, cwd: projectDir, env, signal });
