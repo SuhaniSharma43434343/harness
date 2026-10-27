@@ -74,7 +74,7 @@ fixtures/schemas/         valid and invalid examples for every schema
 samples/briefs/           one sample brief per project type (7)
 tests/unit/               node:test suites
 scripts/                  setup.sh, setup.ps1
-docs/interfaces.md        M1 interface draft, runtime and project sides
+docs/interfaces.md        M1 interfaces (frozen), runtime and project sides
 workspace/                projects are created here (git-ignored)
 ```
 

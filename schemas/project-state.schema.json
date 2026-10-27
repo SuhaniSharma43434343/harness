@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "forge/project-state.schema.json",
   "title": "Project state (workspace/<project>/project.json)",
-  "description": "Runtime-owned snapshot of a project's phase. The ledger is the record of what happened; this file can be rebuilt from it.",
+  "description": "Runtime-owned snapshot of a project's phase and the versions it was planned with. The ledger is the record of what happened; the phase and repair count can be rebuilt from it. Gate results carry only their own gateVersion.",
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "phase", "repairLoops", "createdAt", "updatedAt", "harnessVersion"],
@@ -33,6 +33,21 @@
     "brief": { "type": "string" },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" },
-    "harnessVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" }
+    "harnessVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+    "registryVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Approach registry version the project was planned with. Set at intake."
+    },
+    "questionBankVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Question bank version intake used. Set at intake."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Version of the project-side schemas (brief, facts) the project's files follow."
+    }
   }
 }

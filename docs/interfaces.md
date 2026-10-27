@@ -1,6 +1,6 @@
-# M1 interface draft
+# M1 interfaces (frozen)
 
-This document holds both halves of the M1 interface freeze: the runtime side (Suhani) and the project side (Nidhi). Each half is for review by the other owner. Nothing here is frozen until both owners sign it off. After the freeze, any change needs a pull request approved by both.
+This document holds both halves of the M1 interface freeze: the runtime side (Suhani) and the project side (Nidhi). It was frozen on 2026-10-27: the project lead asked for the open questions to be decided so work could move on, and the decisions are recorded in [Decisions at the freeze](#decisions-at-the-freeze). From now on, any change needs a pull request approved by both owners. Either owner can reopen a decision that way.
 
 ## Schemas provided by the runtime (Suhani)
 
@@ -11,6 +11,7 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 | Gate result | `schemas/gate-result.schema.json` | Nidhi's gates write it; the runner and QA Verifier read it |
 | Ledger entry | `schemas/ledger-entry.schema.json` | Every component that records events |
 | Config | `schemas/forge-config.schema.json` | CLI, doctor |
+| Project state | `schemas/project-state.schema.json` | Runtime only (`project.json`); others read it through `forge status` |
 
 ### Rules the schemas already enforce
 
@@ -45,22 +46,22 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 - **Design decision:** 3 to 5 directions, each rendered at desktop and mobile. Fonts must be open-licensed (OFL, Apache, MIT), system, or client-licensed. Body text contrast is at least 4.5:1, and large text and UI at least 3:1. `chosen` needs the choice and a B2 record.
 - **Rule condition:** a leaf is `{ field, op, value }` on a brief field path; `all`, `any` and `not` combine leaves. The operators are `eq`, `neq`, `in`, `notIn`, `gte`, `lte`, `includes`, `exists` and `missing`.
 
-### Project types and tiers (proposed, please confirm)
+### Project types and tiers
 
-The plan asks for seven project types but does not name them. The proposal is `business`, `launch`, `showroom`, `portfolio`, `event`, `nonprofit` and `flagship`, chosen to cover the approach rules in the plan (brand story and launch for APP-02, showroom for APP-03, enterprise flagship for APP-07). Each has one sample brief in `samples/briefs/`.
+The plan asks for seven project types but does not name them. The frozen set is `business`, `launch`, `showroom`, `portfolio`, `event`, `nonprofit` and `flagship`, chosen to cover the approach rules in the plan (brand story and launch for APP-02, showroom for APP-03, enterprise flagship for APP-07). Each has one sample brief in `samples/briefs/`.
 
 Tiers are `S`, `M` and `L`. S is up to 5 pages with no custom interaction, M is up to 12 pages or one advanced approach, and L is larger or combines several advanced approaches.
 
 ### Data formats
 
-The plan names `registry/approaches/*.yaml`, `registry/questions/*.yaml` and `selection-matrix.yaml`. The schemas validate the parsed object, so the files can be YAML or JSON. Fixtures are JSON for now so that M1 needs no new dependency. Adding a YAML parser is a decision for T14 and T16.
+Registry, question bank and selection matrix files are JSON: `registry/approaches/APP-0N.json`, `registry/questions/*.json` and `registry/selection-matrix.json`. The plan names YAML, but the schemas validate the parsed object, and JSON keeps Release 1.0 free of a parser dependency. If YAML is wanted later, the loader can accept both without a schema change.
 
-## Function signatures to agree at M1
+## Function signatures (frozen at M1)
 
-| Function | Provided by | Signature (draft) | Working by |
+| Function | Provided by | Signature | Working by |
 | --- | --- | --- | --- |
-| `runTask` | Suhani | `runTask(project: string, taskId: string) => Promise<TaskResult>` | M2 |
-| `ledger.append` | Suhani | `append(project: string, entry: Omit<LedgerEntry, 'seq' \| 'ts'>) => LedgerEntry` | M2 |
+| `runTask` | Suhani | `runTask(project: string, taskId: string, opts?: RunOptions) => Promise<TaskResult>` | M2 (built) |
+| `ledger.append` | Suhani | `append(project: string, entry: Omit<LedgerEntry, 'seq' \| 'ts'>, opts?: { workspace?: string }) => LedgerEntry` | M2 (built) |
 | `getPlugin` | Suhani | `getPlugin(id: string) => Promise<Plugin>`; throws `ConfigMissing` or `PermissionDenied` | M2 |
 | `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 |
 | `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation') => Facts` | M2 |
@@ -68,6 +69,11 @@ The plan names `registry/approaches/*.yaml`, `registry/questions/*.yaml` and `se
 | `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix) => ApproachDecision` | M2 |
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object }) => Promise<GateResult>` | M3 |
+
+### What each runtime function promises
+
+- **`runTask`** runs one task through `ready`, `running`, `submitted`, `verifying` and `done`, retrying up to `budget.retries` times before `blocked`. `RunOptions` carries the `worker` (the claude-code adapter from T06), an optional `verifier`, and `workspace`. It resolves to `TaskResult`: `{ task, status: 'done' | 'blocked', attempts, evidence, reason? }`. A done or blocked task is returned as it is, with `reused: true`, and never run again.
+- **`ledger.append`** assigns `seq` and `ts`, checks the entry against the ledger schema, and appends one line. Callers cannot set `seq`, `ts` or `project`.
 
 ### What each project-side function promises
 
@@ -85,26 +91,35 @@ The plan names `registry/approaches/*.yaml`, `registry/questions/*.yaml` and `se
 
 Every component throws one of the typed errors in `src/core/errors.mjs`: `ConfigMissing`, `ConfigInvalid`, `AuthFailed`, `RateLimited`, `Unavailable`, `PermissionDenied`, `SchemaInvalid` or `NotImplemented`. Each has a `code`, a `message`, an optional `hint` for the operator, and optional `details`.
 
-## Open questions for the freeze
+## Decisions at the freeze
 
-1. Should gate results carry the project's harness, registry and schema versions, or should the ledger hold them?
-2. Should the task `budget.minutes` limit be enforced per attempt or across all attempts?
-3. Which folder structure for `workspace/<project>/` do both sides agree on? The project side proposes:
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Where do the harness, registry and schema versions live? | In `project.json`: `harnessVersion` from project creation, plus `registryVersion`, `questionBankVersion` and `schemaVersion` set at intake. A gate result carries only its own `gateVersion`. The ledger records every change, so no version needs repeating per entry. |
+| 2 | Is `budget.minutes` per attempt or across all attempts? | Per attempt, covering the worker and the verify command together. With 2 retries, a task can use at most three times its budget. |
+| 3 | `workspace/<project>/` layout | As below. The runtime owns `project.json`, `ledger.jsonl`, `board/` and `locks/`. Each other folder belongs to the agent named in the plan's agent table. |
+| 4 | Starter template contract | Accepted as proposed: tokens in `site/src/styles/tokens.json`, page content in `site/src/content/pages/<slug>.md`, approach sections in `site/src/sections/<approach>/`. |
+| 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then. |
+| 6 | Project types and tiers | The seven types and the tiers S, M and L above are frozen. |
+| 7 | YAML or JSON registry files | JSON (see Data formats). |
+| 8 | Error for an illegal phase or task transition | `PermissionDenied`, with the allowed moves in `details`. The shared error set stays as it is; lock conflicts and a busy project use `Unavailable`. |
+| 9 | Where does a task's verify command run? | In the project folder, `workspace/<project>/`. A command that needs the site uses `cd site && ...` or a script in `site/package.json`. |
+| 10 | Phase exit gates | The runtime checks the exit approval (B1, B2, B3, B6, B7). The evidence part of each exit gate comes from `runGate` and `validateBrief`, wired into the runner when those functions are built. B4 and B5 are checked at the action through `requireApproval`. |
 
-   ```text
-   workspace/<project>/
-     project.json         harness, registry and schema versions (answers question 1: the project, not each gate result)
-     ledger.jsonl         runtime
-     board/               runtime: task contracts and status
-     intake/              brief.json, facts.json, plan.md, estimate.json
-     research/            research and source register
-     design/              approach-decision.json, directions.json, tokens.json, renders/
-     ux/  content/        sitemap, wireframe spec, locked content (after B3)
-     assets/              assets and licence register
-     site/                the generated site (starter template copied here)
-     evidence/            gate results and screenshots
-     reports/             status and final report
-   ```
+### Workspace layout
 
-4. Starter template contract (frozen at M1, working at M3): the project side proposes that design tokens live in `site/src/styles/tokens.json`, page content in `site/src/content/pages/*.md` keyed by page slug, and approach sections in `site/src/sections/<approach>/`. To be confirmed with Suhani before T12 starts.
-5. Should `estimate.json` (the client scope and cost estimate at B1) get its own schema at M1, or wait for T15?
+```text
+workspace/<project>/
+  project.json         runtime: phase, repair count, versions
+  ledger.jsonl         runtime: append-only event log
+  board/<task>.json    runtime: one task contract per file
+  locks/               runtime: run lock and per-file locks
+  intake/              Project Manager: brief.json, facts.json, plan.md, estimate.json
+  research/            Research & Strategy: research and source register
+  design/              Creative Director: approach-decision.json, directions.json, tokens.json, renders/
+  ux/  content/        Content & UX: sitemap, wireframe spec, locked content (after B3)
+  assets/              Asset & Rights: assets and licence register
+  site/                Lead Developer and builders: the generated site (starter template copied here)
+  evidence/            QA Verifier and runner: gate results, screenshots, verify logs (evidence/tasks/<task>/)
+  reports/             Project Manager and QA Verifier: status and final report
+```

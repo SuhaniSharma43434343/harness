@@ -8,12 +8,14 @@ export const DEFAULT_WORKSPACE = join(ROOT, 'workspace');
 
 const PROJECT_ID = /^[a-z0-9][a-z0-9-]*$/;
 
-// Proposed layout of workspace/<project>/ (open question 3 in docs/interfaces.md):
-//   project.json   current phase and run counters (a cache; the ledger is the record)
-//   ledger.jsonl   append-only event log
-//   tasks/<id>.json  one task contract per file (the board)
-//   locks/         run lock and per-file locks
-//   site/          the generated website (later milestones)
+// Layout of workspace/<project>/, frozen at M1 (see docs/interfaces.md). The runtime owns
+// project.json, ledger.jsonl, board/ and locks/; the other folders belong to their agents.
+//   project.json     phase, run counters and versions (a cache; the ledger is the record)
+//   ledger.jsonl     append-only event log
+//   board/<id>.json  one task contract per file
+//   locks/           run lock and per-file locks
+//   evidence/        gate results, screenshots and verify logs
+//   intake/ research/ design/ ux/ content/ assets/ site/ reports/
 export function projectPaths(project, { workspace = DEFAULT_WORKSPACE } = {}) {
   if (!PROJECT_ID.test(project ?? '')) {
     throw new SchemaInvalid(`"${project}" is not a valid project id`, {
@@ -25,7 +27,8 @@ export function projectPaths(project, { workspace = DEFAULT_WORKSPACE } = {}) {
     dir,
     state: join(dir, 'project.json'),
     ledger: join(dir, 'ledger.jsonl'),
-    tasks: join(dir, 'tasks'),
+    board: join(dir, 'board'),
+    evidence: join(dir, 'evidence'),
     locks: join(dir, 'locks'),
     site: join(dir, 'site'),
   };
