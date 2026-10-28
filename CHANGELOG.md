@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T10: the Cursor path. `forge task next|check|submit|abandon` hands out one contract at a time and refuses a submission that changed files outside `owns_files` (or inside `must_not_touch`) before the verify command runs. `CLAUDE.md`, `AGENTS.md` and `.cursor/rules/forge.mdc` are generated from the Project Manager role and the command rules. A pre-commit hook (installed by the git plugin, or `forge hooks install`) runs `forge scan --staged`. See `docs/cursor.md`.
 - T09: the Claude Code guard hook (`src/hooks/guard.mjs`, in `.claude/settings.json` and every `forge run` worker): `.env` is never read or written, the runtime's files change only through forge, a production deploy needs B7, and a task worker may write only its contract's files. Credentials are redacted from the ledger, recordings and verify logs, and `forge scan` finds secrets in files. See `docs/security.md`.
 - T08 (second part): the `form-function` plugin (a Vercel function that checks each submission on the server, rate limits it and forwards it to `FORM_WEBHOOK_URL`, plus a local endpoint and `form-mock`), the `spline` plugin (scene checks and copying a scene into the site), and `setProjectEnv` on the vercel plugin.
 - T08 (first part): the `git` plugin (a local repository per project), `local-preview` (serves a built site on 127.0.0.1) and `vercel` (preview deploys with B5, production with B5 and B7, through the REST API), each with a mock. See `docs/plugins.md`.
