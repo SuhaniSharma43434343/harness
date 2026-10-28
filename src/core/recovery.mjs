@@ -5,6 +5,7 @@ import { loadConfig } from './config.mjs';
 import * as ledger from './ledger.mjs';
 import { acquireRunLock, listFileLocks, releaseFileLocks, releaseRunLock } from './locks.mjs';
 import { loadProject } from './project.mjs';
+import { isStepTask } from './step.mjs';
 import { assertValid } from './schemas.mjs';
 import { ROOT, assertProjectExists, writeJsonAtomic } from './workspace.mjs';
 
@@ -68,6 +69,11 @@ export function resume(project, options = {}) {
         continue;
       }
       if (task.status !== 'running') continue;
+      // A step-mode task is being done by a person in Cursor, not by a process with a heartbeat.
+      if (isStepTask(project, task.id, ctx)) {
+        report.stillRunning.push(task.id);
+        continue;
+      }
       const beat = task.heartbeat_at ? Date.parse(task.heartbeat_at) : 0;
       if (beat > staleBefore) {
         report.stillRunning.push(task.id);

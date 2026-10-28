@@ -7,7 +7,8 @@ import { cmdAgents } from './agents.mjs';
 import { cmdApproach } from './approach.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
-import { cmdScan } from './scan.mjs';
+import { cmdHooks, cmdScan } from './scan.mjs';
+import { cmdTask } from './task.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
@@ -69,6 +70,8 @@ const COMMANDS = {
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   plugins: { summary: 'List plugins, or enable, disable or health-check one: forge plugins [list|enable|disable|check] [id]', run: (args) => cmdPlugins(ROOT, args) },
+  task: { summary: 'Step mode for Cursor: forge task <next|check|submit|abandon> <project> [task]', run: (args) => cmdTask(ROOT, args) },
+  hooks: { summary: 'Add the secret-scan pre-commit hook to a repository: forge hooks install [dir]', run: (args) => cmdHooks(ROOT, args) },
   scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
   site: {
@@ -82,7 +85,6 @@ const PLANNED = {
   preview: 'M3',
   deploy: 'M3',
   report: 'M3',
-  task: 'M5',
   test: 'M5',
   demo: 'M6',
   package: 'M6',
