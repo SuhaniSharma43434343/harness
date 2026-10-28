@@ -63,3 +63,13 @@ test('version helpers compare correctly', () => {
   assert.equal(versionAtLeast('10.9', '10.0.0'), true);
   assert.equal(versionAtLeast('garbage', '1.0.0'), false);
 });
+
+test('forge select explains the approach decision for a brief', () => {
+  const r = forge('select', 'samples/briefs/flagship.json');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /APP-04 {2}yes .*\[needs B2\]/);
+  assert.match(r.stdout, /APP-06 {2}no /);
+  const json = JSON.parse(forge('select', 'samples/briefs/showroom.json', '--json').stdout);
+  assert.deepEqual(json.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-03']);
+  assert.equal(forge('select').status, 2);
+});

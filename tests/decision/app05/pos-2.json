@@ -1,0 +1,55 @@
+{
+  "case": "A business with a subtle shader at motion 1",
+  "expect": "selected",
+  "brief": {
+    "project": "app05-pos-2",
+    "schemaVersion": "0.1.0",
+    "status": "ready",
+    "projectType": "business",
+    "tier": "M",
+    "client": {
+      "name": "Test Client",
+      "industry": "services",
+      "languages": [
+        "en"
+      ]
+    },
+    "goals": [
+      {
+        "id": "leads",
+        "statement": "Generate qualified enquiries"
+      }
+    ],
+    "audience": [
+      {
+        "segment": "Local customers",
+        "need": "Find and contact the business"
+      }
+    ],
+    "pages": [
+      {
+        "slug": "/",
+        "title": "Home",
+        "purpose": "Introduce the offer",
+        "cta": "Get in touch"
+      }
+    ],
+    "features": {
+      "interactive": [
+        "shader-background"
+      ]
+    },
+    "brand": {
+      "tone": [
+        "clear"
+      ],
+      "motionIntensity": 1
+    },
+    "constraints": {
+      "deviceFloor": "mid",
+      "accessibility": "WCAG 2.2 AA"
+    },
+    "integrations": [],
+    "assumptions": []
+  }
+}

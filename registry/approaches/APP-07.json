@@ -1,0 +1,73 @@
+{
+  "id": "APP-07",
+  "name": "AI + 3D + Motion + Real Website",
+  "summary": "APP-01, APP-02 and APP-03 (optionally APP-05) in one production site, with performance budgets enforced across them and one WebGL canvas visible at a time. For enterprise flagships at tier L.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app07/SKILL.md",
+    "recipes": []
+  },
+  "composedOf": [
+    "APP-01",
+    "APP-02",
+    "APP-03"
+  ],
+  "selectWhen": {
+    "all": [
+      {
+        "field": "projectType",
+        "op": "eq",
+        "value": "flagship"
+      },
+      {
+        "field": "tier",
+        "op": "eq",
+        "value": "L"
+      }
+    ]
+  },
+  "rejectWhen": {
+    "any": [
+      {
+        "field": "constraints.deviceFloor",
+        "op": "eq",
+        "value": "low"
+      },
+      {
+        "field": "brand.motionIntensity",
+        "op": "lte",
+        "value": 1
+      }
+    ]
+  },
+  "fallback": {
+    "approach": "APP-02",
+    "description": "Drop to APP-01 plus APP-02",
+    "triggers": [
+      "no-webgl",
+      "reduced-motion",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "mobileLcpMs": 2500,
+    "cls": 0.1,
+    "minFps": 30
+  },
+  "dependencies": [],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app07/pos-1.json",
+      "tests/decision/app07/pos-2.json",
+      "tests/decision/app07/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app07/neg-1.json",
+      "tests/decision/app07/neg-2.json",
+      "tests/decision/app07/neg-3.json"
+    ]
+  }
+}
