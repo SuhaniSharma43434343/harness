@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
+import { cmdApproach } from './approach.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
@@ -46,6 +47,10 @@ const COMMANDS = {
   directions: {
     summary: 'Propose and render 3 to 5 design directions (P4), or check them: forge directions <project> [--count n] [--check]',
     run: (args) => cmdDirections(ROOT, args),
+  },
+  approach: {
+    summary: 'Apply a selected approach module to the site: forge approach <project> <APP-0N> [--no-install]',
+    run: (args) => cmdApproach(ROOT, args),
   },
   gates: {
     summary: 'Run the automated quality gates on a built site: forge gates <project> [--gate <name>] [--preview] [--json]',

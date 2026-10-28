@@ -1,0 +1,40 @@
+---
+// APP-02 ScrollStory: a pinned section that scrubs through its steps as the visitor scrolls.
+// Props: heading, steps: [{ title, text }] (two to six). Without the full experience (reduced
+// motion, a low-end device, a slow network, a failed load) the steps stay stacked and reveal
+// with CSS, so every step is readable in the fallback.
+import '../../lib/app02/app02.css';
+
+const { heading, steps = [] } = Astro.props;
+---
+{steps.length > 0 && (
+  <section class="section story" data-app02="story">
+    <div class="wrap story__frame">
+      {heading && <h2 class="story__heading">{heading}</h2>}
+      <ol class="story__steps">
+        {steps.map((step, i) => (
+          <li class="story__step" data-app02-step data-app02-reveal>
+            <span class="story__index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{step.title}</h3>
+            {step.text && <p>{step.text}</p>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+)}
+<script>
+  import { startCinematic } from '../../lib/app02/cinematic.js';
+  startCinematic();
+</script>
+<style>
+  .story__steps { display: grid; gap: calc(var(--space) * 2); margin: 0; padding: 0; list-style: none; }
+  .story__step { max-width: var(--measure, 65ch); }
+  .story__index { display: block; font-family: var(--font-display); font-size: var(--step-3); color: var(--color-primary); line-height: 1; }
+  .story__heading { margin-bottom: calc(var(--space) * 2); }
+  /* Full mode: one step at a time, stacked in the same place while the section is pinned. */
+  :global(html[data-app02='full']) .story.is-pinned { min-height: 100vh; display: grid; align-items: center; }
+  :global(html[data-app02='full']) .story.is-pinned .story__steps { grid-template-areas: 'step'; }
+  :global(html[data-app02='full']) .story.is-pinned .story__step { grid-area: step; }
+  :global(html[data-app02='full']) .story.is-pinned .story__step:not(:first-child) { visibility: hidden; opacity: 0; }
+</style>
