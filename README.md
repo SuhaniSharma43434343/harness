@@ -12,13 +12,13 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
-- T08 (part): the git, local-preview and vercel plugins
+- T08: the git, local-preview, vercel, form-function and spline plugins
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
-The form-function and Spline plugins (rest of T08) and the Claude Code hooks (T09) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The Claude Code hooks and security enforcement (T09) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -78,7 +78,7 @@ The tests validate every fixture in `fixtures/schemas/valid` and check that ever
 
 ```text
 forge, forge.cmd          launchers (macOS/Linux, Windows)
-plugins/                  git, local-preview, vercel (off until enabled)
+plugins/                  git, local-preview, vercel, form-function, spline (off until enabled)
 agents/                   the 8 agent roles (source of truth)
 .claude/agents/           generated Claude Code subagents (forge agents generate)
 .cursor/rules/            generated Cursor rules (forge agents generate)

@@ -8,8 +8,8 @@ import { walk } from '../../src/core/glob.mjs';
 // SHA-1, then a deployment is created from the list and polled until it is ready. A preview
 // needs B5 (an external integration); production also needs B7.
 
-export const actionKinds = { deployPreview: 'deploy', deployProduction: 'deploy', getDeployment: 'read' };
-export const actionApprovals = { deployPreview: ['B5'], deployProduction: ['B5', 'B7'], getDeployment: ['B5'] };
+export const actionKinds = { deployPreview: 'deploy', deployProduction: 'deploy', getDeployment: 'read', setProjectEnv: 'write' };
+export const actionApprovals = { deployPreview: ['B5'], deployProduction: ['B5', 'B7'], getDeployment: ['B5'], setProjectEnv: ['B5'] };
 export const configSchema = {
   type: 'object',
   properties: {
@@ -96,6 +96,19 @@ export function create(ctx, { pollMs = POLL_MS, readyTimeoutMs = READY_TIMEOUT_M
   return {
     deployPreview: ({ dir, name } = {}) => deploy({ dir, name }),
     deployProduction: ({ dir, name } = {}) => deploy({ dir, name, target: 'production' }),
+    // Sets an environment variable on the Vercel project, for preview and production (for
+    // example FORM_WEBHOOK_URL for the form function). The value is stored encrypted.
+    setProjectEnv: async (key, value, { name } = {}) => {
+      if (!/^[A-Z][A-Z0-9_]*$/.test(key ?? '')) throw new ConfigInvalid(`"${key}" is not a valid variable name`);
+      const project = ctx.env.VERCEL_PROJECT ?? name ?? ctx.project;
+      if (!project) throw new ConfigMissing('No Vercel project name', { hint: 'Set VERCEL_PROJECT in .env or run it for a Forge project.' });
+      await call(`/v10/projects/${encodeURIComponent(project)}/env?upsert=true`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value, type: 'encrypted', target: ['production', 'preview'] }),
+      });
+      return { project, key };
+    },
     getDeployment: async (id) => {
       const dep = await call(`/v13/deployments/${encodeURIComponent(id)}`);
       return { id: dep.id, url: `https://${dep.url}`, readyState: dep.readyState };

@@ -1,0 +1,13 @@
+{
+  "id": "form-function",
+  "category": "forms",
+  "version": "0.1.0",
+  "enabledByDefault": false,
+  "env": [
+    { "name": "FORM_WEBHOOK_URL", "required": false, "secret": true, "description": "HTTPS webhook that receives each accepted submission as JSON. Set it on the Vercel project too." }
+  ],
+  "permissions": { "network": ["127.0.0.1"], "filesystem": "project-write", "actions": ["read", "write"] },
+  "cost": { "paid": false },
+  "docs": "docs/plugins.md#form-function",
+  "status": "implemented-unverified"
+}
