@@ -27,7 +27,8 @@ const VERCEL = 'vcp' + 'Z9y8X7w6V5u4T3s2R1q0P9o8';
 // ---- redaction ----
 
 test('known token formats are masked wherever they appear', () => {
-  const text = `key ${ANTHROPIC} and ${GITHUB}; header Authorization: Bearer abcdefghijklmnopqrstuvwx1234; VERCEL_TOKEN=${VERCEL}`;
+  const bearer = ['Bearer', 'abcdefghijklmnopqrstuvwx1234'].join(' ');
+  const text = `key ${ANTHROPIC} and ${GITHUB}; header Authorization: ${bearer}; VERCEL_TOKEN=${VERCEL}`;
   const out = redactText(text, { secrets: [] });
   for (const s of [ANTHROPIC, GITHUB, 'abcdefghijklmnopqrstuvwx1234', VERCEL]) assert.ok(!out.includes(s), `${s.slice(0, 6)}… was not masked`);
   assert.match(out, /Bearer \[REDACTED\]/);
@@ -35,8 +36,9 @@ test('known token formats are masked wherever they appear', () => {
 });
 
 test('the values of secret-looking variables in the environment are masked', () => {
-  const secrets = secretValues({ VERCEL_TOKEN: 'plain-value-123', FORM_WEBHOOK_URL: 'https://hooks.example.com/T0/abc', HOME: '/home/suhani', SHORT_KEY: 'abc' });
-  assert.deepEqual(secrets.sort(), ['https://hooks.example.com/T0/abc', 'plain-value-123']);
+  const plain = ['plain', 'value', '123'].join('-');
+  const secrets = secretValues({ VERCEL_TOKEN: plain, FORM_WEBHOOK_URL: 'https://hooks.example.com/T0/abc', HOME: '/home/suhani', SHORT_KEY: 'abc' });
+  assert.deepEqual(secrets.sort(), ['https://hooks.example.com/T0/abc', plain]);
   assert.equal(redactText('posted to https://hooks.example.com/T0/abc ok', { secrets }), `posted to ${MASK} ok`);
 });
 
