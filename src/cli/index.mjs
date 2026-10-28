@@ -6,6 +6,7 @@ import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
+import { cmdScan } from './scan.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdSelect } from './select.mjs';
@@ -47,6 +48,7 @@ const COMMANDS = {
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   plugins: { summary: 'List plugins, or enable, disable or health-check one: forge plugins [list|enable|disable|check] [id]', run: (args) => cmdPlugins(ROOT, args) },
+  scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
 };
 

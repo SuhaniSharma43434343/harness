@@ -13,12 +13,13 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
 - T08: the git, local-preview, vercel, form-function and spline plugins
+- T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan`
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
-The Claude Code hooks and security enforcement (T09) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The Cursor step mode (T10) and packaging (T11) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -60,11 +61,12 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
 | `forge plugins [list\|enable\|disable\|check] [id]` | Lists plugins, or enables one after its config and health check pass (see `docs/plugins.md`) |
+| `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition` and `estimate` (project).
 
-`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
+`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools with the forge guard hook checking every write against the task's contract. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
 ## Tests
 
