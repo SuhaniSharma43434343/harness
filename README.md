@@ -11,6 +11,9 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T03 and T04: project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05: the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06: the Claude Code worker adapter, with recording and replay
+- T07: the plugin host: manifests, config checks, health checks, permissions and approvals
+- T08: the git, local-preview, vercel, form-function and spline plugins ([docs/plugins.md](docs/plugins.md))
+- T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan` ([docs/security.md](docs/security.md))
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 - T14: the question bank (`registry/questions/`) and the intake rules ([docs/intake.md](docs/intake.md))
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
@@ -25,7 +28,7 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T24: the QA Verifier and repair loop (`forge qa`) ([docs/qa.md](docs/qa.md))
 - T25: the operator docs listed below
 
-The plugin host (T07), the Spline plugin (T08), the Claude Code hooks, `CLAUDE.md` and `AGENTS.md` (T09) and Cursor step mode (T10) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+Cursor step mode (T10) and packaging (T11) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Documentation
 
@@ -39,6 +42,7 @@ The plugin host (T07), the Spline plugin (T08), the Claude Code hooks, `CLAUDE.m
 | [docs/gates.md](docs/gates.md) | Every automated gate and its thresholds |
 | [docs/qa.md](docs/qa.md) | Defect reports and the repair loop |
 | [docs/intake.md](docs/intake.md), [docs/registry.md](docs/registry.md), [docs/design.md](docs/design.md), [docs/starter.md](docs/starter.md) | Intake, approach selection, design rules and the starter |
+| [docs/plugins.md](docs/plugins.md), [docs/security.md](docs/security.md) | Plugins, the guard hook and secret handling |
 | [docs/interfaces.md](docs/interfaces.md) | The frozen M1 interfaces |
 
 ## Requirements
@@ -84,12 +88,14 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge gates <project> [--gate name] [--preview] [--json]` | Runs the automated gates on the built site, writes `evidence/gates/<gate>.json` and a `gate_result` ledger entry per gate, and exits 1 unless the quality floor is met |
 | `forge directions <project> [--count n] [--check]` | Proposes 3 to 5 design directions for P4, renders them at desktop and mobile, or checks them against the design rules |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
+| `forge plugins [list\|enable\|disable\|check] [id]` | Lists plugins, or enables one after its config and health check pass (see `docs/plugins.md`) |
+| `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `estimate`, `defectReport`, `tokens` and `siteConfig` (project).
 
-`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
+`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools with the forge guard hook checking every write against the task's contract. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
 ## Tests
 
@@ -103,6 +109,7 @@ The tests validate every fixture in `fixtures/schemas/valid` and check that ever
 
 ```text
 forge, forge.cmd          launchers (macOS/Linux, Windows)
+plugins/                  git, local-preview, vercel, form-function, spline (off until enabled)
 agents/                   the 8 agent roles (source of truth)
 .claude/agents/           generated Claude Code subagents (forge agents generate)
 .cursor/rules/            generated Cursor rules (forge agents generate)
