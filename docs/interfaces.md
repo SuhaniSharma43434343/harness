@@ -66,7 +66,7 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | --- | --- | --- | --- |
 | `runTask` | Suhani | `runTask(project: string, taskId: string, opts?: RunOptions) => Promise<TaskResult>` | M2 (built) |
 | `ledger.append` | Suhani | `append(project: string, entry: Omit<LedgerEntry, 'seq' \| 'ts'>, opts?: { workspace?: string }) => LedgerEntry` | M2 (built) |
-| `getPlugin` | Suhani | `getPlugin(id: string) => Promise<Plugin>`; throws `ConfigMissing` or `PermissionDenied` | M2 |
+| `getPlugin` | Suhani | `getPlugin(id: string, opts?: { project?: string, mock?: boolean, workspace?: string }) => Promise<Plugin>`; throws `ConfigMissing`, `ConfigInvalid` or `PermissionDenied`. See [plugins.md](plugins.md) | M2 (built) |
 | `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 (built) |
 | `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation', opts?: { now?: Date }) => Facts` | M2 (built) |
 | `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 (built) |
