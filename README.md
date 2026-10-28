@@ -11,12 +11,13 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
-The plugin host and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The individual plugins (T08) and the Claude Code hooks (T09) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -57,6 +58,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
+| `forge plugins [list\|enable\|disable\|check] [id]` | Lists plugins, or enables one after its config and health check pass (see `docs/plugins.md`) |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition` and `estimate` (project).
