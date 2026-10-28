@@ -1,0 +1,76 @@
+{
+  "project": "lumen-launch",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "launch",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Lumen Audio",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "consumer electronics",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "waitlist",
+          "statement": "Grow the pre-order waitlist before launch day"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "brand.tone",
+      "status": "known",
+      "value": [
+        "premium",
+        "confident"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.interactive",
+      "status": "known",
+      "value": [
+        "scroll-story"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/launch.json"
+      },
+      "assumption": false
+    }
+  ]
+}

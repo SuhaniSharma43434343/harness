@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-business-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "business"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "enquiries",
+            "statement": "Turn visitors into enquiries and quote requests"
+          }
+        ],
+        "reason": "The usual main goal for a business site."
+      }
+    },
+    {
+      "id": "q-business-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "business"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Local customers",
+            "need": "Find out what the business offers and get in touch"
+          }
+        ],
+        "reason": "The usual main audience for a business site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-business-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "business"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Introduce the business and its services",
+            "cta": "Request a quote"
+          },
+          {
+            "slug": "/services",
+            "title": "Services",
+            "purpose": "Explain each service",
+            "cta": "Request a quote"
+          },
+          {
+            "slug": "/about",
+            "title": "About",
+            "purpose": "Build trust",
+            "cta": "Get in touch"
+          },
+          {
+            "slug": "/contact",
+            "title": "Contact",
+            "purpose": "Collect enquiries",
+            "cta": "Send your enquiry"
+          }
+        ],
+        "reason": "A standard page set for a business site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-business-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "business"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "enquiry",
+            "purpose": "Enquiry or quote request",
+            "fields": [
+              "name",
+              "email",
+              "message"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a business site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

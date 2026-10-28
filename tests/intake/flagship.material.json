@@ -1,0 +1,90 @@
+{
+  "project": "orbit-motors",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "flagship",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "tier",
+      "status": "known",
+      "value": "L",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Orbit Motors",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "electric vehicles",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "test-drives",
+          "statement": "Book test drives for the new model"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "audience",
+      "status": "known",
+      "value": [
+        {
+          "segment": "Premium car buyers",
+          "need": "Feel the car's design before visiting"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.interactive",
+      "status": "known",
+      "value": [
+        "3d-product",
+        "scroll-story",
+        "spline-scene"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/flagship.json"
+      },
+      "assumption": false
+    }
+  ]
+}

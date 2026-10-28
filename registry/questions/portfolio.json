@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-portfolio-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "portfolio"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "bookings",
+            "statement": "Show the work and win bookings"
+          }
+        ],
+        "reason": "The usual main goal for a portfolio site."
+      }
+    },
+    {
+      "id": "q-portfolio-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "portfolio"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Prospective clients",
+            "need": "See past work and decide to book"
+          }
+        ],
+        "reason": "The usual main audience for a portfolio site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-portfolio-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "portfolio"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Show selected work",
+            "cta": "See the work"
+          },
+          {
+            "slug": "/work",
+            "title": "Work",
+            "purpose": "Case studies",
+            "cta": "Book a call"
+          },
+          {
+            "slug": "/contact",
+            "title": "Contact",
+            "purpose": "Collect booking enquiries",
+            "cta": "Book a call"
+          }
+        ],
+        "reason": "A standard page set for a portfolio site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-portfolio-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "portfolio"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "booking",
+            "purpose": "Booking enquiry",
+            "fields": [
+              "name",
+              "email",
+              "message"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a portfolio site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

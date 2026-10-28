@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-event-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "event"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "registrations",
+            "statement": "Get people to register for the event"
+          }
+        ],
+        "reason": "The usual main goal for a event site."
+      }
+    },
+    {
+      "id": "q-event-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "event"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Potential attendees",
+            "need": "Know what, when and where, and register"
+          }
+        ],
+        "reason": "The usual main audience for a event site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-event-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "event"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Announce the event",
+            "cta": "Register"
+          },
+          {
+            "slug": "/programme",
+            "title": "Programme",
+            "purpose": "Show the schedule and speakers",
+            "cta": "Register"
+          },
+          {
+            "slug": "/venue",
+            "title": "Venue",
+            "purpose": "Explain how to get there",
+            "cta": "Register"
+          }
+        ],
+        "reason": "A standard page set for a event site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-event-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "event"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "register",
+            "purpose": "Registration",
+            "fields": [
+              "name",
+              "email"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a event site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

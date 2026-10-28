@@ -1,0 +1,73 @@
+{
+  "project": "atelier-chairs",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "showroom",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Atelier Seating",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "furniture",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "dealer-leads",
+          "statement": "Let buyers explore chairs in 3D and contact a dealer"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.interactive",
+      "status": "known",
+      "value": [
+        "3d-product"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "brand.existingAssets.models3d",
+      "status": "known",
+      "value": true,
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/showroom.json"
+      },
+      "assumption": false
+    }
+  ]
+}

@@ -61,3 +61,38 @@ export function loadApproaches(root = REGISTRY_DIR) {
   checkApproaches(approaches, matrix);
   return { approaches, matrix };
 }
+
+// Reads every registry/questions/*.json file and merges them into one bank. Each file must be a
+// valid question bank, they must share one bank version, and question ids must be unique.
+export function loadQuestionBank(root = REGISTRY_DIR) {
+  const dir = join(root, 'questions');
+  if (!existsSync(dir)) throw new ConfigMissing(`No question bank at ${dir}`);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
+  if (!files.length) throw new ConfigMissing(`No question files in ${dir}`);
+  const banks = files.map((f) => assertValid('questionBank', readJson(join(dir, f)), `registry/questions/${f}`));
+
+  const errors = [];
+  const versions = new Set(banks.map((b) => b.bankVersion));
+  if (versions.size > 1) errors.push(`question files disagree on bankVersion: ${[...versions].join(', ')}`);
+  const questions = banks.flatMap((b) => b.questions);
+  const ids = new Set();
+  for (const q of questions) {
+    if (ids.has(q.id)) errors.push(`${q.id} is defined twice`);
+    ids.add(q.id);
+  }
+  for (const q of questions) {
+    for (const rule of q.followUps ?? []) {
+      for (const id of rule.ask) if (!ids.has(id)) errors.push(`${q.id} asks for ${id}, which does not exist`);
+    }
+  }
+  if (errors.length) {
+    throw new ConfigInvalid('The question bank is inconsistent', { hint: errors.join('; '), details: errors });
+  }
+  return assertValid('questionBank', { schemaVersion: banks[0].schemaVersion, bankVersion: banks[0].bankVersion, questions });
+}
+
+// loadRegistry(root?) => { questions, approaches, matrix }: the only function that reads the
+// registry from disk. The selectors take its output, so tests can pass fixtures in directly.
+export function loadRegistry(root = REGISTRY_DIR) {
+  return { questions: loadQuestionBank(root), ...loadApproaches(root) };
+}

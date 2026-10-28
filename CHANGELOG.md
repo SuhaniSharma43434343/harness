@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T14: the question bank (core questions plus goals, audience, pages and forms for each of the 7 project types), `selectQuestions` with scoring, rounds and follow-up rules, `recordAnswer`, `draftBrief`, `validateBrief`, `loadQuestionBank` and `loadRegistry`, with the A5 intake tests for the 7 sample briefs. See `docs/intake.md`.
 - T16: the eight approach registry entries, the selection matrix, the condition evaluator, `loadApproaches` and `selectApproaches`, with 48 decision briefs (3 qualifying and 3 not, per approach) and `forge select`. See `docs/registry.md`.
 - T05: the 8 agent roles in `agents/<role>.md`, `forge agents generate` and `forge agents check` for the Claude Code subagents and Cursor rules, and phase routing: `forge run` starts only the tasks whose agent works in the current phase, and each worker gets its role instructions.
 - T06: Claude Code worker adapter. Each task runs as a headless `claude -p` session with read and edit tools, its reply's evidence line is parsed, and failures map to typed errors (sign-in, rate limit, missing binary). Every attempt is recorded with the files it changed, and the replay worker plays recordings back identically, including failed attempts. `forge run [--replay <dir>]`.
