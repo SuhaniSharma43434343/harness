@@ -24,6 +24,7 @@ export const SCHEMAS = {
   approachDecision: 'approach-decision.schema.json',
   designDecision: 'design-decision.schema.json',
   condition: 'condition.schema.json',
+  estimate: 'estimate.schema.json',
 };
 
 let ajv;

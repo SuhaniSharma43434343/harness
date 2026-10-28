@@ -44,3 +44,19 @@ The required fields are `projectType`, `tier`, `client.name`, `client.industry`,
 ## Intake tests (A5)
 
 `tests/intake/intake.test.mjs` runs intake for each of the 7 sample briefs. The client material is a set of known facts taken from the sample (`tests/intake/<type>.material.json`). The test checks that round 1 asks 5 to 10 questions, that no question asks for a field the material already gives, and that no question is asked twice. It then answers every question with "use your recommendation" for up to 3 rounds, and checks that every recommendation used is an inferred fact with `assumption: true` and a reason. The material facts must be unchanged, and the drafted brief must pass `validateBrief` with nothing missing.
+
+## The intake workflow (T15)
+
+`runIntake(project, { ask, worker?, maxRounds? })` is the Project Manager loop for P1, and `forge intake <project>` runs it from the terminal.
+
+1. It moves the project from P0 to P1 if needed. It refuses to run in any other phase.
+2. It starts from `intake/facts.json` if a previous run left one. Otherwise, with a worker and files in `intake/material/`, it adds an `intake-facts` task to the board and runs it through the runner: the model reads the material and writes known facts, and the task's verify command checks them against the facts schema. Without a worker, the structured brief given to `forge new --brief` is read as material.
+3. For up to 3 rounds it selects questions, hands them to `ask`, and records each answer. `ask` returns one answer per question: a value, `'use-recommendation'`, or `undefined` to leave it for later. A round with no answers ends the loop.
+4. It drafts the brief and validates it. When nothing is missing, the brief becomes `ready`, and it runs `selectApproaches` and `estimateScope` and writes `intake/estimate.json` and `intake/plan.md`.
+5. It writes `intake/facts.json` and `intake/brief.json` either way, and logs each round, each answer and the result as ledger notes. It never records an approval: the operator approves with `forge approve <project> B1` after reading the plan.
+
+`forge intake <project>` asks in the terminal (Enter takes the recommendation). `--answers <file.json>` takes answers keyed by question id, and `--use-recommendations` takes the recommendation for everything else. Typed text for goals, audience, pages, forms and things to avoid becomes the brief shape, one item per line or semicolon (`src/intake/shape.mjs`).
+
+## The estimate
+
+`estimateScope(brief, decision?, { rates }?)` is pure. Hours are setup by tier, plus hours per page and per form, plus each selected approach's module hours, plus a share for quality review and repair. Cost is hours times the hourly rate range. The rates live in `registry/estimate.json`, which the operator edits; the model never sets them. When the brief has a budget in the same currency, `withinBudget` says whether the high estimate fits, and an assumption is added when it does not. `schemas/estimate.schema.json` validates the result.

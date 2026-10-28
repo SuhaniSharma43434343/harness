@@ -24,6 +24,7 @@ const PREFIX = [
   ['selection-matrix', 'selectionMatrix'],
   ['design-decision', 'designDecision'],
   ['condition', 'condition'],
+  ['estimate', 'estimate'],
 ];
 
 function schemaFor(file) {
