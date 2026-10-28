@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/defect-report.schema.json",
+  "title": "Defect report (reports/defects.json)",
+  "description": "Written only by the QA Verifier. Every defect cites evidence from the review that found it; a defect is verified only by a later review's fresh evidence, never by the builder's report.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "project", "review", "updatedAt", "qualityFloor", "defects", "advisories"],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "project": { "type": "string", "minLength": 1 },
+    "review": { "type": "integer", "minimum": 1, "description": "How many reviews have run; review N writes its evidence to evidence/qa/review-N/." },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "qualityFloor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["met", "failing"],
+      "properties": {
+        "met": { "type": "boolean" },
+        "failing": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "defects": { "type": "array", "items": { "$ref": "#/definitions/defect" } },
+    "advisories": { "type": "integer", "minimum": 0, "description": "Moderate and minor findings in the latest review: reported in the gate evidence, not defects." },
+    "discarded": { "type": "integer", "minimum": 0, "description": "Findings dropped because their evidence could not be written or found." },
+    "escalated": { "type": "boolean" }
+  },
+  "definitions": {
+    "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "not": { "pattern": "(^/|\\.\\.)" } } },
+    "defect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "key", "gate", "finding", "severity", "message", "status", "foundIn", "evidence", "history"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^D-\\d{3,}$" },
+        "key": { "type": "string", "minLength": 1, "description": "gate|finding|location: how a later review recognises the same defect." },
+        "gate": { "type": "string" },
+        "finding": { "type": "string" },
+        "severity": { "enum": ["critical", "serious"] },
+        "message": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "enum": ["open", "verified", "escalated"] },
+        "foundIn": { "type": "integer", "minimum": 1 },
+        "evidence": { "$ref": "#/definitions/evidence" },
+        "fixTasks": { "type": "array", "items": { "type": "string" } },
+        "verifiedIn": { "type": "integer", "minimum": 1 },
+        "verification": { "$ref": "#/definitions/evidence" },
+        "history": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["review", "status"],
+            "properties": {
+              "review": { "type": "integer", "minimum": 1 },
+              "status": { "enum": ["found", "still-open", "verified", "reopened", "escalated"] },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "verified" } } }, "then": { "required": ["verifiedIn", "verification"] } }
+      ]
+    }
+  }
+}

@@ -25,6 +25,8 @@ export const SCHEMAS = {
   designDecision: 'design-decision.schema.json',
   condition: 'condition.schema.json',
   estimate: 'estimate.schema.json',
+  // QA Verifier (Nidhi, T24).
+  defectReport: 'defect-report.schema.json',
   // Starter template (Nidhi, T18).
   tokens: 'tokens.schema.json',
   siteConfig: 'site-config.schema.json',

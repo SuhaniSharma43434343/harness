@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1.0",
+  "project": "harbor",
+  "review": 2,
+  "updatedAt": "2026-10-28T10:00:00.000Z",
+  "qualityFloor": { "met": true, "failing": [] },
+  "defects": [
+    {
+      "id": "D-001",
+      "key": "seo|h1-count|site/dist/contact/index.html",
+      "gate": "seo",
+      "finding": "h1-count",
+      "severity": "serious",
+      "message": "/contact has 2 h1 headings (expected 1)",
+      "location": "site/dist/contact/index.html",
+      "status": "verified",
+      "foundIn": 1,
+      "evidence": ["evidence/qa/review-1/seo.json"],
+      "fixTasks": ["repair-1-seo"],
+      "verifiedIn": 2,
+      "verification": ["evidence/qa/review-2/seo.json"],
+      "history": [{ "review": 1, "status": "found" }, { "review": 2, "status": "verified" }]
+    }
+  ],
+  "advisories": 0
+}
