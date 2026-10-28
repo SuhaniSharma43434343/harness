@@ -45,7 +45,7 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/definitions/relativePath" }
+      "items": { "$ref": "#/definitions/ownedPath" }
     },
     "must_not_touch": {
       "type": "array",
@@ -84,6 +84,14 @@
       "minLength": 1,
       "not": { "pattern": "(^/|^[A-Za-z]:|\\.\\.)" },
       "description": "Project-relative path or glob. Absolute paths and parent traversal are rejected."
+    },
+    "ownedPath": {
+      "allOf": [
+        { "$ref": "#/definitions/relativePath" },
+        { "not": { "pattern": "^(\\./)?(project\\.json|ledger\\.jsonl|board|locks)(/|$)" } },
+        { "not": { "pattern": "^(\\./)?[*?\\[{]" } }
+      ],
+      "description": "A path a task may write. The runtime owns project.json, ledger.jsonl, board/ and locks/, so no task can claim them, and a pattern cannot start with a wildcard that would reach them from the project root."
     }
   },
   "allOf": [
