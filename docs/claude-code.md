@@ -45,11 +45,12 @@ Every attempt is recorded to `evidence/recordings/<task>/attempt-N.json`, includ
 
 `skills/app0N/SKILL.md` tells a builder how to use each approach module. The builder reads the skill named in the registry entry (`module.skill`) for the approaches its task lists.
 
+## Guard hook
+
+`.claude/settings.json` registers the forge guard hook (`src/hooks/guard.mjs`, T09), and every `forge run` worker gets it too. It stops any read or write of `.env`, changes to the runtime's own files (`project.json`, `ledger.jsonl`, `board/`, `locks/`) outside forge, a production deploy without B7, and, for a task worker, any write outside the task's `owns_files`. Credentials are redacted from the ledger, recordings and verify logs. See `docs/security.md`.
+
+The QA Verifier still never trusts a builder's report: only a fresh gate run closes a defect (`docs/qa.md`).
+
 ## Not built yet
 
-These are engine work in progress (plan T09), so treat them as planned, not available:
-
-- the `CLAUDE.md` that routes requests to the Project Manager;
-- the hooks that block writes outside a contract, block a production deploy without B7, and keep `.env` out of agent output.
-
-Until the hooks exist, boundaries rest on the contracts, `owns_files` file locks in the runner, and review. The QA Verifier never trusts a builder's report: only a fresh gate run closes a defect (`docs/qa.md`).
+There is no `CLAUDE.md` yet to route plain requests to the Project Manager, so start each phase with the `forge` commands in `docs/quickstart.md`.

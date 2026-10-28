@@ -9,7 +9,7 @@ Forge has eight website approaches. The selector picks only the ones a brief jus
 | APP-01 AI to Full Website | The multi-page site from the brief, content and tokens. Every project uses it | n/a | Built: the starter (`docs/starter.md`) |
 | APP-02 Cinematic Scroll | Pinned sections, scroll-scrubbed reveals, smooth scroll | Static stacked layout with CSS reveals | Built (T19) |
 | APP-03 Interactive 3D | A lazy-loaded Three.js scene behind a poster | Poster image plus CSS depth | Not built (engine side) |
-| APP-04 Spline + Website | The operator's Spline scene behind a poster | APP-03 scene or the poster | Built (T20). Experimental, needs B2. Needs the Spline plugin (T08) for real scenes |
+| APP-04 Spline + Website | The operator's Spline scene behind a poster | APP-03 scene or the poster | Built (T20). Experimental, needs B2. Its scene comes in through the spline plugin |
 | APP-05 Shader / WebGL | A GLSL background or transition with a quality ladder | CSS gradient or a static frame | Not built |
 | APP-06 Game-Like | One bounded game mechanic over an explainer | The explainer with the same content | Built (T20). Experimental, needs B1 |
 | APP-07 AI + 3D + Motion + Real | APP-01, 02 and 03 in one site under a shared budget | APP-01 plus APP-02 | Not built (needs APP-03) |
@@ -66,7 +66,7 @@ Every module's runtime asks `capability({ webgl, plugin, motion })` (`starters/a
 
 ## Gaps
 
-- **APP-04 real scene:** the tests cannot render a real Spline scene. That needs a scene from the operator's account; the Spline plugin (T08) will supply it. The tests serve an invalid scene, and check load ordering and the `load-failed` fallback instead.
+- **APP-04 real scene:** the tests cannot render a real Spline scene. That needs a real scene from the operator's account. `forge approach <project> APP-04` copies the brief's `features.splineSceneUrl` into `site/public/spline/` through the spline plugin when it is enabled and B5 is recorded, and otherwise keeps the poster and says why. The tests check that path with the plugin's mock. In the browser they serve an invalid scene, and check load ordering and the `load-failed` fallback instead.
 - **APP-03 fallback for APP-04:** the registry names APP-03 as APP-04's first fallback. That module is not built, so APP-04 falls back to the poster.
 - **Real devices:** every module still needs its rows in `docs/device-log.md` before its registry status can move from `implemented` to `verified`.
 

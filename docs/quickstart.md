@@ -125,6 +125,6 @@ On a fresh scaffold, expect these gates to fail. Each failure is real work for a
 
 - **No command moves a project to the next phase after an approval.** The runner wiring for phases and the task board is engine work in progress. Today the phase commands above run whatever phase the project is in, except `forge qa --repair`, which needs `QUALITY_REVIEW`.
 - **Several commands are not built:** `preview`, `deploy`, `report`, `test --mock`, `demo`, `task` (Cursor step mode), `package` and `upgrade`.
-- **The plugin host is not built,** nor are the Git, preview, Vercel, form and Spline plugins.
+- **The plugins are built, but no command drives preview or deploy yet.** Enable one with `forge plugins enable <id>` (see `docs/plugins.md`). `forge approach <project> APP-04` already uses the spline plugin to copy the scene in.
 
 See `docs/troubleshooting.md` when something fails.

@@ -34,7 +34,7 @@ Without Claude Code, step mode will hand out one contract at a time:
 
 This is plan task T10 and is not built yet: `forge task` reports that.
 
-The Git pre-commit hook that runs the secret scan in both modes is also part of T10. Until it exists, run `./forge gates <project> --gate secrets` before committing site changes.
+The Git pre-commit hook that runs the secret scan is also part of T10. Until it exists, run `./forge scan` (the harness) and `./forge gates <project> --gate secrets` (the built site) before committing.
 
 ## Rules that hold in both modes
 

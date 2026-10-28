@@ -65,12 +65,12 @@ test('forge approach applies a selected approach and refuses one that is not sel
   assert.equal(await quiet(() => cmdApproach(root, ['lumen', 'APP-02', '--no-install'])), 0);
   assert.ok(existsSync(join(workspace, 'lumen', 'site/src/sections/APP-02/ScrollStory.astro')));
   const other = cliProject([{ approach: 'APP-02', selected: false, reason: 'Not selected: rejected' }]);
-  assert.throws(() => cmdApproach(other.root, ['lumen', 'APP-02', '--no-install']), /APP-02 is not selected/);
+  await assert.rejects(cmdApproach(other.root, ['lumen', 'APP-02', '--no-install']), /APP-02 is not selected/);
 });
 
 test('forge approach needs the recorded approval for an experimental approach', async () => {
   const { root, workspace } = cliProject([{ approach: 'APP-02', selected: true, needsApproval: 'B2' }]);
-  assert.throws(() => cmdApproach(root, ['lumen', 'APP-02', '--no-install']), /B2 not recorded/);
+  await assert.rejects(cmdApproach(root, ['lumen', 'APP-02', '--no-install']), /B2 not recorded/);
   approve('lumen', 'B2', { workspace });
   assert.equal(await quiet(() => cmdApproach(root, ['lumen', 'APP-02', '--no-install'])), 0);
 });
@@ -115,4 +115,37 @@ test('lockInSync: npm ci only when the lockfile pins what package.json asks for'
   assert.equal(lockInSync(dir), true);
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { astro: '7.3.8', '@fontsource/lora': '5.3.0' } }));
   assert.equal(lockInSync(dir), false, 'forge site added a font package');
+});
+
+test('APP-04 fetches its scene through the spline plugin, and keeps the poster without it', async () => {
+  const app04 = getModule('APP-04');
+  const workspace = mkdtempSync(join(tmpdir(), 'forge-ws-'));
+  createProject('scene', { workspace });
+  const siteDir = join(workspace, 'scene', 'site');
+  mkdirSync(join(siteDir, 'src', 'lib', 'app04'), { recursive: true });
+  const sceneFile = join(siteDir, 'src', 'lib', 'app04', 'scene.json');
+  const root = mkdtempSync(join(tmpdir(), 'forge-root-'));
+  const dirs = [join(ROOT, 'plugins')];
+  const url = 'https://prod.spline.design/AbC123-x/scene.splinecode';
+  const opts = { project: 'scene', workspace, root, dirs, mock: true, env: {} };
+
+  // Plugin not enabled: the poster stays, with the reason.
+  writeFileSync(join(root, 'forge.config.json'), JSON.stringify({ concurrency: 1, plugins: {} }));
+  let r = await app04.fetchScene(siteDir, { url, ...opts });
+  assert.equal(r.fallback, 'plugin-missing');
+  assert.match(r.reason, /not enabled/);
+  assert.deepEqual(JSON.parse(readFileSync(sceneFile, 'utf8')), { scene: null });
+
+  // Enabled but B5 not recorded: still the poster.
+  writeFileSync(join(root, 'forge.config.json'), JSON.stringify({ concurrency: 1, plugins: { spline: true } }));
+  r = await app04.fetchScene(siteDir, { url, ...opts });
+  assert.equal(r.fallback, 'plugin-missing');
+  assert.match(r.reason, /B5/);
+
+  // Enabled and approved: the scene is copied into public/spline/ and recorded for the section.
+  approve('scene', 'B5', { workspace });
+  r = await app04.fetchScene(siteDir, { url, ...opts });
+  assert.equal(r.scene, '/spline/scene.splinecode');
+  assert.ok(existsSync(join(siteDir, 'public', 'spline', 'scene.splinecode')));
+  assert.equal(JSON.parse(readFileSync(sceneFile, 'utf8')).scene, '/spline/scene.splinecode');
 });
