@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "seo",
+  "finding": "h1-count",
+  "description": "A page with two h1 headings.",
+  "replace": [
+    {
+      "file": "site/dist/contact/index.html",
+      "find": "<h2 id=\"quote-title\">Quote request</h2>",
+      "replace": "<h1 id=\"quote-title\">Quote request</h1>"
+    }
+  ]
+}

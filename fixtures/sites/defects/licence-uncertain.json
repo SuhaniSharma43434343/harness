@@ -1,0 +1,29 @@
+{
+  "base": "known-good",
+  "gate": "licences",
+  "finding": "uncertain-rights",
+  "description": "An asset whose rights are uncertain (blocks B7).",
+  "json": [
+    {
+      "file": "assets/register.json",
+      "set": {
+        "assets": [
+          {
+            "file": "favicon.svg",
+            "licence": "own work",
+            "source": "Made for the client",
+            "evidence": "assets/evidence/favicon.md",
+            "status": "cleared"
+          },
+          {
+            "file": "images/workshop.svg",
+            "licence": "unknown",
+            "source": "Found online",
+            "evidence": "",
+            "status": "uncertain"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T23: gate fixtures in `fixtures/sites/`: a blank site, a known-good site, and 21 seeded defects covering all 11 gates, with `materializeFixture` and fixture tests. Adds `node-html-parser` (MIT) for the gates.
 - T17: design directions and rules. `proposeDirections` ranks an open-licensed font catalog, palette families and layouts against the brief's tone and returns 3 to 5 distinct directions; `checkDesignRules` checks licences, recomputed contrast, distinctness, the avoid list, motion and renders; `renderDirections` writes HTML specimens and desktop and mobile screenshots. `forge directions`. See `docs/design.md`.
 - T15: the Project Manager intake workflow. `runIntake` and `forge intake` ask, record answers and assumptions, and write `intake/brief.json`, `facts.json`, `estimate.json` and `plan.md`, stopping before B1. `estimateScope` with operator rates in `registry/estimate.json` and the new `estimate` schema. Client material can be read into facts by the model through a runner task.
 - T14: the question bank (core questions plus goals, audience, pages and forms for each of the 7 project types), `selectQuestions` with scoring, rounds and follow-up rules, `recordAnswer`, `draftBrief`, `validateBrief`, `loadQuestionBank` and `loadRegistry`, with the A5 intake tests for the 7 sample briefs. See `docs/intake.md`.

@@ -1,0 +1,9 @@
+{
+  "name": "forge-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "astro": "7.3.8"
+  }
+}

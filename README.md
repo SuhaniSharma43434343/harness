@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
 - T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
@@ -90,6 +91,7 @@ starters/astro-base/      the starter website (APP-01)
 skills/app01/             APP-01 module instructions for builders
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
+fixtures/sites/           gate fixtures: blank, known-good and seeded defects
 samples/briefs/           one sample brief per project type (7)
 registry/                 question bank, approach registry entries and the selection matrix
 src/intake/               question selection, answers and assumptions, brief drafting and checks

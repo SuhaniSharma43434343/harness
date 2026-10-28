@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "content-parity",
+  "finding": "text-missing",
+  "description": "A locked sentence was reworded on the page.",
+  "replace": [
+    {
+      "file": "site/dist/services/index.html",
+      "find": "finished in two to three weeks",
+      "replace": "finished in one week"
+    }
+  ]
+}

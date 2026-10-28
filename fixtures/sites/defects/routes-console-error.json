@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "routes",
+  "finding": "console-error",
+  "description": "A script that throws on load.",
+  "replace": [
+    {
+      "file": "site/dist/services/index.html",
+      "find": "</body>",
+      "replace": "<script>window.missingFunction();</script>\n  </body>"
+    }
+  ]
+}

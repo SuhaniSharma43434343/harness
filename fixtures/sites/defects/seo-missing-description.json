@@ -1,0 +1,14 @@
+{
+  "base": "known-good",
+  "gate": "seo",
+  "finding": "description-missing",
+  "description": "A page without a meta description.",
+  "replace": [
+    {
+      "file": "site/dist/services/index.html",
+      "find": "\\n    <meta name=\"description\"[^>]*>",
+      "regex": true,
+      "replace": ""
+    }
+  ]
+}

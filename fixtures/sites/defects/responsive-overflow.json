@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "responsive",
+  "finding": "horizontal-overflow",
+  "description": "A fixed-width banner wider than a phone.",
+  "replace": [
+    {
+      "file": "site/dist/services/index.html",
+      "find": "<section class=\"section\"><div class=\"wrap\">",
+      "replace": "<div style=\"width:900px;height:40px;background:#1f3a5f\"></div>\n      <section class=\"section\"><div class=\"wrap\">"
+    }
+  ]
+}

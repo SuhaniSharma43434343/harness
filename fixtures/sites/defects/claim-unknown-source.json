@@ -1,0 +1,19 @@
+{
+  "base": "known-good",
+  "gate": "claims",
+  "finding": "unknown-source",
+  "description": "A claim cites a source that is not in the register.",
+  "json": [
+    {
+      "file": "content/claims.json",
+      "set": {
+        "claims": [
+          {
+            "text": "more than 120 renovations since 2014",
+            "source": "src-nowhere"
+          }
+        ]
+      }
+    }
+  ]
+}
