@@ -74,3 +74,34 @@ test('forge approach needs the recorded approval for an experimental approach', 
   approve('lumen', 'B2', { workspace });
   assert.equal(await quiet(() => cmdApproach(root, ['lumen', 'APP-02', '--no-install'])), 0);
 });
+
+test('APP-04 wiring: scene events dispatch page events, and page triggers emit scene events', async () => {
+  const { wireEvents } = await import('../../skills/app04/recipes/lib/events.js');
+  const listeners = new Map();
+  const emitted = [];
+  const app = {
+    addEventListener: (type, fn) => listeners.set(type, fn),
+    removeEventListener: (type) => listeners.delete(type),
+    emitEvent: (type, object) => emitted.push([type, object]),
+  };
+  const button = new EventTarget();
+  const root = new EventTarget();
+  root.ownerDocument = { querySelectorAll: (sel) => (sel === '#play' ? [button] : []) };
+  const seen = [];
+  root.addEventListener('scene:button', (e) => seen.push(e.detail));
+
+  const off = wireEvents(app, root, {
+    events: [{ on: 'mouseDown', object: 'Button', dispatch: 'scene:button' }],
+    triggers: [{ selector: '#play', event: 'click', emit: 'mouseDown', object: 'Cube' }],
+  });
+  listeners.get('mouseDown')({ target: { name: 'Other' } });
+  listeners.get('mouseDown')({ target: { name: 'Button' } });
+  button.dispatchEvent(new Event('click'));
+  assert.deepEqual(seen, [{ object: 'Button', event: 'mouseDown' }]);
+  assert.deepEqual(emitted, [['mouseDown', 'Cube']]);
+
+  off();
+  button.dispatchEvent(new Event('click'));
+  assert.equal(listeners.size, 0);
+  assert.equal(emitted.length, 1);
+});

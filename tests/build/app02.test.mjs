@@ -90,7 +90,10 @@ test('build: the APP-02 site builds and stays within 60 KB of extra JavaScript',
   const html = readFileSync(join(site.build.dist, 'index.html'), 'utf8');
   assert.match(html, /data-app02="story"/);
   assert.equal((html.match(/data-app02-step/g) ?? []).length, 3);
-  const extra = siteReport(site.build.dist).jsBytes - baseline.jsBytes;
+  const report = siteReport(site.build.dist);
+  const extra = report.totalJsBytes - baseline.totalJsBytes;
+  assert.ok(report.withinBudget, 'GSAP and Lenis load on demand, so the up-front JavaScript stays within the APP-01 budget');
+  assert.ok(report.lazyJsBytes > 20 * 1024, 'GSAP and Lenis are lazy chunks');
   t.diagnostic(`extra JavaScript: ${(extra / 1024).toFixed(1)} KB gzip`);
   assert.ok(extra > 20 * 1024, `the GSAP and Lenis chunks are in the build (${extra} bytes)`);
   assert.ok(extra <= app02.budget.extraJsBytes, `${extra} bytes of extra JavaScript (budget ${app02.budget.extraJsBytes})`);

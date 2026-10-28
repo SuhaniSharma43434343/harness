@@ -3,14 +3,15 @@
 // a slow network or a failed load each produce the fallback). Shared by the approach recipes;
 // APP-01 never loads it.
 //
-// capability({ webgl, plugin }) => { full: boolean, reason?: string }
+// capability({ webgl, plugin, motion }) => { full: boolean, reason?: string }
 //   webgl: the module needs WebGL. plugin: the module needs a plugin the site may not have
-//   (pass false when its configuration is missing).
+//   (pass false when its configuration is missing). motion: false for a module that still runs,
+//   with its animation reduced, when the visitor asks for reduced motion (APP-06).
 // ?forge-fallback=<reason> in the URL forces the fallback, for checks and screenshots.
-export function capability({ webgl = false, plugin = true } = {}) {
+export function capability({ webgl = false, plugin = true, motion = true } = {}) {
   const forced = new URLSearchParams(location.search).get('forge-fallback');
   if (forced) return { full: false, reason: forced };
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return { full: false, reason: 'reduced-motion' };
+  if (motion && reducedMotion()) return { full: false, reason: 'reduced-motion' };
   if (plugin === false) return { full: false, reason: 'plugin-missing' };
   const memory = navigator.deviceMemory;
   const cores = navigator.hardwareConcurrency;
@@ -20,6 +21,8 @@ export function capability({ webgl = false, plugin = true } = {}) {
   if (webgl && !hasWebGL()) return { full: false, reason: 'no-webgl' };
   return { full: true };
 }
+
+export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function hasWebGL() {
   try {

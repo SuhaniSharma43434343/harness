@@ -3,10 +3,13 @@
   "name": "Game-Like Website",
   "summary": "A bounded interactive module: one mechanic, keyboard and touch controls, progress state, optional sound and a skip control. Only when the client confirms at B1 that play is the point.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app06/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app06/recipes/sections/Game.astro",
+      "skills/app06/recipes/lib/game.js"
+    ]
   },
   "selectWhen": {
     "field": "features.interactive",
@@ -41,19 +44,19 @@
       "name": "phaser",
       "licence": "MIT",
       "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+      "note": "MIT as listed on npm (2026-10-28). Pinned at 4.2.1 by the APP-06 module."
     },
     {
       "name": "physics library",
-      "licence": "chosen during design",
-      "licenceVerified": false,
-      "note": "Record the licence when it is chosen"
+      "licence": "none needed",
+      "licenceVerified": true,
+      "note": "The APP-06 mechanic needs only distance checks, done with Phaser's own maths; no physics library is shipped."
     },
     {
       "name": "audio",
       "licence": "per file",
       "licenceVerified": false,
-      "note": "Every sound needs a licence record"
+      "note": "The APP-06 module synthesises its sounds with Web Audio and ships no audio files. Any audio file added later needs a licence record."
     }
   ],
   "tests": {
@@ -66,6 +69,9 @@
       "tests/decision/app06/neg-1.json",
       "tests/decision/app06/neg-2.json",
       "tests/decision/app06/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app06.test.mjs",
+    "fallback": "tests/build/app06.test.mjs",
+    "budget": "tests/build/app06.test.mjs"
   }
 }

@@ -24,7 +24,9 @@ Applying twice gives the same site. Placing the sections on pages is the builder
 
 ## Fallbacks
 
-Every module's runtime asks `capability()` (`starters/astro-base/src/lib/capability.js`) whether it may run in full, and records the answer on `<html>` as `data-app0N="full|fallback"` and `data-app0N-reason`. The reasons are:
+Up-front JavaScript, which is what the APP-01 budget of 150 KB limits, is what a page loads before anything on demand: its scripts and their static imports. `siteReport` reports it as `jsBytes`, the on-demand chunks as `lazyJsBytes`, and everything as `totalJsBytes`. Approach libraries are always dynamic imports, so they count against their own budget, not APP-01's.
+
+Every module's runtime asks `capability({ webgl, plugin, motion })` (`starters/astro-base/src/lib/capability.js`) whether it may run in full, and records the answer on `<html>` as `data-app0N="full|fallback"` and `data-app0N-reason`. The reasons are:
 
 - `reduced-motion`
 - `low-end-device` (fewer than 4 cores or under 4 GB memory)
@@ -40,6 +42,14 @@ Every module's runtime asks `capability()` (`starters/astro-base/src/lib/capabil
 | Approach | Module | Sections | Packages | Fallback | Budget | Tests |
 | --- | --- | --- | --- | --- | --- | --- |
 | APP-02 Cinematic Scroll | `src/approaches/app02.mjs`, `skills/app02/` | `ScrollStory` (pinned, scrubbed steps), `Chapter` (scrubbed chapter opener) | gsap 3.15.0 (own licence, unverified), lenis 1.3.27 (MIT) | Static stacked layout with CSS reveals | +60 KB JS gzip (measured about 51 KB), CLS ≤ 0.1 | `tests/build/app02.test.mjs` |
+| APP-04 Spline + Website (experimental, B2) | `src/approaches/app04.mjs`, `skills/app04/` | `SplineScene` (scene behind a poster, events wired both ways) | @splinetool/runtime 2.0.79 (no licence on npm, unverified) | The poster (APP-03 scene once that module exists) | Runtime after LCP and load; measured about 1.1 MB gzip on demand | `tests/build/app04.test.mjs` |
+| APP-06 Game-Like (experimental, B1) | `src/approaches/app06.mjs`, `skills/app06/` | `Game` (collect each item; keyboard, pointer, progress, sound, skip) | phaser 4.2.1 (MIT) | The explainer with the same content, always in the page | +400 KB JS gzip (measured about 350 KB), ≥ 30 fps, after load | `tests/build/app06.test.mjs` |
+
+## Gaps
+
+- **APP-04 real scene:** the tests cannot render a real Spline scene. That needs a scene from the operator's account; the Spline plugin (T08) will supply it. The tests serve an invalid scene, and check load ordering and the `load-failed` fallback instead.
+- **APP-03 fallback for APP-04:** the registry names APP-03 as APP-04's first fallback. That module is not built, so APP-04 falls back to the poster.
+- **Real devices:** every module still needs its rows in `docs/device-log.md` before its registry status can move from `implemented` to `verified`.
 
 ## Acceptance tests
 

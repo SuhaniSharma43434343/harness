@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T20: the APP-04 Spline and APP-06 Game-Like modules (`docs/approaches.md`)
 - T19: the APP-02 Cinematic Scroll module and `forge approach`, which applies a selected approach's sections, runtime and packages to a site (`docs/approaches.md`)
 - T24: the QA Verifier and repair loop (`forge qa`): defect reports with evidence, repair tasks for the builder, verification by a fresh review, escalation after 3 loops (`docs/qa.md`)
 - T22: the browser gates: routes, accessibility, forms, responsive and performance, with Playwright, axe-core and Lighthouse adapters (`docs/gates.md`)
@@ -96,7 +97,7 @@ src/core/                 config, schemas, typed errors, project state, ledger,
 src/site/                 brief -> pages, design tokens, scaffold and build (T18)
 starters/astro-base/      the starter website (APP-01)
 skills/app01/             APP-01 module instructions for builders
-skills/app02/             APP-02 module: skill and recipes (sections, runtime) copied by forge approach
+skills/app02/, app04/, app06/  approach modules: skill and recipes (sections, runtime) copied by forge approach
 src/approaches/           approach modules and applyApproach
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema

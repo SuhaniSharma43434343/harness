@@ -15,3 +15,7 @@ How to check:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | | APP-02 | iPhone (model, iOS version) | Safari | | | | | |
 | | APP-02 | Mid-range Android (model, version) | Chrome | | | | | |
+| | APP-04 | iPhone (model, iOS version) | Safari | | | | Needs a real scene from the operator's account | |
+| | APP-04 | Mid-range Android (model, version) | Chrome | | | | | |
+| | APP-06 | iPhone (model, iOS version) | Safari | | | | Touch play, skip, sound toggle | |
+| | APP-06 | Mid-range Android (model, version) | Chrome | | | | 30 fps or more while playing | |
