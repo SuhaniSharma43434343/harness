@@ -10,7 +10,7 @@ APP-04 adds an embedded scene from the operator's own Spline account, for a desi
 ## Inputs
 
 - `design/approach-decision.json` with APP-04 selected, and B2 recorded
-- The scene: a `.splinecode` URL from the operator's account, or a file in `site/public/`. The Spline plugin (T08) will supply this from the account.
+- The scene: `forge approach` copies the brief's `features.splineSceneUrl` into `site/public/spline/` through the spline plugin (enabled with `forge plugins enable spline`, and B5 recorded), and `SplineScene` uses it by default (`src/lib/app04/scene.json`). A page can still pass its own `scene` prop.
 - A poster image (`site/public/images/`) with a licence row in `assets/register.json`. The poster is the first paint and the fallback.
 
 ## Steps

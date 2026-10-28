@@ -47,7 +47,7 @@ Every module's runtime asks `capability({ webgl, plugin, motion })` (`starters/a
 
 ## Gaps
 
-- **APP-04 real scene:** the tests cannot render a real Spline scene. That needs a scene from the operator's account; the Spline plugin (T08) will supply it. The tests serve an invalid scene, and check load ordering and the `load-failed` fallback instead.
+- **APP-04 real scene:** the tests cannot render a real Spline scene. That needs a real scene from the operator's account. `forge approach <project> APP-04` copies the brief's `features.splineSceneUrl` into `site/public/spline/` through the spline plugin when it is enabled and B5 is recorded, and otherwise keeps the poster and says why. The tests check that path with the plugin's mock. In the browser they serve an invalid scene, and check load ordering and the `load-failed` fallback instead.
 - **APP-03 fallback for APP-04:** the registry names APP-03 as APP-04's first fallback. That module is not built, so APP-04 falls back to the poster.
 - **Real devices:** every module still needs its rows in `docs/device-log.md` before its registry status can move from `implemented` to `verified`.
 

@@ -1,12 +1,14 @@
 ---
 // APP-04 SplineScene: an embedded Spline scene behind a poster. Props:
-//   scene:   the scene URL (.splinecode) from the operator's Spline account, or a file in public/.
-//            Without it the section is the poster alone (fallback 'plugin-missing').
+//   scene:   the scene URL (.splinecode) or a file in public/. Defaults to the scene that
+//            forge approach copied in through the spline plugin (lib/app04/scene.json).
+//            Without either the section is the poster alone (fallback 'plugin-missing').
 //   poster:  { src, alt, width, height }, required. It is the first paint and the fallback.
 //   heading, text: optional copy beside the scene.
 //   events, triggers: wiring between scene objects and the page (see lib/app04/events.js).
 // The runtime loads after the page, so the poster stays the LCP element.
-const { scene, poster, heading, text, events = [], triggers = [] } = Astro.props;
+import fetched from '../../lib/app04/scene.json';
+const { scene = fetched.scene ?? undefined, poster, heading, text, events = [], triggers = [] } = Astro.props;
 if (!poster?.src || !poster?.alt || !poster?.width || !poster?.height) {
   throw new Error('APP-04/SplineScene needs a poster with src, alt, width and height: it is the first paint and the fallback.');
 }
