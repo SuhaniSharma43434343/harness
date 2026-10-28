@@ -1,0 +1,11 @@
+{
+  "id": "local-preview",
+  "category": "deploy",
+  "version": "0.1.0",
+  "enabledByDefault": false,
+  "env": [],
+  "permissions": { "network": ["127.0.0.1"], "filesystem": "project-read", "actions": ["read"] },
+  "cost": { "paid": false },
+  "docs": "docs/plugins.md#local-preview",
+  "status": "implemented-tested"
+}

@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T08 (first part): the `git` plugin (a local repository per project), `local-preview` (serves a built site on 127.0.0.1) and `vercel` (preview deploys with B5, production with B5 and B7, through the REST API), each with a mock. See `docs/plugins.md`.
 - T07: plugin host. Plugins are found in `plugins/` and `src/plugins/`, checked against the manifest schema, handed out by `getPlugin` only when enabled and fully configured, and each action is checked against the manifest's permissions and the project's approvals, then logged as `plugin_call`. Network access is limited to declared hosts, mock mode loads `mock.mjs`, and `forge plugins [list|enable|disable|check]` and `forge doctor` run health checks. See `docs/plugins.md`.
 - T15: the Project Manager intake workflow. `runIntake` and `forge intake` ask, record answers and assumptions, and write `intake/brief.json`, `facts.json`, `estimate.json` and `plan.md`, stopping before B1. `estimateScope` with operator rates in `registry/estimate.json` and the new `estimate` schema. Client material can be read into facts by the model through a runner task.
 - T14: the question bank (core questions plus goals, audience, pages and forms for each of the 7 project types), `selectQuestions` with scoring, rounds and follow-up rules, `recordAnswer`, `draftBrief`, `validateBrief`, `loadQuestionBank` and `loadRegistry`, with the A5 intake tests for the 7 sample briefs. See `docs/intake.md`.
