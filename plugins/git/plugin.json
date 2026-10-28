@@ -1,0 +1,11 @@
+{
+  "id": "git",
+  "category": "git",
+  "version": "0.1.0",
+  "enabledByDefault": false,
+  "env": [],
+  "permissions": { "network": [], "filesystem": "project-write", "actions": ["read", "write"] },
+  "cost": { "paid": false },
+  "docs": "docs/plugins.md#git",
+  "status": "implemented-tested"
+}

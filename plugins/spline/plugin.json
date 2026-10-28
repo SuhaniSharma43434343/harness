@@ -1,0 +1,14 @@
+{
+  "id": "spline",
+  "category": "design",
+  "version": "0.1.0",
+  "enabledByDefault": false,
+  "env": [
+    { "name": "SPLINE_SCENE_URL", "required": false, "secret": false, "description": "Default scene export URL (https://prod.spline.design/<id>/scene.splinecode). A brief's splineSceneUrl wins." }
+  ],
+  "permissions": { "network": ["prod.spline.design"], "filesystem": "project-write", "actions": ["read", "write"] },
+  "approvals": ["B5"],
+  "cost": { "paid": false, "disclosure": "Spline has free and paid plans; exporting a scene for the web may need a paid plan, and the runtime is under Spline's terms.", "pricingUrl": "https://spline.design/pricing" },
+  "docs": "docs/plugins.md#spline",
+  "status": "implemented-unverified"
+}

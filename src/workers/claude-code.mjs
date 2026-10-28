@@ -1,10 +1,13 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadAgents } from '../core/agents.mjs';
 import { AuthFailed, ConfigInvalid, ConfigMissing, RateLimited, Unavailable } from '../core/errors.mjs';
 import { matcher, walk } from '../core/glob.mjs';
+import { redact } from '../core/redact.mjs';
 
 // The claude-code worker adapter (T06). It runs one task as a headless `claude -p` session
 // in the project folder and returns { evidence }, as the runner expects. Every attempt can be
@@ -16,9 +19,18 @@ export const RECORDING_VERSION = 1;
 // Folders the runtime owns; a worker's file snapshot never includes them.
 const RUNTIME_PATHS = ['board', 'locks', 'ledger.jsonl', 'project.json', 'evidence/recordings', 'evidence/tasks'];
 
-// Read and edit tools only. Shell access waits for the Claude Code hooks in T09, which enforce
-// the contract's file boundaries.
+// Read and edit tools only. The guard hook checks every write against the contract; a shell
+// could reach past it (for example through a build script), so workers do not get one yet.
 export const DEFAULT_TOOLS = ['Read', 'Write', 'Edit', 'Glob', 'Grep'];
+
+const GUARD = join(dirname(fileURLToPath(import.meta.url)), '..', 'hooks', 'guard.mjs');
+
+// Settings for a worker session: the forge guard runs before every file and shell tool, and
+// checks each write against the task's contract (see src/hooks/guard.mjs).
+export function workerSettings(nodePath = process.execPath) {
+  const command = `"${nodePath}" "${GUARD}"`;
+  return { hooks: { PreToolUse: [{ matcher: 'Read|Write|Edit|MultiEdit|NotebookEdit|Bash', hooks: [{ type: 'command', command }] }] } };
+}
 
 const MAX_RECORDED_BYTES = 2 * 1024 * 1024;
 
@@ -145,9 +157,13 @@ export function createClaudeCodeWorker(options = {}) {
     if (model) args.push('--model', model);
     roles ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.body]));
     if (roles[task.agent]) args.push('--append-system-prompt', roles[task.agent]);
+    const settingsFile = join(tmpdir(), `forge-worker-${process.pid}-${task.id}-${attempt}.json`);
+    writeFileSync(settingsFile, JSON.stringify(workerSettings()));
+    args.push('--settings', settingsFile);
+    const childEnv = { ...env, FORGE_PROJECT: project, FORGE_TASK: task.id, FORGE_WORKSPACE: dirname(projectDir) };
 
     const before = snapshot(projectDir, task.owns_files);
-    const run = await runClaude({ command, args, prompt, cwd: projectDir, env, signal });
+    const run = await runClaude({ command, args, prompt, cwd: projectDir, env: childEnv, signal }).finally(() => rmSync(settingsFile, { force: true }));
     if (signal?.aborted) throw signal.reason;
 
     let reply = null;
@@ -179,7 +195,9 @@ export function createClaudeCodeWorker(options = {}) {
       };
       const file = recordingPath(recordDir ?? join(projectDir, 'evidence', 'recordings'), task.id, attempt);
       mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, JSON.stringify(rec, null, 2) + '\n');
+      // The reply and messages are redacted. Changed files are kept as written so a replay is
+      // identical; the secret scan reports any credential in them.
+      writeFileSync(file, JSON.stringify({ ...redact({ ...rec, files: null }), files: rec.files }, null, 2) + '\n');
     }
 
     if (error) throw error;
