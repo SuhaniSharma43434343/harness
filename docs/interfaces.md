@@ -74,7 +74,7 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | `checkDesignRules` | Nidhi | `checkDesignRules(decision: DesignDecision, brief: Brief, opts?: { dir?: string }) => Finding[]` | M3 (built, T17) |
 | `tokensFromDirection` | Nidhi | `tokensFromDirection(direction: Direction) => Tokens`; throws `SchemaInvalid` on failing contrast | M2 (built, T18) |
 | `scaffoldSite` | Nidhi | `scaffoldSite(project: string, opts?: { brief?: Brief, tokens?: Tokens, force?: boolean, workspace?: string }) => { siteDir, tokens, pages, forms, fonts }` | M2 (built, T18) |
-| `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object, projectDir?: string, preview?: boolean, now?: () => Date }) => Promise<GateResult>` | M3 (content gates built, T21) |
+| `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object, projectDir?: string, preview?: boolean, now?: () => Date, browser?: Browser, adapters?: { playwright?, axe?, lighthouse? }, screenshots?: boolean }) => Promise<GateResult>` | M3 (built, T21 and T22) |
 
 ### What each runtime function promises
 
