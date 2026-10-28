@@ -23,12 +23,17 @@ function merge(a, b) {
   return b;
 }
 
+// Fake credentials are spelled as placeholders in the fixture files, so the harness's own
+// secret scan (forge scan) stays clean; they are expanded only in the materialized copy.
+const FAKE_SECRETS = { '{{FAKE_ANTHROPIC_KEY}}': ['sk', 'ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789abcdefgh'].join('-') };
+const expand = (text) => Object.entries(FAKE_SECRETS).reduce((t, [k, v]) => t.split(k).join(v), text);
+
 // Applies one defect's changes to a copy of its base. Every find must match exactly once, so
 // a fixture that drifts from its base fails loudly instead of seeding nothing.
 function applyDefect(defect, out) {
   for (const [file, text] of Object.entries(defect.files ?? {})) {
     mkdirSync(dirname(join(out, file)), { recursive: true });
-    writeFileSync(join(out, file), text);
+    writeFileSync(join(out, file), expand(text));
   }
   for (const file of defect.remove ?? []) rmSync(join(out, file));
   for (const r of defect.replace ?? []) {
@@ -37,7 +42,7 @@ function applyDefect(defect, out) {
     const re = r.regex ? new RegExp(r.find, 'g') : null;
     const count = re ? (text.match(re) ?? []).length : text.split(r.find).length - 1;
     if (count !== 1) throw new Error(`Defect ${defect.id}: "${r.find}" matches ${count} times in ${r.file}`);
-    writeFileSync(path, re ? text.replace(re, r.replace) : text.replace(r.find, r.replace));
+    writeFileSync(path, re ? text.replace(re, expand(r.replace)) : text.replace(r.find, expand(r.replace)));
   }
   for (const j of defect.json ?? []) {
     const path = join(out, j.file);
