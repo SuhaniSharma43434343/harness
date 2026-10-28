@@ -87,3 +87,16 @@ test('a page that uses a missing section fails the build and names the file', { 
   assert.equal(build.ok, false);
   assert.match(build.output, /src\/sections\/APP-03\/Scene\.astro does not exist/);
 });
+
+test('a starter build passes the SEO gate once the site URL is set', { skip }, async () => {
+  const { runGate } = await import('../../src/gates/index.mjs');
+  const brief = JSON.parse(readFileSync(new URL('business.json', SAMPLES), 'utf8'));
+  const { siteDir } = scaffold(brief);
+  const siteFile = join(siteDir, 'src/site.json');
+  writeFileSync(siteFile, JSON.stringify({ ...JSON.parse(readFileSync(siteFile, 'utf8')), url: 'https://example.com' }, null, 2));
+  const build = buildSite(siteDir);
+  assert.ok(build.ok, build.output.slice(-2000));
+  const r = await runGate('seo', siteDir);
+  assert.equal(r.status, 'pass', JSON.stringify(r.findings, null, 2));
+  assert.deepEqual(r.findings.filter((f) => f.id.startsWith('sitemap')), []);
+});

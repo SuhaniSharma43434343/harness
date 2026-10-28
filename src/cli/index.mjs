@@ -7,6 +7,7 @@ import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
+import { cmdGates } from './gates.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdSelect } from './select.mjs';
 import { cmdSite } from './site.mjs';
@@ -44,6 +45,10 @@ const COMMANDS = {
   directions: {
     summary: 'Propose and render 3 to 5 design directions (P4), or check them: forge directions <project> [--count n] [--check]',
     run: (args) => cmdDirections(ROOT, args),
+  },
+  gates: {
+    summary: 'Run the automated quality gates on a built site: forge gates <project> [--gate <name>] [--preview] [--json]',
+    run: (args) => cmdGates(ROOT, args),
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
