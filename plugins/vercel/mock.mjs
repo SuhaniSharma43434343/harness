@@ -13,6 +13,10 @@ export async function deployProduction() {
   return next('production');
 }
 
+export async function setProjectEnv(key) {
+  return { project: 'forge-mock', key };
+}
+
 export async function getDeployment(id) {
   return { id, url: `https://${id}.vercel.app`, readyState: 'READY' };
 }

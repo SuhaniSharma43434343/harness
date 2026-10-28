@@ -72,3 +72,33 @@ Deploys a built static site through the Vercel REST API. It uploads each file by
 | `getDeployment(id)` | read | B5 |
 
 Set `VERCEL_TOKEN` in `.env`. `VERCEL_TEAM_ID` is optional, for team accounts, and so is `VERCEL_PROJECT`, which defaults to the Forge project id. The health check signs in with the token. A rejected token is `AuthFailed`, a rate limit is `RateLimited`, and a failed build is `Unavailable`. The status is `implemented-unverified` until a deploy with a real token has been logged.
+
+### form-function
+
+This makes forms work on a deployed site. Each form posts to a Vercel function at `/api/form?form=<id>`. The function checks the submission again on the server and forwards it as JSON to the operator's `FORM_WEBHOOK_URL`. The checks are:
+
+- unknown forms are refused, and unknown fields are dropped;
+- required fields and email addresses are validated;
+- values over 5,000 characters are refused;
+- a filled `_gotcha` honeypot field is accepted and dropped;
+- each client gets 5 submissions a minute, counted per function instance.
+
+| Action | What it does |
+| --- | --- |
+| `install(distDir, { forms })` | Writes `api/form.mjs` and its helpers into the built site, using the `forms` from `site.json`. It returns each form's `action` URL |
+| `actionFor(id)` | The `action` URL for one form |
+| `startLocalEndpoint({ forms, file })` | The same handler on `127.0.0.1`. Accepted submissions are appended to `file` as JSON lines, for previews and the forms gate |
+
+The function reads `FORM_WEBHOOK_URL` on Vercel. Set it there with the vercel plugin's `setProjectEnv('FORM_WEBHOOK_URL', url)`, which needs B5. The health check needs an HTTPS webhook. The mock (`form-mock`) writes nothing and opens no port. The status is `implemented-unverified` until a submission from a real deploy reaches a webhook.
+
+### spline
+
+This embeds a Spline scene at runtime (used by APP-04); automation through the Spline API is future work. The operator exports a scene from their own Spline account as a public `https://prod.spline.design/<id>/scene.splinecode` URL. Set it in the brief's `features.splineSceneUrl`, or as `SPLINE_SCENE_URL` in `.env`.
+
+| Action | Kind | What it does |
+| --- | --- | --- |
+| `checkScene(url)` | read | Checks the scene is reachable and reports its size, for the APP-04 budget |
+| `downloadScene(url, destDir, { name })` | write | Copies the scene into the site, so the runtime loads it from the site's own origin (50 MB limit) |
+| `sceneUrl(url)` | read | Checks and returns the scene URL |
+
+Every action needs B5. A URL that is not a Spline scene export is `ConfigInvalid`. A scene that is missing or not public is also `ConfigInvalid`, with a hint.

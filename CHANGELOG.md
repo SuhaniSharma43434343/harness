@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T08 (second part): the `form-function` plugin (a Vercel function that checks each submission on the server, rate limits it and forwards it to `FORM_WEBHOOK_URL`, plus a local endpoint and `form-mock`), the `spline` plugin (scene checks and copying a scene into the site), and `setProjectEnv` on the vercel plugin.
 - T08 (first part): the `git` plugin (a local repository per project), `local-preview` (serves a built site on 127.0.0.1) and `vercel` (preview deploys with B5, production with B5 and B7, through the REST API), each with a mock. See `docs/plugins.md`.
 - T07: plugin host. Plugins are found in `plugins/` and `src/plugins/`, checked against the manifest schema, handed out by `getPlugin` only when enabled and fully configured, and each action is checked against the manifest's permissions and the project's approvals, then logged as `plugin_call`. Network access is limited to declared hosts, mock mode loads `mock.mjs`, and `forge plugins [list|enable|disable|check]` and `forge doctor` run health checks. See `docs/plugins.md`.
 - T15: the Project Manager intake workflow. `runIntake` and `forge intake` ask, record answers and assumptions, and write `intake/brief.json`, `facts.json`, `estimate.json` and `plan.md`, stopping before B1. `estimateScope` with operator rates in `registry/estimate.json` and the new `estimate` schema. Client material can be read into facts by the model through a runner task.
