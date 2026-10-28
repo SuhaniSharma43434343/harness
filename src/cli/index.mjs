@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
+import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
+import { cmdScan } from './scan.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdIntake } from './intake.mjs';
@@ -21,8 +23,13 @@ const COMMANDS = {
   version: { summary: 'Print the harness version', run: () => console.log(VERSION) },
   doctor: {
     summary: 'Check Node, npm, Git, Claude Code, config and workspace (--json for machine output)',
-    run: (args) => {
+    run: async (args) => {
       const report = runDoctor(ROOT);
+      const pluginChecks = await pluginDoctorChecks(ROOT).catch((err) => [
+        { name: 'Plugins', status: 'fail', detail: err.message, hint: err.hint },
+      ]);
+      report.checks.push(...pluginChecks);
+      report.ok = report.checks.every((c) => c.status !== 'fail');
       if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
       else printDoctor(report);
       return report.ok ? 0 : 1;
@@ -46,6 +53,8 @@ const COMMANDS = {
     run: (args) => cmdDirections(ROOT, args),
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
+  plugins: { summary: 'List plugins, or enable, disable or health-check one: forge plugins [list|enable|disable|check] [id]', run: (args) => cmdPlugins(ROOT, args) },
+  scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
   site: {
     summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
@@ -58,7 +67,6 @@ const PLANNED = {
   preview: 'M3',
   deploy: 'M3',
   report: 'M3',
-  plugins: 'M2',
   task: 'M5',
   test: 'M5',
   demo: 'M6',
