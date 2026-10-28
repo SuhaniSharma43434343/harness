@@ -8,6 +8,7 @@ import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdSelect } from './select.mjs';
+import { cmdSite } from './site.mjs';
 import { validateFile } from './validate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -41,6 +42,10 @@ const COMMANDS = {
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
+  site: {
+    summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
+    run: (args) => cmdSite(ROOT, args),
+  },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).

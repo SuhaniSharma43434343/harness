@@ -1,0 +1,17 @@
+---
+// Renders a page's sections in order. `use: "APP-0N/Name"` resolves to
+// src/sections/APP-0N/Name.astro; an unknown section fails the build instead of rendering nothing.
+const modules = import.meta.glob('../sections/*/*.astro', { eager: true });
+
+const { page, Content } = Astro.props;
+const sections = page.data.sections.map(({ use, ...props }, index) => {
+  const mod = modules[`../sections/${use}.astro`];
+  if (!mod) {
+    throw new Error(`Page "${page.id}" uses section "${use}", but src/sections/${use}.astro does not exist.`);
+  }
+  return { Component: mod.default, props, index };
+});
+---
+{sections.map(({ Component, props, index }) => (
+  <Component {...props} page={page} Content={Content} index={index} />
+))}

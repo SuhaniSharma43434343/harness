@@ -1,0 +1,16 @@
+---
+// The page heading. Props: heading (defaults to the page title), lead, cta ({ label, href },
+// defaults to the page's call to action; false hides it).
+const { page, heading = page.data.title, lead, cta = page.data.cta } = Astro.props;
+---
+<section class="section hero">
+  <div class="wrap">
+    <h1>{heading}</h1>
+    {lead && <p class="lead">{lead}</p>}
+    {cta && <a class="button" href={cta.href}>{cta.label}</a>}
+  </div>
+</section>
+<style>
+  .hero { padding-block: calc(var(--space) * 5); }
+  .hero .button { margin-top: var(--space); }
+</style>

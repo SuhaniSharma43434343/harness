@@ -1,0 +1,23 @@
+---
+// A grid of short items. Props: heading, items: [{ title, text, href? }].
+const { heading, items = [] } = Astro.props;
+---
+{items.length > 0 && (
+  <section class="section section--alt">
+    <div class="wrap">
+      {heading && <h2>{heading}</h2>}
+      <ul class="features">
+        {items.map((item) => (
+          <li>
+            <h3>{item.href ? <a href={item.href}>{item.title}</a> : item.title}</h3>
+            {item.text && <p>{item.text}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+<style>
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: calc(var(--space) * 1.5); margin: 0; padding: 0; list-style: none; }
+  .features li { padding: calc(var(--space) * 1.25); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius); }
+</style>

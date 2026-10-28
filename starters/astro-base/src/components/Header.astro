@@ -1,0 +1,17 @@
+---
+import site from '../site.json';
+
+const here = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">{site.name}</a>
+    <nav class="nav" aria-label="Main">
+      <ul>
+        {site.nav.map((item) => (
+          <li><a href={item.href} aria-current={item.href === here ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>

@@ -25,6 +25,8 @@ const PREFIX = [
   ['design-decision', 'designDecision'],
   ['condition', 'condition'],
   ['estimate', 'estimate'],
+  ['tokens', 'tokens'],
+  ['site-config', 'siteConfig'],
 ];
 
 function schemaFor(file) {
