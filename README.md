@@ -13,6 +13,9 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
 - T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies, each tested on the gate fixtures (`docs/gates.md`)
 - T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
+- T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
+- T08: the git, local-preview, vercel, form-function and spline plugins
+- T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan`
 - T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
@@ -20,7 +23,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 - T18: the starter website (APP-01) in `starters/astro-base/`, and `forge site`, which writes a project's brief, design tokens and content into it and builds it ([docs/starter.md](docs/starter.md))
 
-The plugin host and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The Cursor step mode (T10) and packaging (T11) are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -63,12 +66,14 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge gates <project> [--gate name] [--preview] [--json]` | Runs the automated gates on the built site, writes `evidence/gates/<gate>.json` and a `gate_result` ledger entry per gate, and exits 1 unless the quality floor is met |
 | `forge directions <project> [--count n] [--check]` | Proposes 3 to 5 design directions for P4, renders them at desktop and mobile, or checks them against the design rules |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
+| `forge plugins [list\|enable\|disable\|check] [id]` | Lists plugins, or enables one after its config and health check pass (see `docs/plugins.md`) |
+| `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `estimate`, `tokens` and `siteConfig` (project).
 
-`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools until the Claude Code hooks (T09) enforce file boundaries. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
+`forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools with the forge guard hook checking every write against the task's contract. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
 ## Tests
 
@@ -82,6 +87,7 @@ The tests validate every fixture in `fixtures/schemas/valid` and check that ever
 
 ```text
 forge, forge.cmd          launchers (macOS/Linux, Windows)
+plugins/                  git, local-preview, vercel, form-function, spline (off until enabled)
 agents/                   the 8 agent roles (source of truth)
 .claude/agents/           generated Claude Code subagents (forge agents generate)
 .cursor/rules/            generated Cursor rules (forge agents generate)

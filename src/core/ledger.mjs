@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, truncateSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { SchemaInvalid } from './errors.mjs';
+import { redact } from './redact.mjs';
 import { assertValid } from './schemas.mjs';
 import { projectPaths } from './workspace.mjs';
 
@@ -58,7 +59,8 @@ export function append(project, entry, opts = {}) {
   let seq = entries.length ? entries[entries.length - 1].seq : 0;
   const write = (e) => {
     const ts = now().toISOString();
-    const full = { seq: ++seq, ts, project, ...e };
+    // Anything that looks like a credential is masked before it reaches the file.
+    const full = { seq: ++seq, ts, project, ...redact(e) };
     Object.assign(full, { seq, ts, project }); // callers cannot override these
     assertValid('ledgerEntry', full, `ledger entry (${e.type})`);
     appendFileSync(file, JSON.stringify(full) + '\n');
