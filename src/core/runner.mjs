@@ -6,6 +6,7 @@ import { loadConfig } from './config.mjs';
 import { ConfigMissing, PermissionDenied, SchemaInvalid, Unavailable } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { acquireFileLocks, acquireRunLock, patternsOverlap, releaseFileLocks, releaseRunLock } from './locks.mjs';
+import { redactText } from './redact.mjs';
 import { ROOT, assertProjectExists } from './workspace.mjs';
 
 // Errors a retry cannot fix: the task is blocked straight away so the operator sees it.
@@ -176,7 +177,7 @@ export async function runTask(project, taskId, options = {}) {
         }
         const log = `evidence/tasks/${taskId}/attempt-${attempt}-verify.log`;
         mkdirSync(dirname(join(paths.dir, log)), { recursive: true });
-        writeFileSync(join(paths.dir, log), `$ ${task.verify}\nexit ${outcome.code}\n\n${outcome.output ?? ''}`);
+        writeFileSync(join(paths.dir, log), redactText(`$ ${task.verify}\nexit ${outcome.code}\n\n${outcome.output ?? ''}`));
         if (outcome.ok) {
           const evidence = [...new Set([...task.evidence, log])];
           transitionTask(project, taskId, 'done', { actor: 'cli', patch: { evidence }, ...ctx });
