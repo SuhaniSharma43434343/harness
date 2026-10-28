@@ -50,3 +50,25 @@ With `{ mock: true }`, the host loads `mock.mjs` and skips the credential check,
 | `forge plugins disable <id>` | Turns it off; its feature falls back to the documented fallback |
 | `forge plugins check [id]` | Runs the health check of one plugin, or of every enabled plugin |
 | `forge doctor` | Also runs the health check of every enabled plugin |
+
+## Plugins in this release
+
+### git
+
+A local Git repository for each project. There is no remote yet; GitHub comes later. `init(projectDir)` makes the project folder the top of its own repository, with a `.gitignore` that leaves out `locks/`, `node_modules/` and `.env`, and makes a first commit. Running it again changes nothing. `commit(projectDir, message, { paths })` returns the new commit, or `null` when nothing changed. `status` and `log` read the repository. Because the project is its own repository, `forge resume` can discard a crashed task's uncommitted changes. No credentials, no network, no approvals.
+
+### local-preview
+
+`start({ dir, port })` serves a built site (for example `site/dist`) on `127.0.0.1` and resolves `{ url, close }`. Clean URLs map to `<path>/index.html` or `<path>.html`. A missing page gets the site's `404.html` with status 404, every response carries `X-Robots-Tag: noindex`, and path traversal is refused. No credentials, no approvals.
+
+### vercel
+
+Deploys a built static site through the Vercel REST API. It uploads each file by its SHA-1, creates the deployment and polls it until it is ready, which can take up to 5 minutes.
+
+| Action | Kind | Needs |
+| --- | --- | --- |
+| `deployPreview({ dir, name })` | deploy | B5 |
+| `deployProduction({ dir, name })` | deploy | B5 and B7 |
+| `getDeployment(id)` | read | B5 |
+
+Set `VERCEL_TOKEN` in `.env`. `VERCEL_TEAM_ID` is optional, for team accounts, and so is `VERCEL_PROJECT`, which defaults to the Forge project id. The health check signs in with the token. A rejected token is `AuthFailed`, a rate limit is `RateLimited`, and a failed build is `Unavailable`. The status is `implemented-unverified` until a deploy with a real token has been logged.
