@@ -98,7 +98,7 @@ test('the secret scan reports file, line and kind, never the secret', () => {
 
 test('the harness itself has no secrets in it', () => {
   const root = join(HERE, '..', '..');
-  assert.deepEqual(scanPaths(['src', 'schemas', 'agents', 'plugins', 'docs', 'fixtures', 'samples', '.claude'], { root, secrets: [] }), []);
+  assert.deepEqual(scanPaths(['src', 'schemas', 'agents', 'plugins', 'docs', 'fixtures', 'samples', 'tests', '.claude'], { root, secrets: [] }), []);
 });
 
 // ---- the guard hook ----
