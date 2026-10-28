@@ -20,13 +20,25 @@ function run(args, cwd, env) {
   return { code: r.status, output: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
-// Installs the site's dependencies when they are missing, then runs `astro build`.
-// Resolves to { ok, code, output, dist }; a failing build is a result, not an exception.
+// True when package-lock.json pins exactly the dependencies package.json asks for, so
+// `npm ci` can install from it. forge site adds font packages and forge approach adds approach
+// packages to package.json, which leaves the starter's lockfile behind until npm install runs.
+export function lockInSync(siteDir) {
+  const lockFile = join(siteDir, 'package-lock.json');
+  if (!existsSync(lockFile)) return false;
+  const pkg = JSON.parse(readFileSync(join(siteDir, 'package.json'), 'utf8'));
+  const root = JSON.parse(readFileSync(lockFile, 'utf8')).packages?.[''] ?? {};
+  const same = (a = {}, b = {}) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
+  return same(pkg.dependencies, root.dependencies) && same(pkg.devDependencies, root.devDependencies);
+}
+
+// Installs the site's dependencies when they are missing, then runs `astro build`. It uses
+// npm ci when the lockfile matches package.json, and npm install (which updates the lockfile)
+// when it does not. Resolves to { ok, code, output, dist }; a failing build is a result, not an exception.
 export function buildSite(siteDir, { install = 'auto', env } = {}) {
   let output = '';
   if (install === 'always' || (install === 'auto' && !existsSync(join(siteDir, 'node_modules')))) {
-    const lock = existsSync(join(siteDir, 'package-lock.json'));
-    const r = run(lock ? ['ci', '--no-audit', '--no-fund'] : ['install', '--no-audit', '--no-fund'], siteDir, env);
+    const r = run(lockInSync(siteDir) ? ['ci', '--no-audit', '--no-fund'] : ['install', '--no-audit', '--no-fund'], siteDir, env);
     output += r.output;
     if (r.code !== 0) return { ok: false, code: r.code, output, dist: null };
   }

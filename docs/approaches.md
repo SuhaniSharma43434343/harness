@@ -1,4 +1,23 @@
-# Approach modules
+# Approaches
+
+Forge has eight website approaches. The selector picks only the ones a brief justifies (`forge select <brief.json>`, `docs/registry.md`). This page covers what each approach is, which ones have a working module, and how modules are applied.
+
+## The eight approaches
+
+| Approach | What it is | Fallback | Module |
+| --- | --- | --- | --- |
+| APP-01 AI to Full Website | The multi-page site from the brief, content and tokens. Every project uses it | n/a | Built: the starter (`docs/starter.md`) |
+| APP-02 Cinematic Scroll | Pinned sections, scroll-scrubbed reveals, smooth scroll | Static stacked layout with CSS reveals | Built (T19) |
+| APP-03 Interactive 3D | A lazy-loaded Three.js scene behind a poster | Poster image plus CSS depth | Not built (engine side) |
+| APP-04 Spline + Website | The operator's Spline scene behind a poster | APP-03 scene or the poster | Built (T20). Experimental, needs B2. Needs the Spline plugin (T08) for real scenes |
+| APP-05 Shader / WebGL | A GLSL background or transition with a quality ladder | CSS gradient or a static frame | Not built |
+| APP-06 Game-Like | One bounded game mechanic over an explainer | The explainer with the same content | Built (T20). Experimental, needs B1 |
+| APP-07 AI + 3D + Motion + Real | APP-01, 02 and 03 in one site under a shared budget | APP-01 plus APP-02 | Not built (needs APP-03) |
+| APP-08 Image to Frame Animation to 3D | A scroll-scrubbed frame sequence and a depth-map parallax scene | A static key frame | Not built |
+
+The selection matrix (`registry/selection-matrix.json`) gives each approach's status per project type: default, optional, experimental (needs approval) or excluded. Each registry entry's `verification` is one of `not-started`, `in-development`, `implemented` or `verified`. It moves to `verified` only with real-project and real-device evidence.
+
+## Approach modules
 
 Every approach has a registry entry (`registry/approaches/APP-0N.json`, see `docs/registry.md`), selection rules, and, once it is built, a module: a skill (`skills/app0N/SKILL.md`) plus code recipes (`skills/app0N/recipes/`) that `forge approach` copies into a project's site.
 

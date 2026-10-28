@@ -171,3 +171,21 @@ test('forge gates runs the gates on a project and records gate_result entries', 
   assert.deepEqual(entries.map((e) => e.data.gate), CONTENT_GATES);
   assert.ok(entries.every((e) => e.data.status === 'pass'));
 });
+
+test('seo: a sitemap with root-relative locations (no site URL yet) still lists every route', async () => {
+  const { siteDir } = materializeFixture('known-good');
+  const map = join(siteDir, 'dist/sitemap.xml');
+  writeFileSync(map, readFileSync(map, 'utf8').replaceAll('https://harbor-home.example', ''));
+  assert.ok(!(await runGate('seo', siteDir)).findings.some((f) => f.id === 'sitemap-incomplete'));
+});
+
+test('dependencies: an optional build-machine binary is reported but does not block', async () => {
+  const { siteDir } = materializeFixture('known-good');
+  const lockFile = join(siteDir, 'package-lock.json');
+  const lock = JSON.parse(readFileSync(lockFile, 'utf8'));
+  lock.packages['node_modules/@img/sharp-libvips-linux-x64'] = { version: '1.3.4', license: 'LGPL-3.0-or-later', optional: true, os: ['linux'], cpu: ['x64'] };
+  writeFileSync(lockFile, JSON.stringify(lock));
+  const r = await runGate('dependencies', siteDir);
+  assert.equal(r.status, 'pass');
+  assert.deepEqual(r.findings.map((f) => [f.id, f.severity]), [['build-binary-licence', 'moderate']]);
+});

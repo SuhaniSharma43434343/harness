@@ -105,3 +105,14 @@ test('APP-04 wiring: scene events dispatch page events, and page triggers emit s
   assert.equal(listeners.size, 0);
   assert.equal(emitted.length, 1);
 });
+
+test('lockInSync: npm ci only when the lockfile pins what package.json asks for', async () => {
+  const { lockInSync } = await import('../../src/site/build.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'forge-lock-'));
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { astro: '7.3.8' } }));
+  assert.equal(lockInSync(dir), false, 'no lockfile');
+  writeFileSync(join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': { dependencies: { astro: '7.3.8' } } } }));
+  assert.equal(lockInSync(dir), true);
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { astro: '7.3.8', '@fontsource/lora': '5.3.0' } }));
+  assert.equal(lockInSync(dir), false, 'forge site added a font package');
+});
