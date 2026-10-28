@@ -63,9 +63,9 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | `runTask` | Suhani | `runTask(project: string, taskId: string, opts?: RunOptions) => Promise<TaskResult>` | M2 (built) |
 | `ledger.append` | Suhani | `append(project: string, entry: Omit<LedgerEntry, 'seq' \| 'ts'>, opts?: { workspace?: string }) => LedgerEntry` | M2 (built) |
 | `getPlugin` | Suhani | `getPlugin(id: string) => Promise<Plugin>`; throws `ConfigMissing` or `PermissionDenied` | M2 |
-| `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 |
-| `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation') => Facts` | M2 |
-| `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 |
+| `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 (built) |
+| `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation', opts?: { now?: Date }) => Facts` | M2 (built) |
+| `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 (built) |
 | `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix, opts?: { now?: Date }) => ApproachDecision` | M2 (built) |
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object }) => Promise<GateResult>` | M3 |
@@ -79,7 +79,7 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 ### What each project-side function promises
 
 - **`selectQuestions`** is pure: it reads, and never writes, files. It drops every question whose `fills` fields are all `known` or `inferred` in the facts, and every question whose `appliesTo` or `askWhen` does not match. It returns the rest sorted by score (the weight, plus a boost when a required brief field is still unknown). Round 1 returns 5 to 10 questions; if fewer than 5 are candidates it returns them all. It throws `SchemaInvalid` if the bank is invalid.
-- **`recordAnswer`** returns new facts. A real answer becomes a `known` fact with source `answer`. `'use-recommendation'` becomes an `inferred` fact with source `recommendation`, `assumption: true` and the question's recommendation reason. Follow-up questions are found by calling `selectQuestions` again.
+- **`recordAnswer`** returns new facts. A real answer becomes a `known` fact with source `answer`. `'use-recommendation'` becomes an `inferred` fact with source `recommendation`, `assumption: true` and the question's recommendation reason. Follow-up questions are found by calling `selectQuestions` again. `opts.now` adds `recordedAt`; without it the function stays pure. Details in `docs/intake.md`.
 - **`validateBrief`** runs the brief schema, then the checks a schema cannot make across files. Every required brief field has a `known` or `inferred` fact. Every inferred field is listed in `brief.assumptions`. `missing` lists the fields that still need an answer. The P1 exit gate is `valid && missing.length === 0`.
 - **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`. `opts.now` sets `decidedAt`, the only part of the record that is not derived from the inputs, so tests can compare whole records. The rules and the matrix are described in `docs/registry.md`.
 - **`proposeDirections`** may call the model through Suhani's worker adapter. It applies the design rules (T17) and returns at least 3 directions that pass the schema.

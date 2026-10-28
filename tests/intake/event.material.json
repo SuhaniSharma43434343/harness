@@ -1,0 +1,63 @@
+{
+  "project": "devfest-pune",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "event",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/event.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "DevFest Pune",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/event.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "technology conference",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/event.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "tickets",
+          "statement": "Drive ticket registrations"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/event.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.interactive",
+      "status": "known",
+      "value": [
+        "shader-background"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/event.json"
+      },
+      "assumption": false
+    }
+  ]
+}

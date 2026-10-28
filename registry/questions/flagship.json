@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-flagship-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "flagship"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "brand-leadership",
+            "statement": "Present the brand and its products at their best and drive sales enquiries"
+          }
+        ],
+        "reason": "The usual main goal for a flagship site."
+      }
+    },
+    {
+      "id": "q-flagship-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "flagship"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Prospective customers",
+            "need": "Experience the products and take the next step"
+          }
+        ],
+        "reason": "The usual main audience for a flagship site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-flagship-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "flagship"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Brand story",
+            "cta": "Explore the range"
+          },
+          {
+            "slug": "/products",
+            "title": "Products",
+            "purpose": "Product range",
+            "cta": "Book a test"
+          },
+          {
+            "slug": "/about",
+            "title": "About",
+            "purpose": "Company story",
+            "cta": "Contact sales"
+          },
+          {
+            "slug": "/contact",
+            "title": "Contact",
+            "purpose": "Sales enquiries",
+            "cta": "Contact sales"
+          }
+        ],
+        "reason": "A standard page set for a flagship site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-flagship-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "flagship"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "sales",
+            "purpose": "Sales enquiry",
+            "fields": [
+              "name",
+              "email",
+              "company",
+              "message"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a flagship site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

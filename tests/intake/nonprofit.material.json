@@ -1,0 +1,77 @@
+{
+  "project": "green-roots",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "nonprofit",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Green Roots Trust",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "environmental charity",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "volunteers",
+          "statement": "Recruit volunteers for tree-planting drives"
+        },
+        {
+          "id": "awareness",
+          "statement": "Explain the impact of urban forests"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.interactive",
+      "status": "known",
+      "value": [
+        "game"
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.playIsThePoint",
+      "status": "known",
+      "value": true,
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/nonprofit.json"
+      },
+      "assumption": false
+    }
+  ]
+}

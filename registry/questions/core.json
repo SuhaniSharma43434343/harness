@@ -1,0 +1,570 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-project-type",
+      "fills": [
+        "projectType"
+      ],
+      "prompt": "Which of these best describes the website?",
+      "why": "Decides which questions follow and which website approaches are allowed.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "business",
+          "label": "A business or services site"
+        },
+        {
+          "value": "launch",
+          "label": "A product or campaign launch"
+        },
+        {
+          "value": "showroom",
+          "label": "A product showroom"
+        },
+        {
+          "value": "portfolio",
+          "label": "A portfolio or studio site"
+        },
+        {
+          "value": "event",
+          "label": "An event site"
+        },
+        {
+          "value": "nonprofit",
+          "label": "A nonprofit or cause site"
+        },
+        {
+          "value": "flagship",
+          "label": "An enterprise flagship site"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 10,
+      "recommendation": {
+        "value": "business",
+        "reason": "The most common kind of site; it can grow into another type later."
+      }
+    },
+    {
+      "id": "q-tier",
+      "fills": [
+        "tier"
+      ],
+      "prompt": "Roughly how big is the site: up to 5 simple pages, up to 12 pages or one special feature, or larger?",
+      "why": "Sets the scope, the estimate and how many advanced approaches fit.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "S",
+          "label": "Up to 5 pages, no custom interaction"
+        },
+        {
+          "value": "M",
+          "label": "Up to 12 pages, or one special feature"
+        },
+        {
+          "value": "L",
+          "label": "Larger, or several special features"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": "M",
+        "reason": "Leaves room for one special feature without committing to a large build."
+      }
+    },
+    {
+      "id": "q-client-name",
+      "fills": [
+        "client.name"
+      ],
+      "prompt": "What name should the website use for the organisation?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "fromField": "project",
+        "reason": "The project name stands in until the client confirms the public name."
+      }
+    },
+    {
+      "id": "q-industry",
+      "fills": [
+        "client.industry"
+      ],
+      "prompt": "What industry or field is the organisation in?",
+      "why": "Shapes research, tone and the reference sites.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 7,
+      "recommendation": {
+        "value": "general services",
+        "reason": "A neutral placeholder; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-device-floor",
+      "fills": [
+        "constraints.deviceFloor"
+      ],
+      "prompt": "What is the oldest or cheapest phone your visitors are likely to use?",
+      "why": "Decides whether 3D and heavy motion are safe.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "low",
+          "label": "Older or budget phones"
+        },
+        {
+          "value": "mid",
+          "label": "Mid-range phones from the last 3 years"
+        },
+        {
+          "value": "high",
+          "label": "Recent flagship phones"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": "mid",
+        "reason": "Safe default for most audiences."
+      },
+      "followUps": [
+        {
+          "when": {
+            "field": "constraints.deviceFloor",
+            "op": "eq",
+            "value": "low"
+          },
+          "ask": [
+            "q-motion-intensity"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q-motion-intensity",
+      "fills": [
+        "brand.motionIntensity"
+      ],
+      "prompt": "How much movement should the site have: none, subtle, expressive or cinematic?",
+      "why": "Motion 2 or more allows cinematic scroll; 0 rules out shaders and frame animation.",
+      "kind": "single",
+      "options": [
+        {
+          "value": 0,
+          "label": "None"
+        },
+        {
+          "value": 1,
+          "label": "Subtle"
+        },
+        {
+          "value": 2,
+          "label": "Expressive"
+        },
+        {
+          "value": 3,
+          "label": "Cinematic"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 7,
+      "recommendation": {
+        "value": 1,
+        "reason": "Subtle motion reads as polished without costing performance or accessibility."
+      }
+    },
+    {
+      "id": "q-tone",
+      "fills": [
+        "brand.tone"
+      ],
+      "prompt": "Which words best describe how the brand should feel? Pick up to five.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "clear",
+          "label": "Clear"
+        },
+        {
+          "value": "warm",
+          "label": "Warm"
+        },
+        {
+          "value": "bold",
+          "label": "Bold"
+        },
+        {
+          "value": "premium",
+          "label": "Premium"
+        },
+        {
+          "value": "playful",
+          "label": "Playful"
+        },
+        {
+          "value": "refined",
+          "label": "Refined"
+        },
+        {
+          "value": "minimal",
+          "label": "Minimal"
+        },
+        {
+          "value": "technical",
+          "label": "Technical"
+        },
+        {
+          "value": "trustworthy",
+          "label": "Trustworthy"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "recommendation": {
+        "value": [
+          "clear",
+          "trustworthy"
+        ],
+        "reason": "A safe starting tone; the design directions at P4 explore further."
+      }
+    },
+    {
+      "id": "q-accessibility",
+      "fills": [
+        "constraints.accessibility"
+      ],
+      "prompt": "Does the site need to meet the stricter WCAG AAA level, or is AA enough?",
+      "kind": "single",
+      "options": [
+        {
+          "value": "WCAG 2.2 AA",
+          "label": "AA (the usual standard)"
+        },
+        {
+          "value": "WCAG 2.2 AAA",
+          "label": "AAA (stricter, for public sector or specialist audiences)"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": "WCAG 2.2 AA",
+        "reason": "AA is the legal and practical standard for most sites."
+      }
+    },
+    {
+      "id": "q-interactive",
+      "fills": [
+        "features.interactive"
+      ],
+      "prompt": "Should the site include any of these special features? Choose none if you are not sure.",
+      "why": "This is what the approach selector reads; nothing advanced is added unless it is asked for here.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "3d-product",
+          "label": "A 3D product view"
+        },
+        {
+          "value": "3d-scene",
+          "label": "A 3D scene"
+        },
+        {
+          "value": "spline-scene",
+          "label": "A Spline scene you design"
+        },
+        {
+          "value": "scroll-story",
+          "label": "A cinematic scroll story"
+        },
+        {
+          "value": "shader-background",
+          "label": "An animated shader background"
+        },
+        {
+          "value": "game",
+          "label": "A small game"
+        },
+        {
+          "value": "frame-sequence",
+          "label": "A scrubbed image sequence"
+        },
+        {
+          "value": "data-visualisation",
+          "label": "A data visualisation"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "recommendation": {
+        "value": [],
+        "reason": "No special feature keeps cost and risk down; one can be added at B1."
+      },
+      "followUps": [
+        {
+          "when": {
+            "field": "features.interactive",
+            "op": "includes",
+            "value": "game"
+          },
+          "ask": [
+            "q-play-is-the-point"
+          ]
+        },
+        {
+          "when": {
+            "any": [
+              {
+                "field": "features.interactive",
+                "op": "includes",
+                "value": "3d-product"
+              },
+              {
+                "field": "features.interactive",
+                "op": "includes",
+                "value": "3d-scene"
+              }
+            ]
+          },
+          "ask": [
+            "q-models3d"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q-play-is-the-point",
+      "fills": [
+        "features.playIsThePoint"
+      ],
+      "prompt": "Is playing the interactive section the main point of the visit, rather than a bonus?",
+      "why": "A game is only built when play is the goal; otherwise an interactive explainer is used.",
+      "kind": "boolean",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "askWhen": {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "game"
+      },
+      "weight": 9,
+      "round": 2,
+      "recommendation": {
+        "value": false,
+        "reason": "A game is only worth its cost when play is the goal."
+      }
+    },
+    {
+      "id": "q-models3d",
+      "fills": [
+        "brand.existingAssets.models3d"
+      ],
+      "prompt": "Do you already have 3D models of the products, with the right to use them on the web?",
+      "kind": "boolean",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "askWhen": {
+        "any": [
+          {
+            "field": "features.interactive",
+            "op": "includes",
+            "value": "3d-product"
+          },
+          {
+            "field": "features.interactive",
+            "op": "includes",
+            "value": "3d-scene"
+          }
+        ]
+      },
+      "weight": 6,
+      "round": 2,
+      "recommendation": {
+        "value": false,
+        "reason": "Assume models must be made or sourced, so their licences are planned for."
+      }
+    },
+    {
+      "id": "q-logo",
+      "fills": [
+        "brand.existingAssets.logo"
+      ],
+      "prompt": "Do you have a logo file we can use?",
+      "kind": "boolean",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 4,
+      "round": 2,
+      "recommendation": {
+        "value": false,
+        "reason": "Plan a simple wordmark until a logo file arrives."
+      }
+    },
+    {
+      "id": "q-photography",
+      "fills": [
+        "brand.existingAssets.photography"
+      ],
+      "prompt": "Do you have your own photography we can use?",
+      "kind": "boolean",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 4,
+      "round": 2,
+      "recommendation": {
+        "value": false,
+        "reason": "Plan for licensed stock or illustration, each recorded in the licence register."
+      }
+    },
+    {
+      "id": "q-hosting",
+      "fills": [
+        "constraints.hosting"
+      ],
+      "prompt": "Where should the finished site be hosted?",
+      "kind": "single",
+      "options": [
+        {
+          "value": "vercel",
+          "label": "Vercel"
+        },
+        {
+          "value": "local-only",
+          "label": "Local files only, we host it ourselves"
+        },
+        {
+          "value": "undecided",
+          "label": "Not decided yet"
+        }
+      ],
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 3,
+      "round": 2,
+      "recommendation": {
+        "value": "undecided",
+        "reason": "Hosting is only needed at deploy (B7), so it can wait."
+      }
+    },
+    {
+      "id": "q-avoid",
+      "fills": [
+        "brand.avoid"
+      ],
+      "prompt": "Is there anything the design should avoid, such as colours, styles or competitors to not look like?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 2,
+      "round": 3,
+      "recommendation": {
+        "value": [],
+        "reason": "Nothing to avoid unless the client names it."
+      }
+    }
+  ]
+}
