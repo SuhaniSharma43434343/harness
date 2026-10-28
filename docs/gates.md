@@ -72,9 +72,10 @@ a browser gate is `error` with code `UNAVAILABLE` and a hint, never a pass, and 
 are skipped with that reason. Lighthouse runs Playwright's Chromium, so no Chrome install is needed.
 
 Each tool has an adapter and a manifest in `src/plugins/<id>/` (`plugin.json`, off by default,
-local network only). Until the plugin host (T07) exists, the gates import the adapters directly;
-`opts.adapters.{playwright, axe, lighthouse}` replaces them, which is how the tests pass a fake
-Lighthouse and how the plugin host will pass the enabled plugin.
+local network only), so `forge plugins list` and `forge doctor` show them. The gates import the
+adapters directly rather than through `getPlugin`, because they are local test tools that every
+QA run needs, not optional services to enable. `opts.adapters.{playwright, axe, lighthouse}`
+replaces them, which is how the tests pass a fake Lighthouse.
 
 Real Lighthouse runs take about 40 seconds a page, so their tests run only with
 `FORGE_SLOW_TESTS=1`. The performance rules are tested with a fake adapter in every run.
