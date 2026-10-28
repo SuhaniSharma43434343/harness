@@ -1,0 +1,71 @@
+{
+  "id": "APP-06",
+  "name": "Game-Like Website",
+  "summary": "A bounded interactive module: one mechanic, keyboard and touch controls, progress state, optional sound and a skip control. Only when the client confirms at B1 that play is the point.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app06/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "field": "features.interactive",
+    "op": "includes",
+    "value": "game"
+  },
+  "rejectWhen": {
+    "field": "features.playIsThePoint",
+    "op": "neq",
+    "value": true
+  },
+  "requiresApproval": [
+    "B1"
+  ],
+  "fallback": {
+    "approach": "APP-01",
+    "description": "An interactive explainer section with the same content",
+    "triggers": [
+      "no-webgl",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "extraJsKbGzip": 400,
+    "minFps": 30,
+    "loadAfterLcp": true
+  },
+  "dependencies": [
+    {
+      "name": "phaser",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    },
+    {
+      "name": "physics library",
+      "licence": "chosen during design",
+      "licenceVerified": false,
+      "note": "Record the licence when it is chosen"
+    },
+    {
+      "name": "audio",
+      "licence": "per file",
+      "licenceVerified": false,
+      "note": "Every sound needs a licence record"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app06/pos-1.json",
+      "tests/decision/app06/pos-2.json",
+      "tests/decision/app06/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app06/neg-1.json",
+      "tests/decision/app06/neg-2.json",
+      "tests/decision/app06/neg-3.json"
+    ]
+  }
+}

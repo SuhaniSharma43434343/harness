@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T16: the eight approach registry entries, the selection matrix, the condition evaluator, `loadApproaches` and `selectApproaches`, with 48 decision briefs (3 qualifying and 3 not, per approach) and `forge select`. See `docs/registry.md`.
 - Task contracts can no longer claim the runtime's own files in `owns_files` (`project.json`, `ledger.jsonl`, `board/`, `locks/`), or a pattern that starts with a wildcard at the project root.
 - T05: the 8 agent roles in `agents/<role>.md`, `forge agents generate` and `forge agents check` for the Claude Code subagents and Cursor rules, and phase routing: `forge run` starts only the tasks whose agent works in the current phase, and each worker gets its role instructions.
 - T06: Claude Code worker adapter. Each task runs as a headless `claude -p` session with read and edit tools, its reply's evidence line is parsed, and failures map to typed errors (sign-in, rate limit, missing binary). Every attempt is recorded with the files it changed, and the replay worker plays recordings back identically, including failed attempts. `forge run [--replay <dir>]`.

@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 
 The plugin host and the Claude Code hooks are not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
@@ -52,6 +53,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
+| `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision` and `condition` (project).
@@ -79,6 +81,9 @@ src/core/                 config, schemas, typed errors, project state, ledger,
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
 samples/briefs/           one sample brief per project type (7)
+registry/                 approach registry entries and the selection matrix
+src/registry/             condition evaluator, registry loader, approach selector
+tests/decision/           decision briefs and the approach selection suite
 tests/unit/               node:test suites
 scripts/                  setup.sh, setup.ps1
 docs/interfaces.md        M1 interfaces (frozen), runtime and project sides

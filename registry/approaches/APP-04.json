@@ -1,0 +1,62 @@
+{
+  "id": "APP-04",
+  "name": "Spline + Website",
+  "summary": "An embedded Spline scene from the operator's own scene URL or file, with runtime events wired to UI triggers, lazy-loaded behind a poster. For a designer-edited micro-3D hero or feature visual.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app04/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "field": "features.interactive",
+    "op": "includes",
+    "value": "spline-scene"
+  },
+  "rejectWhen": {
+    "field": "constraints.deviceFloor",
+    "op": "eq",
+    "value": "low"
+  },
+  "requiresPlugins": [
+    "spline"
+  ],
+  "requiresApproval": [
+    "B2"
+  ],
+  "fallback": {
+    "approach": "APP-03",
+    "description": "APP-03 scene or a poster image",
+    "triggers": [
+      "plugin-missing",
+      "no-webgl",
+      "reduced-motion",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "loadAfterLcp": true
+  },
+  "dependencies": [
+    {
+      "name": "@splinetool/runtime",
+      "licence": "Spline terms of service",
+      "licenceVerified": false,
+      "note": "npm lists no licence: review the runtime and account terms before release"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app04/pos-1.json",
+      "tests/decision/app04/pos-2.json",
+      "tests/decision/app04/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app04/neg-1.json",
+      "tests/decision/app04/neg-2.json",
+      "tests/decision/app04/neg-3.json"
+    ]
+  }
+}
