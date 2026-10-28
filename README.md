@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
@@ -57,6 +58,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |
+| `forge directions <project> [--count n] [--check]` | Proposes 3 to 5 design directions for P4, renders them at desktop and mobile, or checks them against the design rules |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |

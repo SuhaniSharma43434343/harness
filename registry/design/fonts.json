@@ -1,0 +1,26 @@
+{
+  "catalogVersion": "0.1.0",
+  "note": "Open-licensed fonts the Creative Director may use without a licence record. Every family is on Fontsource. Licences from each family's Fontsource or Google Fonts page; recheck when adding a family.",
+  "fonts": [
+    { "family": "Fraunces", "category": "serif", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["warm", "refined", "premium", "editorial"] },
+    { "family": "Playfair Display", "category": "serif", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["premium", "refined", "editorial", "bold"] },
+    { "family": "DM Serif Display", "category": "serif", "licence": "OFL-1.1", "weights": [400], "tags": ["premium", "bold", "refined"] },
+    { "family": "Cormorant Garamond", "category": "serif", "licence": "OFL-1.1", "weights": [500, 700], "tags": ["refined", "premium", "minimal"] },
+    { "family": "Lora", "category": "serif", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["warm", "trustworthy", "clear"], "body": true },
+    { "family": "Source Serif 4", "category": "serif", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["clear", "trustworthy", "editorial"], "body": true },
+    { "family": "Inter", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["clear", "technical", "minimal", "trustworthy"], "body": true },
+    { "family": "Manrope", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["clear", "minimal", "warm"], "body": true },
+    { "family": "DM Sans", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["clear", "playful", "warm"], "body": true },
+    { "family": "Work Sans", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["clear", "trustworthy", "warm"], "body": true },
+    { "family": "IBM Plex Sans", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["technical", "trustworthy", "clear"], "body": true },
+    { "family": "Plus Jakarta Sans", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["minimal", "premium", "clear"], "body": true },
+    { "family": "Space Grotesk", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["technical", "bold", "playful"] },
+    { "family": "Sora", "category": "sans", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["technical", "minimal", "bold"] },
+    { "family": "Archivo", "category": "sans", "licence": "OFL-1.1", "weights": [400, 800], "tags": ["bold", "trustworthy", "clear"] },
+    { "family": "Bricolage Grotesque", "category": "display", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["playful", "bold", "warm"] },
+    { "family": "Syne", "category": "display", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["bold", "playful", "premium"] },
+    { "family": "Unbounded", "category": "display", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["bold", "playful", "technical"] },
+    { "family": "Zilla Slab", "category": "slab", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["warm", "trustworthy", "bold"] },
+    { "family": "IBM Plex Mono", "category": "mono", "licence": "OFL-1.1", "weights": [400, 700], "tags": ["technical", "minimal"] }
+  ]
+}
