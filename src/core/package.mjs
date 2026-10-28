@@ -50,7 +50,8 @@ export function forbiddenReason(path) {
 function trackedFiles(root) {
   const r = spawnSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', windowsHide: true });
   if (r.status === 0) return r.stdout.split('\0').filter(Boolean);
-  return walk(root, { skip: ['node_modules', '.git', 'dist', 'workspace'] });
+  // Not a Git checkout (for example an extracted package): every file, minus the forbidden ones.
+  return walk(root, { skip: ['node_modules', '.git', 'dist'] });
 }
 
 export function packageFiles(root = ROOT) {
