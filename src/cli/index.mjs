@@ -6,6 +6,7 @@ import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
+import { cmdIntake } from './intake.mjs';
 import { cmdSelect } from './select.mjs';
 import { validateFile } from './validate.mjs';
 
@@ -34,13 +35,16 @@ const COMMANDS = {
   status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
   run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
   agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
+  intake: {
+    summary: 'Run intake (P1): forge intake <project> [--answers <file.json>] [--use-recommendations]',
+    run: (args) => cmdIntake(ROOT, args),
+  },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).
 const PLANNED = {
-  intake: 'M2',
   preview: 'M3',
   deploy: 'M3',
   report: 'M3',

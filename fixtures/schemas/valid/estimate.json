@@ -1,0 +1,53 @@
+{
+  "project": "harbor-home",
+  "tier": "S",
+  "pages": 4,
+  "approaches": [
+    "APP-01"
+  ],
+  "lines": [
+    {
+      "item": "Setup and design system (tier S)",
+      "hours": {
+        "min": 6,
+        "max": 10
+      }
+    },
+    {
+      "item": "4 page(s)",
+      "hours": {
+        "min": 8,
+        "max": 16
+      }
+    },
+    {
+      "item": "1 form(s)",
+      "hours": {
+        "min": 2,
+        "max": 3
+      }
+    },
+    {
+      "item": "Quality review and repair",
+      "hours": {
+        "min": 3,
+        "max": 6
+      }
+    }
+  ],
+  "hours": {
+    "min": 19,
+    "max": 35
+  },
+  "cost": {
+    "min": 860,
+    "max": 2630,
+    "currency": "USD"
+  },
+  "withinBudget": null,
+  "assumptions": [
+    "No approach decision yet: estimated as APP-01 only. Re-estimate after P3.",
+    "Brief field constraints.deviceFloor is an assumption (use your recommendation)."
+  ],
+  "rateVersion": "0.1.0"
+}

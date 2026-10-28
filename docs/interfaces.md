@@ -31,6 +31,7 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 | Selection matrix | `selectionMatrix` | `schemas/selection-matrix.schema.json` | Nidhi (T16) | `selectApproaches` |
 | Approach decision record | `approachDecision` | `schemas/approach-decision.schema.json` | `selectApproaches` (P3) | Creative Director, Lead Developer; reviewed at B2 |
 | Design decision | `designDecision` | `schemas/design-decision.schema.json` | Creative Director (P4) | Content & UX, builders; chosen at B2 |
+| Estimate | `estimate` | `schemas/estimate.schema.json` | `estimateScope` (P1) | Operator at B1, final report |
 | Rule condition | `condition` | `schemas/condition.schema.json` | (shared language) | Question rules, selection rules, design rules |
 
 `schemas/common.schema.json` holds the shared enumerations (project types, tiers, approach ids, approval codes, motion intensity, device floor, fallback triggers). It is referenced by the others and is not validated on its own.
@@ -100,7 +101,7 @@ Every component throws one of the typed errors in `src/core/errors.mjs`: `Config
 | 2 | Is `budget.minutes` per attempt or across all attempts? | Per attempt, covering the worker and the verify command together. With 2 retries, a task can use at most three times its budget. |
 | 3 | `workspace/<project>/` layout | As below. The runtime owns `project.json`, `ledger.jsonl`, `board/` and `locks/`. Each other folder belongs to the agent named in the plan's agent table. |
 | 4 | Starter template contract | Accepted as proposed: tokens in `site/src/styles/tokens.json`, page content in `site/src/content/pages/<slug>.md`, approach sections in `site/src/sections/<approach>/`. |
-| 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then. |
+| 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then (`schemas/estimate.schema.json`). |
 | 6 | Project types and tiers | The seven types and the tiers S, M and L above are frozen. |
 | 7 | YAML or JSON registry files | JSON (see Data formats). |
 | 8 | Error for an illegal phase or task transition | `PermissionDenied`, with the allowed moves in `details`. The shared error set stays as it is; lock conflicts and a busy project use `Unavailable`. |
