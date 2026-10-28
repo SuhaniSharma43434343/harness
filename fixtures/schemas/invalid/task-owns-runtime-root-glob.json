@@ -1,0 +1,33 @@
+{
+  "id": "build-hero",
+  "agent": "builder",
+  "approach_modules": [
+    "APP-01",
+    "APP-02"
+  ],
+  "inputs": [
+    "design/tokens.json",
+    "content/home.md"
+  ],
+  "owns_files": [
+    "**/*.json"
+  ],
+  "must_not_touch": [
+    "content/**"
+  ],
+  "depends_on": [
+    "tokens-ready"
+  ],
+  "acceptance": [
+    "Hero renders at 360 and 1440 px with no overflow",
+    "Reduced motion shows static layout"
+  ],
+  "verify": "npm run test:hero",
+  "budget": {
+    "minutes": 30,
+    "retries": 2
+  },
+  "idempotency_key": "harbor-home:build-hero:v1",
+  "status": "pending",
+  "evidence": []
+}
