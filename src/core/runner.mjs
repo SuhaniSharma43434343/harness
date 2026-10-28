@@ -57,6 +57,7 @@ const result = (task) => {
 // The third argument injects the worker (the claude-code adapter arrives with T06) and test seams.
 //   worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat }) => { evidence: string[] }
 // The budget (task.budget.minutes) applies to each attempt: worker plus verification.
+// With `once`, a submitted task is verified and returned without starting another attempt.
 export async function runTask(project, taskId, options = {}) {
   const {
     worker,
@@ -65,6 +66,7 @@ export async function runTask(project, taskId, options = {}) {
     heartbeatMs = 30_000,
     timeoutMs,
     now = () => new Date(),
+    once = false,
     ...opts
   } = options;
   const ctx = { ...opts, now };
@@ -184,6 +186,8 @@ export async function runTask(project, taskId, options = {}) {
         } else {
           fail(`Verify command failed on attempt ${attempt} (exit ${outcome.code}); see ${log}`);
         }
+        // Step mode verifies one submission and hands the task back, rather than calling a worker.
+        if (once) return result(getTask(project, taskId, ctx));
         continue;
       }
 

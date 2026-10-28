@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { ConfigMissing, Unavailable } from '../../src/core/errors.mjs';
+import { installPreCommit } from '../../src/core/precommit.mjs';
 
 // Local Git repository per project (Release 1.0: no remote, no GitHub). The project folder is
 // the top of its own repository, which is what forge resume relies on to discard a crashed
@@ -39,11 +40,13 @@ export async function healthCheck() {
   return { ok: true, detail: out.trim() };
 }
 
-// Makes the project folder its own repository, with an ignore file and a first commit.
+// Makes the project folder its own repository, with an ignore file, the secret-scan
+// pre-commit hook and a first commit.
 // Running it again on an initialised project changes nothing.
 export async function init(projectDir) {
   if (isRepoTop(projectDir)) return { created: false };
   must(git(projectDir, ['init', '-q', '-b', 'main']), 'init');
+  installPreCommit(projectDir);
   if (!existsSync(join(projectDir, '.gitignore'))) writeFileSync(join(projectDir, '.gitignore'), IGNORE);
   must(git(projectDir, ['add', '-A']), 'add');
   must(git(projectDir, ['-c', 'user.name=Forge', '-c', 'user.email=forge@localhost', 'commit', '-q', '--allow-empty', '-m', 'Project created']), 'commit');
