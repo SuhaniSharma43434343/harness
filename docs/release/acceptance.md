@@ -9,11 +9,11 @@ Status follows the plan: **Not started**, **In development** (code exists, the t
 | A1 | Clean installation | Implemented | `clean-extract-2026-10-29.md`: the ZIP extracted on a Linux machine that never held the repo; setup, doctor and 612 tests pass. Suhani's Windows 11 runs. | A run on a machine or account outside the pair; the `.sh` script's exit code (see the integration log). |
 | A2 | Configuration | Implemented | Config and plugin tests (`tests/unit/config.test.mjs`, `plugins.test.mjs`): a missing value names the variable and the plugin. | Re-run from the clean extraction. |
 | A3 | Mock mode | Implemented | `forge test --mock` and `forge demo` (#30), with `tests/build/demo.test.mjs`. | A network log from a demo run for the release record. |
-| A4 | Real-model workflow | In development | `runs/`: the release run reaches P11 on all three sites; with Claude Code, the repair loop clears every gate but content-parity on the business site (`runs/2026-10-29-business-repair.md`). | `forge advance` stops at TECHNICAL_PLAN: nothing creates the P5 to P9 task contracts, so a new brief cannot reach an accepted preview yet. |
+| A4 | Real-model workflow | In development | `runs/README.md`: all three release briefs went through B1 to B3 with Claude Code and reached PREVIEW_REPORT with a local preview and the final report. | One exit gate (INTEGRATION_TESTS) was skipped on each; the planner fails at CONTENT without a site; no person has accepted a preview (B6). Integration log, blockers 2, 3 and 9. |
 | A5 | Adaptive intake | Implemented | `tests/intake/` (7 sample briefs). | |
 | A6 | Approach selection | Implemented | `tests/decision/` (48 decision briefs). | |
-| A7 | Approach modules | Implemented | `tests/build/` (build, fallback and budget tests for APP-01 to APP-08). | Real-device logs (`docs/device-log.md`); the APP-03 fallback for APP-04. |
-| A8 | Website quality | In development | `runs/2026-10-29-*.md`: gates and QA Verifier on the 3 release websites. After the real-model repair loop, the business site passes 10 of 11 gates. | The floor is not met on any of the three: content-parity needs locked content (B3). Showroom and story have no model run yet. |
+| A7 | Approach modules | Implemented | `tests/build/` (build, fallback and budget tests for APP-01 to APP-08); every approach from APP-02 to APP-08 was placed on a release site, which then passed the gates. | Real-device logs (`docs/device-log.md`); the APP-03 fallback for APP-04. |
+| A8 | Website quality | Implemented | `runs/2026-10-29-*-model.md`: the quality floor is met on all 3 release websites, 11 of 11 gates, with every selected approach on a page. | A person's look at each preview (the gates do not judge layout); the release websites need confirming. |
 | A9 | Boundaries | Implemented | Runner and step-mode tests (`forge task submit` refuses changes outside `owns_files`). | |
 | A10 | Approval gates | Implemented | Project and plugin tests: run, paid plugin and production deploy are refused without the approval, and the ledger shows the refusal. | Ledger extract for the release record. |
 | A11 | Retries and recovery | Implemented | `tests/unit/recovery.test.mjs`, `runner.test.mjs`. | |
@@ -44,8 +44,8 @@ APP-07 is only selected for a `flagship` brief at tier L, so the showroom brief 
 Run them with:
 
 ```bash
-node scripts/release-run.mjs all --fresh          # every built command, no model
-node scripts/release-run.mjs business --repair    # plus the repair loop with Claude Code
+node scripts/release-run.mjs all --fresh            # every built command, no model
+node scripts/release-run.mjs business --fresh --model   # the full workflow with Claude Code, to a local preview
 ```
 
 Reports go to `dist/release/<date>-<site>.md` and `.json`. Copy the Markdown into `docs/release/runs/` for the record; the JSON holds local paths, so it stays out of the repository.
