@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "accessibility",
+  "finding": "color-contrast",
+  "description": "Footer text too faint to read.",
+  "replace": [
+    {
+      "file": "site/dist/_astro/site.css",
+      "find": "--muted:#5c5c57",
+      "replace": "--muted:#d0d0cc"
+    }
+  ]
+}

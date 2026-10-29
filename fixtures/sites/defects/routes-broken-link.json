@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "routes",
+  "finding": "broken-link",
+  "description": "A link to a page that does not exist.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": "<a href=\"/contact\">Contact</a>",
+      "replace": "<a href=\"/contact\">Contact</a>\n          <a href=\"/projects\">Projects</a>"
+    }
+  ]
+}

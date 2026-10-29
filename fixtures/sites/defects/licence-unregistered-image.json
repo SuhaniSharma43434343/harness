@@ -1,0 +1,9 @@
+{
+  "base": "known-good",
+  "gate": "licences",
+  "finding": "no-licence-record",
+  "description": "A shipped image with no licence row.",
+  "files": {
+    "site/dist/images/stock-kitchen.jpg": "not really a jpeg"
+  }
+}

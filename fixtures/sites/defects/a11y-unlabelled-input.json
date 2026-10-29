@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "accessibility",
+  "finding": "label",
+  "description": "A form field with no label.",
+  "replace": [
+    {
+      "file": "site/dist/contact/index.html",
+      "find": "<label for=\"quote-email\">Email</label>",
+      "replace": ""
+    }
+  ]
+}

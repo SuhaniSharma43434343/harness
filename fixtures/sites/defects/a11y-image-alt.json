@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "accessibility",
+  "finding": "image-alt",
+  "description": "An image without alternative text.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": " alt=\"Line drawing of a renovated kitchen\"",
+      "replace": ""
+    }
+  ]
+}

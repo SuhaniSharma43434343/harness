@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "seo",
+  "finding": "title-duplicate",
+  "description": "Two pages share a title.",
+  "replace": [
+    {
+      "file": "site/dist/services/index.html",
+      "find": "<title>Services | Harbor Home Renovations</title>",
+      "replace": "<title>Contact | Harbor Home Renovations</title>"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "assets": [
+    {
+      "file": "favicon.svg",
+      "licence": "own work",
+      "source": "Made for the client by the Forge team",
+      "evidence": "assets/evidence/favicon.md",
+      "status": "cleared"
+    },
+    {
+      "file": "images/workshop.svg",
+      "licence": "own work",
+      "source": "Drawn for the client",
+      "evidence": "assets/evidence/workshop.md",
+      "status": "cleared"
+    }
+  ]
+}

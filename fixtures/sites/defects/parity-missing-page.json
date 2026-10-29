@@ -1,0 +1,16 @@
+{
+  "base": "known-good",
+  "gate": "content-parity",
+  "finding": "route-missing",
+  "description": "A locked page has no route.",
+  "remove": [
+    "site/dist/services/index.html"
+  ],
+  "replace": [
+    {
+      "file": "site/dist/sitemap.xml",
+      "find": "  <url><loc>https://harbor-home.example/services/</loc></url>\n",
+      "replace": ""
+    }
+  ]
+}

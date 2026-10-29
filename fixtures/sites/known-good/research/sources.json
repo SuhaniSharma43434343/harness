@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "id": "src-client-records",
+      "title": "Client project list, 2014 to 2026",
+      "kind": "client",
+      "ref": "intake/material/projects.xlsx"
+    }
+  ]
+}

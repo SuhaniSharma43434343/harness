@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "performance",
+  "finding": "tbt",
+  "description": "A script that blocks the main thread for two seconds.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": "</head>",
+      "replace": "<script>const end = Date.now() + 2000; while (Date.now() < end) {}</script>\n  </head>"
+    }
+  ]
+}

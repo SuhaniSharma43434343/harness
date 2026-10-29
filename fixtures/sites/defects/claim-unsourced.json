@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "claims",
+  "finding": "unsourced-claim",
+  "description": "An award claim with no source or client flag.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": "<p>You get a fixed quote",
+      "replace": "<p>We are the best-rated renovation company in Pune.</p>\n        <p>You get a fixed quote"
+    }
+  ]
+}

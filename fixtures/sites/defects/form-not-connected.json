@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "forms",
+  "finding": "no-endpoint",
+  "description": "A form with no endpoint, so nothing is sent.",
+  "replace": [
+    {
+      "file": "site/dist/contact/index.html",
+      "find": " action=\"/api/quote\"",
+      "replace": ""
+    }
+  ]
+}

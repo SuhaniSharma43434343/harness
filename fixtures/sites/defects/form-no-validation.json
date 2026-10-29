@@ -1,0 +1,18 @@
+{
+  "base": "known-good",
+  "gate": "forms",
+  "finding": "no-validation",
+  "description": "Required fields that are not marked required.",
+  "replace": [
+    {
+      "file": "site/dist/contact/index.html",
+      "find": " type=\"text\" required",
+      "replace": " type=\"text\""
+    },
+    {
+      "file": "site/dist/contact/index.html",
+      "find": " type=\"email\" required",
+      "replace": " type=\"email\""
+    }
+  ]
+}

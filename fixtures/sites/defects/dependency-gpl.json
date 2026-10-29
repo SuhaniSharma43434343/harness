@@ -1,0 +1,19 @@
+{
+  "base": "known-good",
+  "gate": "dependencies",
+  "finding": "licence-not-allowed",
+  "description": "A GPL package in the shipped dependencies.",
+  "json": [
+    {
+      "file": "site/package-lock.json",
+      "merge": {
+        "packages": {
+          "node_modules/copyleft-widget": {
+            "version": "1.0.0",
+            "license": "GPL-3.0-only"
+          }
+        }
+      }
+    }
+  ]
+}
