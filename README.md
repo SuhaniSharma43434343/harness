@@ -21,13 +21,14 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan`
 - T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
 - T10: the Cursor path: step mode (`forge task`), `AGENTS.md`, `CLAUDE.md`, Cursor rules and the pre-commit secret scan
+- T11: packaging (`forge package`, with a clean-extraction test) and `forge upgrade`
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 - T18: the starter website (APP-01) in `starters/astro-base/`, and `forge site`, which writes a project's brief, design tokens and content into it and builds it ([docs/starter.md](docs/starter.md))
 
-Packaging (T11) is not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The licence and QUICKSTART.md are still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Requirements
 
@@ -76,6 +77,8 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge task <next\|check\|submit\|abandon> <project> [task]` | Step mode for Cursor without Claude Code (see `docs/cursor.md`) |
 | `forge hooks install [dir]` | Adds the secret-scan pre-commit hook to a repository |
 | `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
+| `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
+| `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
