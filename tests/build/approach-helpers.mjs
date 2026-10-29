@@ -37,11 +37,13 @@ export function packageCache(packages) {
   return modules;
 }
 
-// site/node_modules: a link to each starter package, plus each approach package.
+// site/node_modules: a link to each starter package, plus each approach package. Build caches
+// (.astro, .vite) are not linked, so builds running at the same time never share one.
+const CACHES = new Set(['.astro', '.vite', '.cache']);
 export function linkModules(siteDir, extra = null, names = []) {
   const target = join(siteDir, 'node_modules');
   mkdirSync(target, { recursive: true });
-  for (const entry of readdirSync(STARTER_MODULES)) symlinkSync(join(STARTER_MODULES, entry), join(target, entry), 'junction');
+  for (const entry of readdirSync(STARTER_MODULES).filter((e) => !CACHES.has(e))) symlinkSync(join(STARTER_MODULES, entry), join(target, entry), 'junction');
   for (const name of names) {
     const scope = name.startsWith('@') ? name.split('/')[0] : null;
     if (scope) mkdirSync(join(target, scope), { recursive: true });

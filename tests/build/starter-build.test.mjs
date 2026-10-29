@@ -6,12 +6,13 @@
 // tests are skipped, and say so. Set FORGE_SKIP_BUILD_TESTS=1 to skip them on purpose.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSite, JS_BUDGET_BYTES, siteReport } from '../../src/site/build.mjs';
 import { scaffoldSite } from '../../src/site/scaffold.mjs';
 import { STARTER_DIR } from '../../src/site/tokens.mjs';
 import { newProject } from '../unit/helpers.mjs';
+import { linkModules } from './approach-helpers.mjs';
 
 const MODULES = join(STARTER_DIR, 'node_modules');
 const skip = process.env.FORGE_SKIP_BUILD_TESTS
@@ -27,7 +28,7 @@ const TYPES = readdirSync(SAMPLES).map((f) => f.replace('.json', ''));
 function scaffold(brief) {
   const { project, opts } = newProject(brief.project);
   const r = scaffoldSite(project, { brief, ...opts });
-  symlinkSync(MODULES, join(r.siteDir, 'node_modules'), 'junction');
+  linkModules(r.siteDir);
   return r;
 }
 

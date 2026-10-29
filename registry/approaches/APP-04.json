@@ -3,10 +3,14 @@
   "name": "Spline + Website",
   "summary": "An embedded Spline scene from the operator's own scene URL or file, with runtime events wired to UI triggers, lazy-loaded behind a poster. For a designer-edited micro-3D hero or feature visual.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app04/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app04/recipes/sections/SplineScene.astro",
+      "skills/app04/recipes/lib/spline.js",
+      "skills/app04/recipes/lib/events.js"
+    ]
   },
   "selectWhen": {
     "field": "features.interactive",
@@ -44,7 +48,7 @@
       "name": "@splinetool/runtime",
       "licence": "Spline terms of service",
       "licenceVerified": false,
-      "note": "npm lists no licence: review the runtime and account terms before release"
+      "note": "npm lists no licence: review the runtime and account terms before release. Pinned at 2.0.79 by the APP-04 module."
     }
   ],
   "tests": {
@@ -57,6 +61,9 @@
       "tests/decision/app04/neg-1.json",
       "tests/decision/app04/neg-2.json",
       "tests/decision/app04/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app04.test.mjs",
+    "fallback": "tests/build/app04.test.mjs",
+    "budget": "tests/build/app04.test.mjs"
   }
 }

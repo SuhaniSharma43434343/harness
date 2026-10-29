@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { Unavailable } from '../core/errors.mjs';
 
@@ -42,9 +42,33 @@ function files(dir) {
     .map((f) => f.split(sep).join('/'));
 }
 
-// Facts about a built site, for build tests and the APP-01 budget: routes, and the most
-// JavaScript any one page ships, gzipped (every bundled file, which is an upper bound, plus
-// that page's inline module scripts).
+// Static imports of a bundled module: `import{a}from"./x.js"` and `import"./x.js"`, but not
+// dynamic `import("./x.js")`, which loads later, on demand.
+const STATIC_IMPORT = /\bimport\s*(?:[\w$*{}\s,]+?\s*from\s*)?["']([^"']+\.m?js)["']/g;
+
+// The bundled files a page loads before anything runs on demand: its <script src> and
+// modulepreload files, and everything they import statically.
+export function initialScripts(dist, htmlFile, text = readFileSync(join(dist, htmlFile), 'utf8')) {
+  const queue = [...text.matchAll(/<(?:script\b[^>]*\bsrc|link\b[^>]*rel="modulepreload"[^>]*\bhref)="([^"]+\.m?js)"/g)].map((m) => m[1]);
+  const seen = new Set();
+  while (queue.length) {
+    const ref = queue.shift();
+    if (/^https?:/.test(ref)) continue;
+    const rel = ref.startsWith('/') ? ref.slice(1) : join(dirname(htmlFile), ref).split(sep).join('/');
+    if (seen.has(rel) || !existsSync(join(dist, rel))) continue;
+    seen.add(rel);
+    for (const m of readFileSync(join(dist, rel), 'utf8').matchAll(STATIC_IMPORT)) {
+      queue.push(m[1].startsWith('/') ? m[1] : join(dirname(rel), m[1]).split(sep).join('/'));
+    }
+  }
+  return seen;
+}
+
+// Facts about a built site, for build tests and the budgets: routes; jsBytes, the most
+// JavaScript any one page loads up front (its inline scripts plus the bundled files it loads
+// and their static imports), gzipped, which is what the APP-01 budget limits; lazyJsBytes,
+// the bundled JavaScript no page loads up front (approach libraries behind a dynamic import);
+// and totalJsBytes, everything bundled plus the largest page's inline scripts.
 export function siteReport(dist) {
   const all = files(dist);
   const html = all.filter((f) => f.endsWith('.html'));
@@ -52,16 +76,22 @@ export function siteReport(dist) {
     .filter((f) => f !== '404.html')
     .map((f) => '/' + f.replace(/(^|\/)index\.html$/, '').replace(/\/$/, ''))
     .sort();
-  let bundled = 0;
-  for (const f of all.filter((f) => f.endsWith('.js') || f.endsWith('.mjs'))) bundled += gzipSync(readFileSync(join(dist, f))).length;
+  const gz = new Map(all.filter((f) => /\.m?js$/.test(f)).map((f) => [f, gzipSync(readFileSync(join(dist, f))).length]));
+  const upFront = new Set();
+  let jsBytes = 0;
   let inline = 0;
   for (const f of html) {
+    const text = readFileSync(join(dist, f), 'utf8');
     let page = 0;
-    for (const m of readFileSync(join(dist, f), 'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) {
-      if (m[1].trim()) page += gzipSync(m[1]).length;
-    }
+    for (const m of text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) if (m[1].trim()) page += gzipSync(m[1]).length;
     inline = Math.max(inline, page);
+    for (const s of initialScripts(dist, f, text)) {
+      upFront.add(s);
+      page += gz.get(s) ?? 0;
+    }
+    jsBytes = Math.max(jsBytes, page);
   }
-  const jsBytes = bundled + inline;
-  return { routes, html, jsBytes, withinBudget: jsBytes <= JS_BUDGET_BYTES };
+  const bundled = [...gz.values()].reduce((a, b) => a + b, 0);
+  const lazyJsBytes = [...gz].filter(([f]) => !upFront.has(f)).reduce((a, [, n]) => a + n, 0);
+  return { routes, html, jsBytes, lazyJsBytes, totalJsBytes: bundled + inline, withinBudget: jsBytes <= JS_BUDGET_BYTES };
 }

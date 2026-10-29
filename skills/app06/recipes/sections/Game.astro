@@ -1,0 +1,52 @@
+---
+// APP-06 Game: a bounded game with one mechanic (collect each item), keyboard and touch
+// controls, progress, optional sound and a skip control, above an explainer with the same
+// content. Props: id, heading, intro, items: [{ title, text }] (two to eight).
+// The explainer is the fallback (no WebGL, a low-end device, a slow network, a failed load) and
+// is always in the page: every item can be opened without playing.
+const { id = 'game', heading, intro, items = [] } = Astro.props;
+const label = `${heading ?? 'Game'}: move the light to collect each item`;
+---
+<section class="section game" data-app06="game" data-id={id}>
+  <div class="wrap">
+    {heading && <h2>{heading}</h2>}
+    {intro && <p class="lead">{intro}</p>}
+    <div class="game__stage" hidden>
+      <div class="game__canvas" tabindex="0" role="application" aria-label={label} aria-describedby={`${id}-how`}></div>
+      <p id={`${id}-how`} class="game__how">Arrow keys or WASD move the light. On a touch screen, drag or tap where it should go. Each item you collect opens below.</p>
+      <div class="game__controls">
+        <p class="game__progress" role="status" aria-live="polite"></p>
+        <button type="button" class="button game__sound" aria-pressed="false">Sound</button>
+        <button type="button" class="button game__skip">Skip the game</button>
+      </div>
+    </div>
+    <div class="game__explainer">
+      <h3 tabindex="-1">{items.length} things to find</h3>
+      <ol>
+        {items.map((item, i) => (
+          <li data-item={i}>
+            <details open={i === 0}>
+              <summary>{item.title}</summary>
+              <p>{item.text}</p>
+            </details>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+<script>
+  import { startGame } from '../../lib/app06/game.js';
+  for (const section of document.querySelectorAll('[data-app06="game"]')) startGame(section);
+</script>
+<style>
+  .game__canvas { width: 100%; max-width: 960px; border-radius: var(--radius); overflow: hidden; outline-offset: 4px; touch-action: none; }
+  .game__canvas:focus-visible { outline: 3px solid var(--color-primary); }
+  .game__controls { display: flex; flex-wrap: wrap; gap: var(--space); align-items: center; margin-block: var(--space); }
+  .game__progress { margin: 0; flex: 1 1 12rem; font-weight: 600; }
+  .game__sound[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--color-on-primary, #fff); }
+  .game__explainer ol { margin: 0; padding: 0; list-style: none; display: grid; gap: calc(var(--space) * 0.5); }
+  .game__explainer li { border: 1px solid var(--color-border); border-radius: var(--radius); padding: calc(var(--space) * 0.75) var(--space); }
+  .game__explainer li[data-found='true'] { border-color: var(--color-primary); }
+  .game__explainer summary { cursor: pointer; font-weight: 600; }
+</style>

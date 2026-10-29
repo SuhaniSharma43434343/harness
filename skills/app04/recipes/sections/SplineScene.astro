@@ -1,0 +1,41 @@
+---
+// APP-04 SplineScene: an embedded Spline scene behind a poster. Props:
+//   scene:   the scene URL (.splinecode) or a file in public/. Defaults to the scene that
+//            forge approach copied in through the spline plugin (lib/app04/scene.json).
+//            Without either the section is the poster alone (fallback 'plugin-missing').
+//   poster:  { src, alt, width, height }, required. It is the first paint and the fallback.
+//   heading, text: optional copy beside the scene.
+//   events, triggers: wiring between scene objects and the page (see lib/app04/events.js).
+// The runtime loads after the page, so the poster stays the LCP element.
+import fetched from '../../lib/app04/scene.json';
+const { scene = fetched.scene ?? undefined, poster, heading, text, events = [], triggers = [] } = Astro.props;
+if (!poster?.src || !poster?.alt || !poster?.width || !poster?.height) {
+  throw new Error('APP-04/SplineScene needs a poster with src, alt, width and height: it is the first paint and the fallback.');
+}
+---
+<section class="section spline" data-app04="scene" data-scene={scene} data-wiring={JSON.stringify({ events, triggers })}>
+  <div class="wrap spline__grid">
+    {(heading || text) && (
+      <div>
+        {heading && <h2>{heading}</h2>}
+        {text && <p class="lead">{text}</p>}
+      </div>
+    )}
+    <div class="spline__stage" style={`aspect-ratio: ${poster.width} / ${poster.height}`}>
+      <img class="spline__poster" src={poster.src} alt={poster.alt} width={poster.width} height={poster.height} fetchpriority="high" decoding="async" />
+      <canvas class="spline__canvas" hidden role="img" aria-label={poster.alt}></canvas>
+    </div>
+  </div>
+</section>
+<script>
+  import { startSpline } from '../../lib/app04/spline.js';
+  for (const section of document.querySelectorAll('[data-app04="scene"]')) startSpline(section);
+</script>
+<style>
+  .spline__grid { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); align-items: center; }
+  .spline__stage { position: relative; width: 100%; border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+  .spline__poster, .spline__canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .spline__canvas { display: block; }
+  .spline__canvas[hidden] { display: none; }
+  .spline.is-live .spline__poster { visibility: hidden; }
+</style>
