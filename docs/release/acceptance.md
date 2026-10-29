@@ -9,11 +9,11 @@ Status follows the plan: **Not started**, **In development** (code exists, the t
 | A1 | Clean installation | Implemented | `clean-extract-2026-10-29.md`: the ZIP extracted on a Linux machine that never held the repo; setup, doctor and 612 tests pass. Suhani's Windows 11 runs. | A run on a machine or account outside the pair; the `.sh` script's exit code (see the integration log). |
 | A2 | Configuration | Implemented | Config and plugin tests (`tests/unit/config.test.mjs`, `plugins.test.mjs`): a missing value names the variable and the plugin. | Re-run from the clean extraction. |
 | A3 | Mock mode | Not started | | `forge test --mock` and `forge demo` are not built. |
-| A4 | Real-model workflow | In development | `runs/`: the release run reaches P11 on all three sites. | No command moves a project through P2 to P10, and nothing creates the P5 to P9 tasks, so a new brief cannot reach an accepted preview yet. |
+| A4 | Real-model workflow | In development | `runs/`: the release run reaches P11 on all three sites; with Claude Code, the repair loop clears every gate but content-parity on the business site (`runs/2026-10-29-business-repair.md`). | No command moves a project through P2 to P10, and nothing creates the P5 to P9 tasks, so a new brief cannot reach an accepted preview yet. |
 | A5 | Adaptive intake | Implemented | `tests/intake/` (7 sample briefs). | |
 | A6 | Approach selection | Implemented | `tests/decision/` (48 decision briefs). | |
 | A7 | Approach modules | Implemented | `tests/build/` (build, fallback and budget tests for APP-01 to APP-08). | Real-device logs (`docs/device-log.md`); the APP-03 fallback for APP-04. |
-| A8 | Website quality | In development | `runs/2026-10-29-*.md`: gates and QA Verifier on the 3 release websites. | The floor is not met on any of the three (see T28 below). |
+| A8 | Website quality | In development | `runs/2026-10-29-*.md`: gates and QA Verifier on the 3 release websites. After the real-model repair loop, the business site passes 10 of 11 gates. | The floor is not met on any of the three: content-parity needs locked content (B3). Showroom and story have no model run yet. |
 | A9 | Boundaries | Implemented | Runner and step-mode tests (`forge task submit` refuses changes outside `owns_files`). | |
 | A10 | Approval gates | Implemented | Project and plugin tests: run, paid plugin and production deploy are refused without the approval, and the ledger shows the refusal. | Ledger extract for the release record. |
 | A11 | Retries and recovery | Implemented | `tests/unit/recovery.test.mjs`, `runner.test.mjs`. | |

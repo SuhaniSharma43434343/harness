@@ -14,7 +14,7 @@ One entry per integration session: what was merged, what was checked, and the bl
 
 - The three release websites ran through every built command (`scripts/release-run.mjs`, reports in `runs/`). Problems found and fixed in the T28 pull request: the licences gate threw on the package rows that `forge approach` writes; intake dropped the brief file's fields that no question fills (`integrations`, `features.splineSceneUrl`), so APP-04 was never selected from a brief file; there was no way to rebuild a site after `forge approach` (now `forge site --build-only`); and the repair loop verified a builder's fix against the old `site/dist`, so fixes in `site/src` always failed (the verifier now builds first); and the forms gate passed a builder's invented `action="/api/contact"` for a form the brief sends through form-function (now `wrong-endpoint`); and the loop spent three rounds of repair tasks on content-parity, which no builder can fix (a skipped gate now gets no task, and the loop escalates at once).
 - Clean extraction of the ZIP on a second machine (`clean-extract-2026-10-29.md`): passes.
-- Two real-model repair loops on the business site (`runs/2026-10-29-business-repair.md`). The second, with the fixes, met every gate except content-parity.
+- Three real-model repair runs on the business site (`runs/2026-10-29-business-repair.md`). With all the fixes, the builder clears every gate except content-parity in 2 loops.
 
 **Blockers:**
 
@@ -37,7 +37,7 @@ Every pull request is approved by the other owner before it merges.
 
 | PR | Task | Author | Reviewer | Outcome |
 | --- | --- | --- | --- | --- |
-| #29 | T29 | Suhani | Nidhi | In review, 2026-10-29 |
+| #29 | T29 | Suhani | Nidhi | Reviewed 2026-10-29: four changes asked for (licences, approach packages, workspace path, missing lockfile) |
 | #28 | T12 | Suhani | Nidhi | Merged 2026-10-29 with no review on GitHub; Nidhi to review the APP-03, 05, 07 and 08 tests after the merge |
 | #10 to #21 | T14 to T25 | Nidhi | Suhani | Merged 2026-10-28 and 2026-10-29 |
 | #9 | T18 | Nidhi | Suhani | Merged 2026-10-29, after the Windows path fix |
