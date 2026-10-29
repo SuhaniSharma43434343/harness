@@ -1,0 +1,56 @@
+{
+  "case": "A frame sequence with motion off",
+  "expect": "not-selected",
+  "because": "rejectWhen",
+  "brief": {
+    "project": "app08-neg-1",
+    "schemaVersion": "0.1.0",
+    "status": "ready",
+    "projectType": "business",
+    "tier": "M",
+    "client": {
+      "name": "Test Client",
+      "industry": "services",
+      "languages": [
+        "en"
+      ]
+    },
+    "goals": [
+      {
+        "id": "leads",
+        "statement": "Generate qualified enquiries"
+      }
+    ],
+    "audience": [
+      {
+        "segment": "Local customers",
+        "need": "Find and contact the business"
+      }
+    ],
+    "pages": [
+      {
+        "slug": "/",
+        "title": "Home",
+        "purpose": "Introduce the offer",
+        "cta": "Get in touch"
+      }
+    ],
+    "features": {
+      "interactive": [
+        "frame-sequence"
+      ]
+    },
+    "brand": {
+      "tone": [
+        "clear"
+      ],
+      "motionIntensity": 0
+    },
+    "constraints": {
+      "deviceFloor": "mid",
+      "accessibility": "WCAG 2.2 AA"
+    },
+    "integrations": [],
+    "assumptions": []
+  }
+}

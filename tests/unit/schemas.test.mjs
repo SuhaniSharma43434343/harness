@@ -26,6 +26,7 @@ const PREFIX = [
   ['condition', 'condition'],
   ['tokens', 'tokens'],
   ['site-config', 'siteConfig'],
+  ['estimate', 'estimate'],
 ];
 
 function schemaFor(file) {

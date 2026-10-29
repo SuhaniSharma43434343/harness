@@ -1,0 +1,16 @@
+{
+  "id": "vercel",
+  "category": "deploy",
+  "version": "0.1.0",
+  "enabledByDefault": false,
+  "env": [
+    { "name": "VERCEL_TOKEN", "required": true, "secret": true, "description": "A Vercel access token (Account Settings > Tokens)." },
+    { "name": "VERCEL_TEAM_ID", "required": false, "secret": false, "description": "Team id, when deploying to a team rather than a personal account." },
+    { "name": "VERCEL_PROJECT", "required": false, "secret": false, "description": "Vercel project name. Defaults to the Forge project id." }
+  ],
+  "permissions": { "network": ["api.vercel.com"], "filesystem": "project-read", "actions": ["read", "write", "deploy"] },
+  "approvals": ["B5", "B7"],
+  "cost": { "paid": false, "disclosure": "Vercel's Hobby plan is free for personal, non-commercial use; client sites usually need a paid Pro plan.", "pricingUrl": "https://vercel.com/pricing" },
+  "docs": "docs/plugins.md#vercel",
+  "status": "implemented-unverified"
+}

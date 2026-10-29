@@ -27,6 +27,7 @@ export const SCHEMAS = {
   // Starter template (Nidhi, T18).
   tokens: 'tokens.schema.json',
   siteConfig: 'site-config.schema.json',
+  estimate: 'estimate.schema.json',
 };
 
 let ajv;

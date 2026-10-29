@@ -6,6 +6,7 @@ import { loadConfig } from './config.mjs';
 import { ConfigMissing, PermissionDenied, SchemaInvalid, Unavailable } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { acquireFileLocks, acquireRunLock, patternsOverlap, releaseFileLocks, releaseRunLock } from './locks.mjs';
+import { redactText } from './redact.mjs';
 import { ROOT, assertProjectExists } from './workspace.mjs';
 
 // Errors a retry cannot fix: the task is blocked straight away so the operator sees it.
@@ -56,6 +57,7 @@ const result = (task) => {
 // The third argument injects the worker (the claude-code adapter arrives with T06) and test seams.
 //   worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat }) => { evidence: string[] }
 // The budget (task.budget.minutes) applies to each attempt: worker plus verification.
+// With `once`, a submitted task is verified and returned without starting another attempt.
 export async function runTask(project, taskId, options = {}) {
   const {
     worker,
@@ -64,6 +66,7 @@ export async function runTask(project, taskId, options = {}) {
     heartbeatMs = 30_000,
     timeoutMs,
     now = () => new Date(),
+    once = false,
     ...opts
   } = options;
   const ctx = { ...opts, now };
@@ -176,13 +179,15 @@ export async function runTask(project, taskId, options = {}) {
         }
         const log = `evidence/tasks/${taskId}/attempt-${attempt}-verify.log`;
         mkdirSync(dirname(join(paths.dir, log)), { recursive: true });
-        writeFileSync(join(paths.dir, log), `$ ${task.verify}\nexit ${outcome.code}\n\n${outcome.output ?? ''}`);
+        writeFileSync(join(paths.dir, log), redactText(`$ ${task.verify}\nexit ${outcome.code}\n\n${outcome.output ?? ''}`));
         if (outcome.ok) {
           const evidence = [...new Set([...task.evidence, log])];
           transitionTask(project, taskId, 'done', { actor: 'cli', patch: { evidence }, ...ctx });
         } else {
           fail(`Verify command failed on attempt ${attempt} (exit ${outcome.code}); see ${log}`);
         }
+        // Step mode verifies one submission and hands the task back, rather than calling a worker.
+        if (once) return result(getTask(project, taskId, ctx));
         continue;
       }
 

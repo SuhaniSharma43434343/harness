@@ -1,0 +1,43 @@
+{
+  "id": "APP-01",
+  "name": "AI to Full Website",
+  "summary": "A complete multi-page site generated from the locked brief, content and tokens. The build method for every project.",
+  "registryVersion": "0.1.0",
+  "verification": "in-development",
+  "module": {
+    "skill": "skills/app01/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "field": "projectType",
+    "op": "exists"
+  },
+  "rejectWhen": {
+    "field": "projectType",
+    "op": "missing"
+  },
+  "budget": {
+    "mobileLcpMs": 2500,
+    "jsKbGzip": 150
+  },
+  "dependencies": [
+    {
+      "name": "astro",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app01/pos-1.json",
+      "tests/decision/app01/pos-2.json",
+      "tests/decision/app01/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app01/neg-1.json",
+      "tests/decision/app01/neg-2.json",
+      "tests/decision/app01/neg-3.json"
+    ]
+  }
+}

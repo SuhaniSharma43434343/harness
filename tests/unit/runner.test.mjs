@@ -42,6 +42,9 @@ test('addTask always starts a task as pending with no evidence', () => {
   assert.deepEqual(t.evidence, []);
   assert.throws(() => addTask(project, task('hero'), opts), PermissionDenied);
   assert.throws(() => addTask(project, task('bad', { owns_files: ['/etc/passwd'] }), opts), SchemaInvalid);
+  for (const runtime of ['ledger.jsonl', 'project.json', 'board/hero.json', 'locks/**', '**/*.json']) {
+    assert.throws(() => addTask(project, task('bad', { owns_files: [runtime] }), opts), SchemaInvalid, runtime);
+  }
 });
 
 test('a task whose dependencies are unfinished is refused', async () => {

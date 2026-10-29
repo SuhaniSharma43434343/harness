@@ -1,0 +1,110 @@
+{
+  "project": "harbor-home",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "business",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Harbor Home Renovations",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "home renovation",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "goals",
+      "status": "known",
+      "value": [
+        {
+          "id": "leads",
+          "statement": "Get qualified renovation enquiries through the contact form",
+          "metric": "enquiries per month"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "pages",
+      "status": "known",
+      "value": [
+        {
+          "slug": "/",
+          "title": "Home",
+          "purpose": "Show services and proof of quality",
+          "cta": "Request a quote"
+        },
+        {
+          "slug": "/services",
+          "title": "Services",
+          "purpose": "Explain each renovation service",
+          "cta": "Request a quote"
+        },
+        {
+          "slug": "/projects",
+          "title": "Projects",
+          "purpose": "Before-and-after case studies",
+          "cta": "Start your project"
+        },
+        {
+          "slug": "/contact",
+          "title": "Contact",
+          "purpose": "Collect enquiries",
+          "cta": "Send enquiry"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "features.forms",
+      "status": "known",
+      "value": [
+        {
+          "id": "quote",
+          "purpose": "Quote request",
+          "fields": [
+            "name",
+            "email",
+            "phone",
+            "project type",
+            "message"
+          ],
+          "destination": "form-function"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/business.json"
+      },
+      "assumption": false
+    }
+  ]
+}

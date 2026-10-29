@@ -48,7 +48,12 @@ test('an agent outside its phases is refused with the agents that are allowed', 
 
 test('generated files keep the source instructions and mark themselves as generated', () => {
   const files = generatedFiles(agents);
-  assert.equal(Object.keys(files).length, 16);
+  assert.equal(Object.keys(files).length, 19);
+  for (const rel of ['CLAUDE.md', 'AGENTS.md', '.cursor/rules/forge.mdc']) {
+    assert.match(files[rel], /You are the Project Manager/, rel);
+    assert.match(files[rel], /forge task submit/, rel);
+  }
+  assert.match(files['.cursor/rules/forge.mdc'], /^alwaysApply: true$/m);
   for (const a of agents) {
     for (const rel of [`.claude/agents/${a.id}.md`, `.cursor/rules/${a.id}.mdc`]) {
       const text = files[rel];

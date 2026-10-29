@@ -31,6 +31,7 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 | Selection matrix | `selectionMatrix` | `schemas/selection-matrix.schema.json` | Nidhi (T16) | `selectApproaches` |
 | Approach decision record | `approachDecision` | `schemas/approach-decision.schema.json` | `selectApproaches` (P3) | Creative Director, Lead Developer; reviewed at B2 |
 | Design decision | `designDecision` | `schemas/design-decision.schema.json` | Creative Director (P4) | Content & UX, builders; chosen at B2 |
+| Estimate | `estimate` | `schemas/estimate.schema.json` | `estimateScope` (P1) | Operator at B1, final report |
 | Rule condition | `condition` | `schemas/condition.schema.json` | (shared language) | Question rules, selection rules, design rules |
 | Design tokens | `tokens` | `schemas/tokens.schema.json` | Creative Director (P4), `forge site` (T18) | The starter site, builders |
 | Site config | `siteConfig` | `schemas/site-config.schema.json` | `forge site` (T18); the form plugin sets form actions | The starter site, builders |
@@ -64,11 +65,11 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | --- | --- | --- | --- |
 | `runTask` | Suhani | `runTask(project: string, taskId: string, opts?: RunOptions) => Promise<TaskResult>` | M2 (built) |
 | `ledger.append` | Suhani | `append(project: string, entry: Omit<LedgerEntry, 'seq' \| 'ts'>, opts?: { workspace?: string }) => LedgerEntry` | M2 (built) |
-| `getPlugin` | Suhani | `getPlugin(id: string) => Promise<Plugin>`; throws `ConfigMissing` or `PermissionDenied` | M2 |
-| `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 |
-| `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation') => Facts` | M2 |
-| `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 |
-| `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix) => ApproachDecision` | M2 |
+| `getPlugin` | Suhani | `getPlugin(id: string, opts?: { project?: string, mock?: boolean, workspace?: string }) => Promise<Plugin>`; throws `ConfigMissing`, `ConfigInvalid` or `PermissionDenied`. See [plugins.md](plugins.md) | M2 (built) |
+| `selectQuestions` | Nidhi | `selectQuestions(brief: Partial<Brief>, facts: Facts, bank: QuestionBank, opts?: { round?: 1 \| 2 \| 3, max?: number }) => Question[]` | M2 (built) |
+| `recordAnswer` | Nidhi | `recordAnswer(facts: Facts, question: Question, answer: unknown \| 'use-recommendation', opts?: { now?: Date }) => Facts` | M2 (built) |
+| `validateBrief` | Nidhi | `validateBrief(brief: Brief, facts: Facts) => { valid: boolean, errors: string[], missing: string[] }` | M2 (built) |
+| `selectApproaches` | Nidhi | `selectApproaches(brief: Brief, registry: ApproachEntry[], matrix: SelectionMatrix, opts?: { now?: Date }) => ApproachDecision` | M2 (built) |
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
 | `tokensFromDirection` | Nidhi | `tokensFromDirection(direction: Direction) => Tokens`; throws `SchemaInvalid` on failing contrast | M2 (built, T18) |
 | `scaffoldSite` | Nidhi | `scaffoldSite(project: string, opts?: { brief?: Brief, tokens?: Tokens, force?: boolean, workspace?: string }) => { siteDir, tokens, pages, forms, fonts }` | M2 (built, T18) |
@@ -83,9 +84,9 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 ### What each project-side function promises
 
 - **`selectQuestions`** is pure: it reads, and never writes, files. It drops every question whose `fills` fields are all `known` or `inferred` in the facts, and every question whose `appliesTo` or `askWhen` does not match. It returns the rest sorted by score (the weight, plus a boost when a required brief field is still unknown). Round 1 returns 5 to 10 questions; if fewer than 5 are candidates it returns them all. It throws `SchemaInvalid` if the bank is invalid.
-- **`recordAnswer`** returns new facts. A real answer becomes a `known` fact with source `answer`. `'use-recommendation'` becomes an `inferred` fact with source `recommendation`, `assumption: true` and the question's recommendation reason. Follow-up questions are found by calling `selectQuestions` again.
+- **`recordAnswer`** returns new facts. A real answer becomes a `known` fact with source `answer`. `'use-recommendation'` becomes an `inferred` fact with source `recommendation`, `assumption: true` and the question's recommendation reason. Follow-up questions are found by calling `selectQuestions` again. `opts.now` adds `recordedAt`; without it the function stays pure. Details in `docs/intake.md`.
 - **`validateBrief`** runs the brief schema, then the checks a schema cannot make across files. Every required brief field has a `known` or `inferred` fact. Every inferred field is listed in `brief.assumptions`. `missing` lists the fields that still need an answer. The P1 exit gate is `valid && missing.length === 0`.
-- **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`.
+- **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`. `opts.now` sets `decidedAt`, the only part of the record that is not derived from the inputs, so tests can compare whole records. The rules and the matrix are described in `docs/registry.md`.
 - **`proposeDirections`** may call the model through Suhani's worker adapter. It applies the design rules (T17) and returns at least 3 directions that pass the schema.
 - **`tokensFromDirection`** is pure. It copies the direction's colours, derives `surface`, `border`, `onPrimary`, `onAccent` and `link`, and refuses tokens whose rendered pairs fail WCAG contrast.
 - **`scaffoldSite`** copies `starters/astro-base/` into `site/` and writes the brief, tokens and content into it (see [starter.md](starter.md)). It reads `intake/brief.json` when no brief is passed, prefers `design/tokens.json`, then the chosen direction, then the starter defaults, and uses a locked page from `content/pages/` over the scaffold. It refuses to replace an existing `site/` without `force`, and records a `site_scaffolded` note in the ledger.
@@ -106,7 +107,7 @@ Every component throws one of the typed errors in `src/core/errors.mjs`: `Config
 | 2 | Is `budget.minutes` per attempt or across all attempts? | Per attempt, covering the worker and the verify command together. With 2 retries, a task can use at most three times its budget. |
 | 3 | `workspace/<project>/` layout | As below. The runtime owns `project.json`, `ledger.jsonl`, `board/` and `locks/`. Each other folder belongs to the agent named in the plan's agent table. |
 | 4 | Starter template contract | Accepted as proposed: tokens in `site/src/styles/tokens.json`, page content in `site/src/content/pages/<slug>.md`, approach sections in `site/src/sections/<approach>/`. Detailed in [starter.md](starter.md). |
-| 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then. |
+| 5 | Does `estimate.json` get a schema at M1? | No. It is defined with the Project Manager workflow in T15 and added by a pull request then (`schemas/estimate.schema.json`). |
 | 6 | Project types and tiers | The seven types and the tiers S, M and L above are frozen. |
 | 7 | YAML or JSON registry files | JSON (see Data formats). |
 | 8 | Error for an illegal phase or task transition | `PermissionDenied`, with the allowed moves in `details`. The shared error set stays as it is; lock conflicts and a busy project use `Unavailable`. |

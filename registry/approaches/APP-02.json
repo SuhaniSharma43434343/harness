@@ -1,0 +1,84 @@
+{
+  "id": "APP-02",
+  "name": "Cinematic Scroll Website",
+  "summary": "Pinned sections, scroll-scrubbed reveals and section transitions with synced smooth scroll. For brand stories, launches and premium business sites with motion intensity 2 or 3.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app02/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "any": [
+      {
+        "field": "projectType",
+        "op": "in",
+        "value": [
+          "launch",
+          "flagship"
+        ]
+      },
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "scroll-story"
+      },
+      {
+        "field": "brand.tone",
+        "op": "includes",
+        "value": "premium"
+      }
+    ]
+  },
+  "rejectWhen": {
+    "field": "brand.motionIntensity",
+    "op": "lte",
+    "value": 1
+  },
+  "fallback": {
+    "approach": "APP-01",
+    "description": "Static stacked layout with CSS reveals",
+    "triggers": [
+      "reduced-motion",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "extraJsKbGzip": 60,
+    "cls": 0.1
+  },
+  "dependencies": [
+    {
+      "name": "gsap",
+      "licence": "GSAP Standard 'no charge' licence",
+      "licenceVerified": false,
+      "note": "Own licence, not open source: confirm the terms allow client sites before release"
+    },
+    {
+      "name": "gsap/ScrollTrigger",
+      "licence": "GSAP Standard 'no charge' licence",
+      "licenceVerified": false,
+      "note": "Ships with gsap"
+    },
+    {
+      "name": "lenis",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app02/pos-1.json",
+      "tests/decision/app02/pos-2.json",
+      "tests/decision/app02/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app02/neg-1.json",
+      "tests/decision/app02/neg-2.json",
+      "tests/decision/app02/neg-3.json"
+    ]
+  }
+}

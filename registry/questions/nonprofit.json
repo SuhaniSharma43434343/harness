@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-nonprofit-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "nonprofit"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "supporters",
+            "statement": "Turn visitors into volunteers and donors"
+          }
+        ],
+        "reason": "The usual main goal for a nonprofit site."
+      }
+    },
+    {
+      "id": "q-nonprofit-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "nonprofit"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Supporters and volunteers",
+            "need": "Understand the cause and find a way to help"
+          }
+        ],
+        "reason": "The usual main audience for a nonprofit site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-nonprofit-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "nonprofit"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Explain the cause",
+            "cta": "Get involved"
+          },
+          {
+            "slug": "/impact",
+            "title": "Impact",
+            "purpose": "Show results",
+            "cta": "Donate"
+          },
+          {
+            "slug": "/get-involved",
+            "title": "Get involved",
+            "purpose": "Volunteer and donate options",
+            "cta": "Sign up to volunteer"
+          }
+        ],
+        "reason": "A standard page set for a nonprofit site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-nonprofit-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "nonprofit"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "volunteer",
+            "purpose": "Volunteer sign-up",
+            "fields": [
+              "name",
+              "email"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a nonprofit site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

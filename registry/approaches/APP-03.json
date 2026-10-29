@@ -1,0 +1,84 @@
+{
+  "id": "APP-03",
+  "name": "Interactive 3D Website",
+  "summary": "A lazy-loaded Three.js scene (model or procedural) with camera and scroll interaction, behind a poster. For showrooms, products and data visualisation when the device floor allows it.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app03/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "any": [
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "3d-product"
+      },
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "3d-scene"
+      },
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "data-visualisation"
+      }
+    ]
+  },
+  "rejectWhen": {
+    "field": "constraints.deviceFloor",
+    "op": "eq",
+    "value": "low"
+  },
+  "fallback": {
+    "approach": "APP-01",
+    "description": "Poster image plus CSS depth",
+    "triggers": [
+      "reduced-motion",
+      "no-webgl",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "extraJsKbGzip": 250,
+    "assetsMb": 3,
+    "minFps": 30,
+    "loadAfterLcp": true
+  },
+  "dependencies": [
+    {
+      "name": "three",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    },
+    {
+      "name": "three/examples GLTFLoader",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Ships with three"
+    },
+    {
+      "name": "glTF models",
+      "licence": "per model",
+      "licenceVerified": false,
+      "note": "Every model needs a row in the asset licence register"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app03/pos-1.json",
+      "tests/decision/app03/pos-2.json",
+      "tests/decision/app03/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app03/neg-1.json",
+      "tests/decision/app03/neg-2.json",
+      "tests/decision/app03/neg-3.json"
+    ]
+  }
+}
