@@ -15,6 +15,7 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T08: the git, local-preview, vercel, form-function and spline plugins ([docs/plugins.md](docs/plugins.md))
 - T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan` ([docs/security.md](docs/security.md))
 - T10: the Cursor path: step mode (`forge task`), `AGENTS.md`, `CLAUDE.md`, Cursor rules and the pre-commit secret scan ([docs/cursor.md](docs/cursor.md))
+- T11: packaging (`forge package`, with a clean-extraction test) and `forge upgrade` ([docs/packaging.md](docs/packaging.md))
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
 - T14: the question bank (`registry/questions/`) and the intake rules ([docs/intake.md](docs/intake.md))
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
@@ -29,13 +30,13 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T24: the QA Verifier and repair loop (`forge qa`) ([docs/qa.md](docs/qa.md))
 - T25: the operator docs listed below
 
-Packaging (T11) is not built yet. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The licence is still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
 ## Documentation
 
 | Doc | For |
 | --- | --- |
-| [docs/quickstart.md](docs/quickstart.md) | Taking one project from brief to a gated, QA-reviewed site |
+| [QUICKSTART.md](QUICKSTART.md) | Taking one project from brief to a gated, QA-reviewed site |
 | [docs/claude-code.md](docs/claude-code.md) | Running Forge with Claude Code |
 | [docs/cursor.md](docs/cursor.md) | Running Forge from Cursor |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Common failures and what to do |
@@ -93,6 +94,8 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge task <next\|check\|submit\|abandon> <project> [task]` | Step mode for Cursor without Claude Code (see `docs/cursor.md`) |
 | `forge hooks install [dir]` | Adds the secret-scan pre-commit hook to a repository |
 | `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
+| `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
+| `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 

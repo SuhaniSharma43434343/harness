@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contact | Harbor Home Renovations</title>
+    <meta name="description" content="Ask Harbor Home for a fixed renovation quote. We reply within two working days.">
+    <link rel="canonical" href="https://harbor-home.example/contact/">
+    <meta property="og:title" content="Contact | Harbor Home Renovations">
+    <meta property="og:description" content="Ask Harbor Home for a fixed renovation quote. We reply within two working days.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/_astro/site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">Harbor Home Renovations</a>
+        <nav aria-label="Main">
+          <a href="/">Home</a>
+          <a href="/services">Services</a>
+          <a href="/contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="hero"><div class="wrap">
+        <h1>Request a quote</h1>
+        
+      </div></section>
+      <section class="section"><div class="wrap">
+        <p>Tell us about your home and what you would like to change. We reply within two working days.</p>
+        <p><a class="button" href="/contact#quote">Send enquiry</a></p>
+      </div></section>
+      <section class="section" id="quote">
+        <h2 id="quote-title">Quote request</h2>
+        <form class="form" method="post" action="/api/quote" data-forge-form="quote" aria-labelledby="quote-title">
+          <div class="field"><label for="quote-name">Name</label><input id="quote-name" name="name" type="text" required autocomplete="name"></div>
+          <div class="field"><label for="quote-email">Email</label><input id="quote-email" name="email" type="email" required autocomplete="email"></div>
+          <div class="field"><label for="quote-message">Message (optional)</label><textarea id="quote-message" name="message"></textarea></div>
+          <div><button class="button" type="submit">Send enquiry</button></div>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <script src="/_astro/form.js" defer></script>
+    </main>
+    <footer class="site-footer"><div class="wrap"><p>Harbor Home Renovations, Pune</p></div></footer>
+  </body>
+</html>
