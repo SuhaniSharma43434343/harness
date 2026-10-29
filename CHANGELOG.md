@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T21: the content, claims, licence, secrets, SEO and dependency gates in `src/gates/`, with `runGate`, `runGates`, `qualityFloor` and `forge gates`. Every gate fails a site with no build or no text, passes the known-good fixture and catches its seeded defects. The starter now builds `sitemap.xml`, `robots.txt` and Organization JSON-LD. See `docs/gates.md`.
 - T23: gate fixtures in `fixtures/sites/`: a blank site, a known-good site, and 21 seeded defects covering all 11 gates, with `materializeFixture` and fixture tests. Adds `node-html-parser` (MIT) for the gates.
 - T17: design directions and rules. `proposeDirections` ranks an open-licensed font catalog, palette families and layouts against the brief's tone and returns 3 to 5 distinct directions; `checkDesignRules` checks licences, recomputed contrast, distinctness, the avoid list, motion and renders; `renderDirections` writes HTML specimens and desktop and mobile screenshots. `forge directions`. See `docs/design.md`.
 - T18: starter website and APP-01 module. `starters/astro-base/` is a static Astro site styled only from design tokens, with pages from Markdown content and sections resolved from `src/sections/<approach>/`. `forge site` writes a project's brief, tokens (from `design/tokens.json` or the chosen direction, contrast-checked) and content into it; `--build` builds it and checks the 150 KB JavaScript budget. New `tokens` and `siteConfig` schemas, `docs/starter.md`, `skills/app01/`, and build tests for all 7 sample briefs.

@@ -14,6 +14,14 @@ interface Props {
 const { title, description } = Astro.props;
 const fullTitle = Astro.url.pathname === '/' ? site.name : `${title} | ${site.name}`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+// Structured data for the organisation behind the site (the SEO gate checks that it parses).
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: site.name,
+  description: site.description,
+  ...(site.url ? { url: site.url } : {}),
+});
 ---
 <!doctype html>
 <html lang={site.lang}>
@@ -28,6 +36,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta property="og:type" content="website" />
     <meta name="theme-color" content={tokens.color.bg} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="application/ld+json" set:html={jsonLd} />
     <style is:inline set:html={tokensToCss(tokens)}></style>
     <slot name="head" />
   </head>
