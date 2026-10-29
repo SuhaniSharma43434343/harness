@@ -9,6 +9,7 @@ This document holds both halves of the M1 interface freeze: the runtime side (Su
 | Task contract | `schemas/task.schema.json` | Runner, Lead Developer, QA Verifier, Cursor step mode |
 | Plugin manifest | `schemas/plugin-manifest.schema.json` | Plugin host, every plugin |
 | Gate result | `schemas/gate-result.schema.json` | Nidhi's gates write it; the runner and QA Verifier read it |
+| Defect report | `schemas/defect-report.schema.json` | The QA Verifier writes `reports/defects.json`; builders read it through their repair tasks |
 | Ledger entry | `schemas/ledger-entry.schema.json` | Every component that records events |
 | Config | `schemas/forge-config.schema.json` | CLI, doctor |
 | Project state | `schemas/project-state.schema.json` | Runtime only (`project.json`); others read it through `forge status` |
@@ -75,6 +76,8 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | `tokensFromDirection` | Nidhi | `tokensFromDirection(direction: Direction) => Tokens`; throws `SchemaInvalid` on failing contrast | M2 (built, T18) |
 | `scaffoldSite` | Nidhi | `scaffoldSite(project: string, opts?: { brief?: Brief, tokens?: Tokens, force?: boolean, workspace?: string }) => { siteDir, tokens, pages, forms, fonts }` | M2 (built, T18) |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object, projectDir?: string, preview?: boolean, now?: () => Date, browser?: Browser, adapters?: { playwright?, axe?, lighthouse? }, screenshots?: boolean }) => Promise<GateResult>` | M3 (built, T21 and T22) |
+| `qaReview` | Nidhi | `qaReview(project: string, opts?: { workspace?, gates?: GateName[], now?, ...runGate opts }) => Promise<{ report: DefectReport, results: GateResult[], floor, evidenceDir }>` | M3 (built, T24) |
+| `runRepairLoop` | Nidhi | `runRepairLoop(project: string, opts: { worker: Worker, verifier?, workspace?, gates?, ...runGate opts }) => Promise<{ outcome: 'passed' \| 'escalated', loops, report }>` | M3 (built, T24) |
 
 The types are the schemas: `Brief`, `Facts`, `QuestionBank`, `ApproachEntry`, `SelectionMatrix`, `ApproachDecision`, `DesignDecision` and `GateResult` are the parsed objects those schemas validate. `Question` is one item of `QuestionBank.questions`, `Finding` is one item of `GateResult.findings`, `GateName` is the `gate` enum in `gate-result.schema.json`, and `FallbackTrigger` is the enum in `common.schema.json`. `Worker` is the adapter the runner already takes (`worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat })`), so intake and directions call the model through the same seam as builders. `Estimate` and `DefectReport` have their own schemas (`estimate`, `defectReport`).
 

@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- T24: the QA Verifier. `qaReview` runs the gates with fresh evidence per review and keeps `reports/defects.json` (new `defectReport` schema) and `reports/qa-log.md`; `runRepairLoop` hands open defects to the builder as repair tasks through the runner, re-reviews, and escalates after 3 loops. `forge qa [--repair]`. End-to-end tests on every seeded defect. See `docs/qa.md`.
 - T22: the browser gates: routes, accessibility (axe-core at three widths and with reduced motion), forms (empty, success and failure submissions against an intercepted endpoint), responsive (six widths, with screenshots) and performance (Lighthouse median of three runs, plus the JavaScript budget). A static server for `site/dist`, Playwright, axe-core and Lighthouse adapters with plugin manifests in `src/plugins/`, and the tools pinned in `tools/package.json` (`scripts/setup.sh --with-test-tools`).
 - T21: the content, claims, licence, secrets, SEO and dependency gates in `src/gates/`, with `runGate`, `runGates`, `qualityFloor` and `forge gates`. Every gate fails a site with no build or no text, passes the known-good fixture and catches its seeded defects. The starter now builds `sitemap.xml`, `robots.txt` and Organization JSON-LD. See `docs/gates.md`.
 - T23: gate fixtures in `fixtures/sites/`: a blank site, a known-good site, and 21 seeded defects covering all 11 gates, with `materializeFixture` and fixture tests. Adds `node-html-parser` (MIT) for the gates.

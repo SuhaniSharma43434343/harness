@@ -23,8 +23,7 @@ export default {
     const { jsBytes } = siteReport(ctx.dist);
     if (jsBytes > t.jsBytes) add('js-budget', `The build ships ${jsBytes} bytes of JavaScript (budget ${t.jsBytes})`);
 
-    const serve = async (fn) => (ctx.opts.adapters?.lighthouse ? fn(ctx.opts.base ?? 'http://site.test') : withServer(ctx, fn));
-    return serve(async (base) => {
+    return withServer(ctx, async (base) => {
       const metrics = { jsBytes, pages: 0 };
       const pages = ctx.routes().slice(0, t.maxPages);
       for (const route of pages) {

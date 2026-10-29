@@ -13,6 +13,7 @@ import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs'
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
 import { cmdIntake } from './intake.mjs';
+import { cmdQa } from './qa.mjs';
 import { cmdSelect } from './select.mjs';
 import { cmdSite } from './site.mjs';
 import { validateFile } from './validate.mjs';
@@ -58,6 +59,10 @@ const COMMANDS = {
   gates: {
     summary: 'Run the automated quality gates on a built site: forge gates <project> [--gate <name>] [--preview] [--json]',
     run: (args) => cmdGates(ROOT, args),
+  },
+  qa: {
+    summary: 'QA Verifier review, or the repair loop with --repair: forge qa <project> [--gate <name>] [--repair [--replay <dir>]]',
+    run: (args) => cmdQa(ROOT, args),
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
   plugins: { summary: 'List plugins, or enable, disable or health-check one: forge plugins [list|enable|disable|check] [id]', run: (args) => cmdPlugins(ROOT, args) },

@@ -25,6 +25,7 @@ const PREFIX = [
   ['design-decision', 'designDecision'],
   ['condition', 'condition'],
   ['estimate', 'estimate'],
+  ['defect-report', 'defectReport'],
   ['tokens', 'tokens'],
   ['site-config', 'siteConfig'],
 ];
