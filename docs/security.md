@@ -42,3 +42,13 @@ A worker recording keeps the files a worker wrote exactly as written, so a repla
 ## Secret scan
 
 `forge scan [path...]` reports every file that contains something that looks like a credential, and every `.env` file other than `.env.example`. It gives the file, the line and the kind of secret, never the secret itself, and exits with code 1 when it finds anything. Packaging (T11) and the Cursor pre-commit hook (T10) will run it. A test checks that the harness's own source, schemas, docs, plugins and fixtures stay clean.
+
+## Release audit
+
+`forge audit` is the release security review (acceptance A13). It checks two things:
+
+- **Dependencies:** it runs `npm audit` on every lockfile the harness installs from: the harness, `starters/astro-base` and `tools`. Any high or critical advisory fails the audit.
+- **Secrets:** it builds the package ZIP and audits every entry (see `docs/packaging.md`), then scans `workspace/` (every project's files, ledger, logs and reports) and any `.log` file in `dist/`.
+
+It writes `dist/audit-<date>.md` and `.json`, and exits 1 when anything fails. The fixture lockfiles under `fixtures/sites/` are test data for the dependencies gate. They are never installed, so the audit does not include them.
+

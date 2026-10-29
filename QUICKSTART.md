@@ -92,7 +92,7 @@ This copies the starter (`starters/astro-base/`) into `workspace/harbor/site/` a
 
 It then installs and builds the site, and checks the 150 KB JavaScript budget. Pages stay `status: scaffold` until Content & UX locks the copy in `content/pages/` (B3). See `docs/starter.md`.
 
-If the approach decision selects APP-02, APP-04 or APP-06, apply it, then place its sections as its skill describes:
+Apply each approach the decision selects (APP-02 to APP-08), then place its sections as its skill describes:
 
 ```bash
 ./forge approach harbor APP-02
@@ -119,12 +119,38 @@ On a fresh scaffold, expect these gates to fail. Each failure is real work for a
 
 `forge qa harbor --repair` runs the repair loop with the Claude Code builder. It needs the project to be in `QUALITY_REVIEW`. See `docs/gates.md` and `docs/qa.md`.
 
-## Not built yet
+## 7. Move between phases, preview, deploy and report
 
-`forge --help` lists every planned command and its milestone. Running one says it is not built. The main gaps for an end-to-end run are:
+A project moves to its next phase only when that phase's exit gate holds. That means its tasks are done, its evidence is there (for example a valid brief at P1, a chosen direction at P4, a built site at P9, or the quality floor at P11), and its approval is recorded:
 
-- **No command moves a project to the next phase after an approval.** The runner wiring for phases and the task board is engine work in progress. Today the phase commands above run whatever phase the project is in, except `forge qa --repair`, which needs `QUALITY_REVIEW`.
-- **Several commands are not built:** `preview`, `deploy`, `report`, `test --mock`, `demo`, `package` and `upgrade`.
-- **The plugins are built, but no command drives preview or deploy yet.** Enable one with `forge plugins enable <id>` (see `docs/plugins.md`). `forge approach <project> APP-04` already uses the spline plugin to copy the scene in.
+```bash
+./forge advance harbor --check       # what still stands between the project and its next phase
+./forge advance harbor               # move on; a refusal names what is missing, in the ledger too
+./forge run harbor --advance         # run each phase's tasks and move on, until an approval or a blocker stops it
+```
+
+When the site is ready, preview, deploy and report:
+
+```bash
+./forge plugins enable local-preview
+./forge preview harbor               # serves site/dist on 127.0.0.1, after a secret scan
+./forge plugins enable vercel        # needs VERCEL_TOKEN in .env
+./forge approve harbor B5            # integrations
+./forge deploy harbor --preview      # a Vercel preview, smoke-tested; forms get the form function
+./forge approve harbor B6            # you accepted the preview
+./forge advance harbor
+./forge approve harbor B7            # production
+./forge deploy harbor --production
+./forge report harbor                # reports/final-report.md, built from the ledger
+```
+
+To try the whole flow without a model or any paid API, run `./forge demo`. It replays the sample business project to a local preview. `./forge test --mock` runs the full suite with every plugin in mock mode.
+
+## Still needs real accounts
+
+Everything above is built. These parts are tested only against stand-ins until they run with real accounts:
+
+- the workers (`forge run`), which need Claude Code signed in;
+- the vercel, form-function and spline plugins, which need a Vercel token, a webhook and a Spline scene. Their status in `forge plugins list` stays `implemented-unverified` until then.
 
 See `docs/troubleshooting.md` when something fails.

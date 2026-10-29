@@ -1,6 +1,7 @@
 import { isAbsolute, join } from 'node:path';
 import { listTasks } from '../core/board.mjs';
 import { loadConfig } from '../core/config.mjs';
+import { advanceProject, exitBlockers } from '../core/advance.mjs';
 import { agentsForPhase } from '../core/agents.mjs';
 import { approvals, approve, createProject, loadProject, nextPhases, PHASES } from '../core/project.mjs';
 import { resume } from '../core/recovery.mjs';
@@ -99,29 +100,47 @@ export function cmdResume(root, args) {
 }
 
 // forge run: runs every task that can start, through Claude Code or from recordings (--replay).
+// forge run: runs every task of the current phase that can start, through Claude Code or from
+// recordings (--replay). With --advance it then moves the project on whenever the phase's exit
+// gate holds, and keeps going until an approval, a missing piece of evidence or a blocker
+// stops it: "runs until the next approval or blocker".
 export async function cmdRun(root, args) {
   const [project] = args;
   if (!project || project.startsWith('-')) {
-    console.error('Usage: forge run <project> [--replay <recordings dir>] [--model <model>] [--json]');
+    console.error('Usage: forge run <project> [--advance] [--replay <recordings dir>] [--model <model>] [--json]');
     return 2;
   }
   const replay = flag(args, '--replay');
   const worker = replay ? createReplayWorker({ recordDir: replay }) : createClaudeCodeWorker({ model: flag(args, '--model') });
   const workspace = workspaceFor(root);
-  const { phase } = loadProject(project, { workspace });
-  const summary = await runProject(project, { workspace, worker, agents: agentsForPhase(phase) });
-  if (args.includes('--json')) {
-    console.log(JSON.stringify(summary, null, 2));
-  } else {
-    const list = (xs) => xs.join(', ') || 'none';
-    console.log(`Ran ${project} in phase ${phase}${replay ? ' from recordings' : ''}.`);
-    console.log(`  done: ${list(summary.done)}`);
-    for (const b of summary.blocked) console.log(`  blocked: ${b.task} (${b.reason})`);
-    for (const w of summary.waiting) {
-      const why = w.notInPhase ? ` (${w.notInPhase} does not work in ${phase})` : w.on.length ? ` on ${w.on.join(', ')}` : '';
-      console.log(`  waiting: ${w.task}${why}`);
+  const list = (xs) => xs.join(', ') || 'none';
+  const runs = [];
+  for (;;) {
+    const { phase } = loadProject(project, { workspace });
+    const summary = await runProject(project, { workspace, worker, agents: agentsForPhase(phase) });
+    runs.push({ phase, ...summary });
+    if (!args.includes('--json')) {
+      console.log(`Ran ${project} in phase ${phase}${replay ? ' from recordings' : ''}.`);
+      console.log(`  done: ${list(summary.done)}`);
+      for (const b of summary.blocked) console.log(`  blocked: ${b.task} (${b.reason})`);
+      for (const w of summary.waiting) {
+        const why = w.notInPhase ? ` (${w.notInPhase} does not work in ${phase})` : w.on.length ? ` on ${w.on.join(', ')}` : '';
+        console.log(`  waiting: ${w.task}${why}`);
+      }
+      for (const e of summary.errors) console.log(`  error: ${e.task}: ${e.code} ${e.message}`);
     }
-    for (const e of summary.errors) console.log(`  error: ${e.task}: ${e.code} ${e.message}`);
+    if (summary.blocked.length || summary.errors.length || !args.includes('--advance')) break;
+    const blockers = exitBlockers(project, { workspace });
+    if (blockers.length) {
+      if (!args.includes('--json')) console.log(`Stopped in ${phase}. Next it needs:\n${blockers.map((b) => `  - ${b}`).join('\n')}`);
+      runs.at(-1).stoppedFor = blockers;
+      break;
+    }
+    const { to } = advanceProject(project, { workspace });
+    if (!args.includes('--json')) console.log(`Moved ${project}: ${phase} -> ${to}`);
+    if (to === 'HANDOFF') break;
   }
-  return summary.blocked.length || summary.errors.length ? 1 : 0;
+  if (args.includes('--json')) console.log(JSON.stringify(args.includes('--advance') ? runs : runs[0], null, 2));
+  const last = runs.at(-1);
+  return last.blocked.length || last.errors.length ? 1 : 0;
 }
