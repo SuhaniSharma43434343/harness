@@ -54,7 +54,7 @@ export default {
     if (!files.has('sitemap.xml') && !files.has('sitemap-index.xml')) add('sitemap-missing', 'serious', 'site/dist/sitemap.xml is missing');
     else if (files.has('sitemap.xml')) {
       const xml = readFileSync(join(ctx.dist, 'sitemap.xml'), 'utf8');
-      const listed = new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => (URL.canParse(m[1]) ? strip(new URL(m[1]).pathname) : m[1])));
+      const listed = new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => strip(URL.canParse(m[1]) ? new URL(m[1]).pathname : m[1])));
       for (const r of ctx.routes()) if (!listed.has(strip(r))) add('sitemap-incomplete', 'serious', `${r} is not in sitemap.xml`, 'site/dist/sitemap.xml');
     }
     return { findings, metrics: { pages: ctx.routes().length } };

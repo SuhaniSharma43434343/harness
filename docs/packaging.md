@@ -17,7 +17,7 @@ Before it reports success, it reads back the archive it just wrote and checks ev
 - a file containing something that looks like a credential;
 - a file containing a personal absolute path such as a real `C:\Users\<name>\` or `/home/<name>/`. Placeholders like `<you>` or `$USER` are allowed.
 
-It names the file, line and kind of problem, never the secret. It also lists any release file that is still missing; today that is `QUICKSTART.md` and `LICENSE`, because the licence has not been chosen yet.
+It names the file, line and kind of problem, never the secret. It also lists any release file that is still missing; today that is `LICENSE`, because the licence has not been chosen yet.
 
 ## Clean-extraction test
 

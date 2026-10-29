@@ -23,3 +23,10 @@ Without Claude Code, `forge task` hands out one task contract at a time.
 ## Pre-commit secret scan
 
 The git plugin installs a pre-commit hook in every project repository, and `forge hooks install [folder]` adds the same hook to any other repository, such as a clone of the harness. Before each commit, the hook runs `forge scan --staged`. It stops the commit if the staged changes contain something that looks like a credential, or a `.env` file. It prints the file, line and kind of secret, never the secret itself. If the repository already has a different pre-commit hook, it is left alone unless you pass `--force`.
+
+## Rules that hold in both modes
+
+- Agents write only inside `workspace/<project>/` and their contract's files.
+- Locked content (`content/pages/`, after B3) and tokens (after B2) change only with a new approval.
+- **Approvals stay with you.** Run `forge approve <project> <code>` yourself, or tell the agent to after you have read what it covers.
+- A gate decides completion. An agent's report never does (`docs/gates.md`, `docs/qa.md`).

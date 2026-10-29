@@ -4,32 +4,48 @@ Forge is a portable AI website production harness. The full design is in the pro
 
 ## Status
 
-This repository is at the start of **Milestone 1 (Architecture and Contracts)**. It contains:
+Milestone 1 (architecture and contracts) is in place, along with much of the runtime and the website side. The repository contains, in task order:
 
 - T01: the CLI skeleton, launchers, config loader and `forge doctor`
 - T02: the runtime schemas (task, plugin manifest, gate result, ledger entry) and the config schema, with fixtures and tests
-- T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
-- T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
-- T06 (from M2): the Claude Code worker adapter, with recording and replay
-- T20: the APP-04 Spline and APP-06 Game-Like modules (`docs/approaches.md`)
-- T19: the APP-02 Cinematic Scroll module and `forge approach`, which applies a selected approach's sections, runtime and packages to a site (`docs/approaches.md`)
-- T24: the QA Verifier and repair loop (`forge qa`): defect reports with evidence, repair tasks for the builder, verification by a fresh review, escalation after 3 loops (`docs/qa.md`)
-- T22: the browser gates: routes, accessibility, forms, responsive and performance, with Playwright, axe-core and Lighthouse adapters (`docs/gates.md`)
-- T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies, each tested on the gate fixtures (`docs/gates.md`)
-- T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
-- T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
-- T08: the git, local-preview, vercel, form-function and spline plugins
-- T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan`
-- T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
-- T10: the Cursor path: step mode (`forge task`), `AGENTS.md`, `CLAUDE.md`, Cursor rules and the pre-commit secret scan
-- T11: packaging (`forge package`, with a clean-extraction test) and `forge upgrade`
-- T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
-- T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
-- T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
+- T03 and T04: project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
+- T05: the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
+- T06: the Claude Code worker adapter, with recording and replay
+- T07: the plugin host: manifests, config checks, health checks, permissions and approvals
+- T08: the git, local-preview, vercel, form-function and spline plugins ([docs/plugins.md](docs/plugins.md))
+- T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan` ([docs/security.md](docs/security.md))
+- T10: the Cursor path: step mode (`forge task`), `AGENTS.md`, `CLAUDE.md`, Cursor rules and the pre-commit secret scan ([docs/cursor.md](docs/cursor.md))
+- T11: packaging (`forge package`, with a clean-extraction test) and `forge upgrade` ([docs/packaging.md](docs/packaging.md))
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
-- T18: the starter website (APP-01) in `starters/astro-base/`, and `forge site`, which writes a project's brief, design tokens and content into it and builds it ([docs/starter.md](docs/starter.md))
+- T14: the question bank (`registry/questions/`) and the intake rules ([docs/intake.md](docs/intake.md))
+- T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
+- T16: the approach registry, the selection matrix and the approach selector ([docs/registry.md](docs/registry.md))
+- T17: design directions (`forge directions`), checked against the design rules ([docs/design.md](docs/design.md))
+- T18: the starter website (APP-01) and `forge site` ([docs/starter.md](docs/starter.md))
+- T19: the APP-02 Cinematic Scroll module and `forge approach` ([docs/approaches.md](docs/approaches.md))
+- T20: the APP-04 Spline and APP-06 Game-Like modules ([docs/approaches.md](docs/approaches.md))
+- T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies ([docs/gates.md](docs/gates.md))
+- T22: the browser gates: routes, accessibility, forms, responsive and performance ([docs/gates.md](docs/gates.md))
+- T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
+- T24: the QA Verifier and repair loop (`forge qa`) ([docs/qa.md](docs/qa.md))
+- T25: the operator docs listed below
 
-The licence and QUICKSTART.md are still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The licence is still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+
+## Documentation
+
+| Doc | For |
+| --- | --- |
+| [QUICKSTART.md](QUICKSTART.md) | Taking one project from brief to a gated, QA-reviewed site |
+| [docs/claude-code.md](docs/claude-code.md) | Running Forge with Claude Code |
+| [docs/cursor.md](docs/cursor.md) | Running Forge from Cursor |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Common failures and what to do |
+| [docs/approaches.md](docs/approaches.md) | The eight approaches, their modules and fallbacks |
+| [docs/gates.md](docs/gates.md) | Every automated gate and its thresholds |
+| [docs/qa.md](docs/qa.md) | Defect reports and the repair loop |
+| [docs/intake.md](docs/intake.md), [docs/registry.md](docs/registry.md), [docs/design.md](docs/design.md), [docs/starter.md](docs/starter.md) | Intake, approach selection, design rules and the starter |
+| [docs/plugins.md](docs/plugins.md), [docs/security.md](docs/security.md) | Plugins, the guard hook and secret handling |
+| [docs/interfaces.md](docs/interfaces.md) | The frozen M1 interfaces |
 
 ## Requirements
 
@@ -121,10 +137,10 @@ tests/intake/             client material for the sample briefs and the intake s
 src/registry/             condition evaluator, registry loader, approach selector
 tests/decision/           decision briefs and the approach selection suite
 tests/unit/               node:test suites
-tests/build/              starter build tests
+tests/build/              starter and approach build tests
+tests/gates/, tests/qa/   gate and QA Verifier suites
 scripts/                  setup.sh, setup.ps1
-docs/interfaces.md        M1 interfaces (frozen), runtime and project sides
-docs/starter.md           starter template contract
+docs/                     operator and reference docs (see Documentation)
 workspace/                projects are created here (git-ignored)
 ```
 

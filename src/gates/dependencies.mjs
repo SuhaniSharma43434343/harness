@@ -14,8 +14,9 @@ export function licenceAllowed(expr, allowed = ALLOWED) {
   return allowed.includes(e);
 }
 
-// Dependencies: every package the site ships (site/package-lock.json, without dev packages)
-// has an allowed licence or a licence record.
+// Dependencies: every package the site installs for production (site/package-lock.json, without
+// dev packages) has an allowed licence or a licence record. Optional packages are reported
+// but do not block (see below).
 export default {
   name: 'dependencies',
   version: '0.1.0',
@@ -36,6 +37,13 @@ export default {
       if (licenceAllowed(pkg.license)) continue;
       const row = recorded.get(name);
       if (row && row.status !== 'uncertain' && row.evidence) continue;
+      // An optional package is a build-machine binary or its fallback (sharp's libvips builds,
+      // for example): it runs where the site is built and is never sent to a visitor, so it is
+      // reported for THIRD_PARTY_NOTICES but does not block.
+      if (pkg.optional) {
+        findings.push({ id: 'build-binary-licence', severity: 'moderate', message: `${name}@${pkg.version} is ${pkg.license ?? 'unlicensed'}; it is a build-machine binary, so record it in THIRD_PARTY_NOTICES`, location: `site/package-lock.json:${path}` });
+        continue;
+      }
       findings.push({ id: 'licence-not-allowed', severity: 'serious', message: `${name}@${pkg.version} is ${pkg.license ?? 'unlicensed'}, which needs a licence record`, location: `site/package-lock.json:${path}` });
     }
     return { findings, metrics: { packages: checked } };
