@@ -4,6 +4,7 @@ import { loadConfig } from '../core/config.mjs';
 import { readJson } from '../core/workspace.mjs';
 import { runIntake } from '../intake/run.mjs';
 import { shapeAnswer } from '../intake/shape.mjs';
+import { parseTyped } from '../intake/typed.mjs';
 
 function workspaceFor(root) {
   const dir = loadConfig(root).config.workspaceDir;
@@ -23,29 +24,6 @@ function recommendationText(q) {
   return `${value} (${r.reason})`;
 }
 
-// Parses what the operator typed. An empty line means "use your recommendation".
-function parseTyped(q, text) {
-  const t = text.trim();
-  if (!t || /^(r|rec|use your recommendation)$/i.test(t)) return 'use-recommendation';
-  const option = (s) => {
-    const n = Number(s);
-    if (Number.isInteger(n) && n >= 1 && n <= q.options.length) return q.options[n - 1].value;
-    return q.options.find((o) => String(o.value) === s || o.label.toLowerCase() === s.toLowerCase())?.value ?? s;
-  };
-  switch (q.kind) {
-    case 'single':
-      return option(t);
-    case 'multi':
-      return t === '-' ? [] : t.split(',').map((s) => option(s.trim()));
-    case 'boolean':
-      return /^(y|yes|true)$/i.test(t);
-    case 'number':
-      return Number(t);
-    default:
-      return shapeAnswer(q, t);
-  }
-}
-
 function prompter() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = async (questions, { round }) => {
@@ -54,8 +32,17 @@ function prompter() {
     for (const q of questions) {
       console.log(`${q.prompt}${q.why ? `\n  Why: ${q.why}` : ''}`);
       q.options?.forEach((o, i) => console.log(`  ${i + 1}. ${o.label}`));
+      if (q.kind === 'multi') console.log('  Pick several with commas, for example 1,3, or type none.');
       console.log(`  Recommendation: ${recommendationText(q)}`);
-      answers.push(parseTyped(q, await rl.question('> ')));
+      // A typed answer that is not valid is explained and asked again, not failed at the end.
+      for (;;) {
+        const r = parseTyped(q, await rl.question('> '));
+        if (!r.error) {
+          answers.push(r.answer);
+          break;
+        }
+        console.log(`  ${r.error}`);
+      }
     }
     return answers;
   };
