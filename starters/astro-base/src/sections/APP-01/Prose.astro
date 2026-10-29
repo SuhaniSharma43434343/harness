@@ -1,0 +1,17 @@
+---
+// The page's Markdown body. Renders nothing when the body is empty or only comments.
+const { page, Content, heading } = Astro.props;
+const hasBody = (page.body ?? '').replace(/<!--[\s\S]*?-->/g, '').trim().length > 0;
+---
+{hasBody && (
+  <section class="section">
+    <div class="wrap prose">
+      {heading && <h2>{heading}</h2>}
+      <Content />
+    </div>
+  </section>
+)}
+<style>
+  .prose :global(ul), .prose :global(ol) { max-width: var(--measure); padding-left: 1.25em; }
+  .prose :global(h2) { margin-top: 1.5em; }
+</style>

@@ -5,6 +5,12 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Write-Error "Node.j
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Write-Error "Git 2.40+ is required: https://git-scm.com" }
 if (Test-Path package-lock.json) { npm ci } else { npm install }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+# The starter site's own dependencies (Astro), used by forge site --build and the build tests.
+Push-Location starters\astro-base
+npm ci --no-audit --no-fund
+$code = $LASTEXITCODE
+Pop-Location
+if ($code -ne 0) { exit $code }
 if (-not (Test-Path forge.config.json)) { Copy-Item forge.config.example.json forge.config.json }
 & node src\cli\index.mjs doctor
 exit $LASTEXITCODE

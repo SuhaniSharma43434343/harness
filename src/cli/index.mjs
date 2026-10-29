@@ -10,6 +10,7 @@ import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
 import { cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
+import { cmdSite } from './site.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdSelect } from './select.mjs';
 import { validateFile } from './validate.mjs';
@@ -56,6 +57,10 @@ const COMMANDS = {
   package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
   upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
+  site: {
+    summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
+    run: (args) => cmdSite(ROOT, args),
+  },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).

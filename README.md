@@ -20,6 +20,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T14: the question bank (`registry/questions/`) and the intake rules: which questions to ask, recording answers and assumptions, and checking the brief (`docs/intake.md`)
 - T16: the approach registry (`registry/`), the selection matrix and the approach selector, with decision tests for all eight approaches (`docs/registry.md`)
 - T13: the project schemas (brief, facts, question bank, approach registry, selection matrix, approach decision, design decision, rule condition), with fixtures, 7 sample briefs and tests
+- T18: the starter website (APP-01) in `starters/astro-base/`, and `forge site`, which writes a project's brief, design tokens and content into it and builds it ([docs/starter.md](docs/starter.md))
 
 The licence and QUICKSTART.md are still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
 
@@ -69,7 +70,9 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
 | `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
+| `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `tokens` and `siteConfig` (project).
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition` and `estimate` (project).
 
 `forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools with the forge guard hook checking every write against the task's contract. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
@@ -80,7 +83,7 @@ The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and
 npm test
 ```
 
-The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands.
+The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands. The build tests in `tests/build/` build a site from every sample brief; they need the starter's dependencies, which `setup` installs, and are skipped with the reason without them.
 
 ## Layout
 
@@ -93,6 +96,9 @@ agents/                   the 8 agent roles (source of truth)
 src/cli/                  command router, doctor, validate, project commands
 src/core/                 config, schemas, typed errors, project state, ledger,
                           task board, runner, locks, recovery
+src/site/                 brief -> pages, design tokens, scaffold and build (T18)
+starters/astro-base/      the starter website (APP-01)
+skills/app01/             APP-01 module instructions for builders
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
 samples/briefs/           one sample brief per project type (7)
@@ -102,8 +108,10 @@ tests/intake/             client material for the sample briefs and the intake s
 src/registry/             condition evaluator, registry loader, approach selector
 tests/decision/           decision briefs and the approach selection suite
 tests/unit/               node:test suites
+tests/build/              starter build tests
 scripts/                  setup.sh, setup.ps1
 docs/interfaces.md        M1 interfaces (frozen), runtime and project sides
+docs/starter.md           starter template contract
 workspace/                projects are created here (git-ignored)
 ```
 

@@ -1,0 +1,11 @@
+---
+// A closing call to action. Props: heading (defaults to the CTA label), cta (defaults to the page's).
+const { page, cta = page.data.cta, heading = cta.label, text } = Astro.props;
+---
+<section class="section section--alt cta-band">
+  <div class="wrap">
+    <h2>{heading}</h2>
+    {text && <p>{text}</p>}
+    <a class="button" href={cta.href}>{cta.label}</a>
+  </div>
+</section>

@@ -24,6 +24,8 @@ const PREFIX = [
   ['selection-matrix', 'selectionMatrix'],
   ['design-decision', 'designDecision'],
   ['condition', 'condition'],
+  ['tokens', 'tokens'],
+  ['site-config', 'siteConfig'],
   ['estimate', 'estimate'],
 ];
 
