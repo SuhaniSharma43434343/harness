@@ -1,0 +1,16 @@
+{
+  "catalogVersion": "0.1.0",
+  "note": "Palette families. Each one passes the starter's contrast pairs (tests/unit/design.test.mjs checks them all). The Creative Director may adjust a palette, and checkDesignRules re-checks whatever is chosen.",
+  "palettes": [
+    { "id": "ink-paper", "name": "Ink and Paper", "mode": "light", "tags": ["minimal", "refined", "editorial", "clear"], "tokens": { "bg": "#FAFAF7", "fg": "#141414", "primary": "#1F3A5F", "accent": "#B4532A", "muted": "#5C5C57" } },
+    { "id": "warm-earth", "name": "Warm Earth", "mode": "light", "tags": ["warm", "trustworthy", "refined"], "tokens": { "bg": "#FBF7F2", "fg": "#1F1B16", "primary": "#8A3B12", "accent": "#2F6F5E", "muted": "#6B625A" } },
+    { "id": "forest", "name": "Forest", "mode": "light", "tags": ["warm", "trustworthy", "clear"], "tokens": { "bg": "#F5F8F4", "fg": "#14201A", "primary": "#1E5B3C", "accent": "#A04A1C", "muted": "#56635B" } },
+    { "id": "coastal", "name": "Coastal", "mode": "light", "tags": ["clear", "trustworthy", "minimal"], "tokens": { "bg": "#F4F8FB", "fg": "#0F1C26", "primary": "#0B5C8A", "accent": "#B03A48", "muted": "#4E5D69" } },
+    { "id": "citrus", "name": "Citrus", "mode": "light", "tags": ["playful", "bold", "warm"], "tokens": { "bg": "#FFFBEF", "fg": "#1C1A12", "primary": "#B33E00", "accent": "#5B3FA6", "muted": "#615B48" } },
+    { "id": "violet-pop", "name": "Violet Pop", "mode": "light", "tags": ["playful", "bold", "technical"], "tokens": { "bg": "#FBF9FF", "fg": "#17132A", "primary": "#5A2DC9", "accent": "#0F7A6B", "muted": "#5A5670" } },
+    { "id": "midnight", "name": "Midnight", "mode": "dark", "tags": ["premium", "bold", "technical"], "tokens": { "bg": "#0D1117", "fg": "#E8EDF2", "primary": "#6CB6FF", "accent": "#F2A65A", "muted": "#9AA6B2" } },
+    { "id": "noir-gold", "name": "Noir and Gold", "mode": "dark", "tags": ["premium", "refined", "bold"], "tokens": { "bg": "#111010", "fg": "#F3EFE6", "primary": "#D9B45A", "accent": "#9FC4B8", "muted": "#A8A196" } },
+    { "id": "graphite", "name": "Graphite", "mode": "light", "tags": ["technical", "minimal", "clear"], "tokens": { "bg": "#F6F7F8", "fg": "#16181B", "primary": "#2B3440", "accent": "#C2410C", "muted": "#5B626B" } },
+    { "id": "rose-clay", "name": "Rose Clay", "mode": "light", "tags": ["warm", "refined", "playful"], "tokens": { "bg": "#FCF6F4", "fg": "#231716", "primary": "#9C2F45", "accent": "#3D5A80", "muted": "#6E5C5A" } }
+  ]
+}

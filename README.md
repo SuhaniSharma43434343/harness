@@ -14,6 +14,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
 - T08: the git, local-preview, vercel, form-function and spline plugins
 - T09: Claude Code hooks for file boundaries, B7 and `.env`; secret redaction; `forge scan`
+- T17: design directions (`forge directions`): three or more distinct directions per brief, checked against the design rules and rendered at desktop and mobile (`docs/design.md`)
 - T10: the Cursor path: step mode (`forge task`), `AGENTS.md`, `CLAUDE.md`, Cursor rules and the pre-commit secret scan
 - T11: packaging (`forge package`, with a clean-extraction test) and `forge upgrade`
 - T15: the intake workflow (`forge intake`): brief, facts, plan and estimate, ready for B1
@@ -62,6 +63,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |
+| `forge directions <project> [--count n] [--check]` | Proposes 3 to 5 design directions for P4, renders them at desktop and mobile, or checks them against the design rules |
 | `forge select <brief.json> [--json]` | Shows which approaches a brief selects, the reason for each, and the fallbacks |
 | `forge plugins [list\|enable\|disable\|check] [id]` | Lists plugins, or enables one after its config and health check pass (see `docs/plugins.md`) |
 | `forge task <next\|check\|submit\|abandon> <project> [task]` | Step mode for Cursor without Claude Code (see `docs/cursor.md`) |
@@ -72,8 +74,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `tokens` and `siteConfig` (project).
-The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition` and `estimate` (project).
+The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `estimate`, `tokens` and `siteConfig` (project).
 
 `forge run` starts only the tasks whose agent works in the project's current phase, one headless `claude -p` session per task in the project folder, with the agent's role instructions as a system prompt. It is limited to read and edit tools with the forge guard hook checking every write against the task's contract. Run `claude` once and sign in first. Every attempt is recorded in `evidence/recordings/<task>/`, and `forge run --replay <dir>` plays recordings back without calling the model.
 
