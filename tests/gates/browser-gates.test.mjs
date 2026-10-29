@@ -82,6 +82,19 @@ test('forms: a form whose endpoint fails must show the error state', { skip }, a
   assert.ok(r.findings.some((f) => f.id === 'no-error-state'));
 });
 
+// Found in the T28 real-model run: the builder gave the quote form action="/api/contact", which
+// passed the browser checks, but the brief sends it through form-function (/api/form).
+test('forms: a form-function form must post to the plugin endpoint', { skip }, async () => {
+  const { dir, siteDir } = materializeFixture('known-good');
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  mkdirSync(join(dir, 'intake'), { recursive: true });
+  writeFileSync(join(dir, 'intake/brief.json'), JSON.stringify({ features: { forms: [{ id: 'quote', destination: 'form-function' }] } }));
+  const r = await runGate('forms', siteDir, { browser });
+  assert.ok(r.findings.length > 0);
+  assert.deepEqual([...new Set(r.findings.map((f) => f.id))], ['wrong-endpoint']);
+  assert.match(r.findings[0].message, /posts to \/api\/quote.*\/api\/form\?form=quote/);
+});
+
 test('runGates shares one browser across the browser gates', { skip: skip || skipAxe }, async () => {
   const { siteDir } = materializeFixture('known-good');
   const results = await runGates(siteDir, { gates: BROWSER_GATES, screenshots: false });

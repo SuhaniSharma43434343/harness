@@ -47,6 +47,7 @@ The licence is still to come before a release. `forge --help` lists the planned 
 | [docs/intake.md](docs/intake.md), [docs/registry.md](docs/registry.md), [docs/design.md](docs/design.md), [docs/starter.md](docs/starter.md) | Intake, approach selection, design rules and the starter |
 | [docs/plugins.md](docs/plugins.md), [docs/security.md](docs/security.md) | Plugins, the guard hook and secret handling |
 | [docs/interfaces.md](docs/interfaces.md) | The frozen M1 interfaces |
+| [docs/release/acceptance.md](docs/release/acceptance.md) | Maintainers: the Release 1.0 acceptance record (A1 to A15), release runs and integration log |
 
 ## Requirements
 
@@ -98,7 +99,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
 | `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
-| `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
+| `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget. `--build-only` rebuilds the site that is there (after `forge approach`) |
 
 The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and `projectState` (runtime), and `brief`, `facts`, `questionBank`, `approach`, `selectionMatrix`, `approachDecision`, `designDecision`, `condition`, `estimate`, `defectReport`, `tokens` and `siteConfig` (project).
 

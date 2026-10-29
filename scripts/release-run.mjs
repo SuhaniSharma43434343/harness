@@ -86,16 +86,8 @@ export async function runSite(name, { fresh = false, repair = false } = {}) {
     if (d.needsApproval) approve(d.needsApproval, `experimental ${d.approach} accepted`);
     step(`approach ${d.approach}`, ['approach', project, d.approach]);
   }
-  // Approaches add packages and sections, so build again before the gates look at dist/. There
-  // is no build-only command (forge site --build scaffolds first), so this calls buildSite.
-  if (selected.length > 1) {
-    const { buildSite, siteReport } = await import('../src/site/build.mjs');
-    const started = Date.now();
-    const b = buildSite(join(dir, 'site'));
-    const report = b.ok ? siteReport(b.dist) : null;
-    const output = b.ok ? `Built ${report.routes.length} routes; JavaScript ${(report.jsBytes / 1024).toFixed(1)} KB gzip up front${report.withinBudget ? '' : ' (over budget)'}` : b.output;
-    steps.push({ label: 'build after approaches', args: [], code: b.ok && report.withinBudget ? 0 : 1, ms: Date.now() - started, stdout: output, stderr: '' });
-  }
+  // Approaches add packages and sections, so build again before the gates look at dist/.
+  if (selected.length > 1) step('site --build-only (after approaches)', ['site', project, '--build-only']);
 
   const gates = step('gates (P11)', ['gates', project, '--json']);
   let floor = null;
@@ -138,7 +130,7 @@ export async function runSite(name, { fresh = false, repair = false } = {}) {
     planned: site.approaches,
     selected,
     repair,
-    steps: steps.map(({ label, args, code, ms, stdout, stderr }) => ({ label, command: args.length ? `forge ${args.join(' ')}` : '(library call)', code, ms, output: tail(code === 0 ? stdout : `${stdout}\n${stderr}`) })),
+    steps: steps.map(({ label, args, code, ms, stdout, stderr }) => ({ label, command: args.length ? `forge ${args.join(' ')}` : '(script)', code, ms, output: tail(code === 0 ? stdout : `${stdout}\n${stderr}`) })),
     gates: results.map((r) => ({ gate: r.gate, status: r.status, findings: r.findings.length, ids: [...new Set(r.findings.map((f) => f.id))], error: r.error?.message })),
     qualityFloor: floor,
     defects: defects ? { review: defects.review, open: defects.defects.filter((d) => d.status === 'open').length, total: defects.defects.length } : null,
