@@ -33,16 +33,32 @@ export function assertNoSecrets(project, dist, opts = {}) {
   }
 }
 
-// A deployed or served site answers 200 with HTML at its root.
-export async function smokeTest(url, { fetchFn = fetch, timeoutMs = 20_000 } = {}) {
+// A deployed or served site answers 200 at its root, from its own host, with the page we built.
+// A redirect to another host (for example Vercel's sign-in page in front of a protected
+// preview) is not the site, so it fails with `protected: true`. `expectTitle` is the <title>
+// of the built index.html.
+export async function smokeTest(url, { fetchFn = fetch, timeoutMs = 20_000, expectTitle } = {}) {
   try {
-    const res = await fetchFn(url, { signal: AbortSignal.timeout(timeoutMs), redirect: 'follow' });
+    const res = await fetchFn(url, { signal: AbortSignal.timeout(timeoutMs), redirect: 'manual' });
+    const robots = res.headers?.get?.('x-robots-tag') ?? null;
+    if (res.status >= 300 && res.status < 400) {
+      const to = res.headers?.get?.('location') ?? '';
+      const other = to && new URL(to, url).host !== new URL(url).host;
+      return { ok: false, status: res.status, robots, protected: Boolean(other), redirect: to.split('?')[0] };
+    }
     const text = await res.text();
-    const ok = res.status === 200 && /<html[\s>]/i.test(text);
-    return { ok, status: res.status, robots: res.headers?.get?.('x-robots-tag') ?? null };
+    const title = text.match(/<title>([^<]*)<\/title>/i)?.[1]?.trim();
+    const ok = res.status === 200 && /<html[\s>]/i.test(text) && (!expectTitle || title === expectTitle);
+    return { ok, status: res.status, robots, title };
   } catch (err) {
     return { ok: false, status: null, error: err.message };
   }
+}
+
+// The <title> of a built site's home page, for the smoke test.
+export function builtTitle(dist) {
+  const file = join(dist, 'index.html');
+  return existsSync(file) ? readFileSync(file, 'utf8').match(/<title>([^<]*)<\/title>/i)?.[1]?.trim() : undefined;
 }
 
 // forge preview: serves the built site locally through the local-preview plugin.
@@ -51,7 +67,7 @@ export async function startPreview(project, opts = {}) {
   assertNoSecrets(project, dist, opts);
   const plugin = await getPlugin('local-preview', { ...opts, project });
   const server = await plugin.actions.start({ dir: dist, port: opts.port ?? 0 });
-  const smoke = await smokeTest(server.url, opts);
+  const smoke = await smokeTest(server.url, { ...opts, expectTitle: builtTitle(dist) });
   ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'local_preview', url: server.url, smoke: smoke.ok ? 'pass' : 'fail' } }, opts);
   return { ...server, smoke };
 }
@@ -84,8 +100,13 @@ export async function deploy(project, { target = 'preview', ...opts } = {}) {
   const action = target === 'production' ? vercel.actions.deployProduction : vercel.actions.deployPreview;
   const out = await action({ dir: dist, name: project });
   // A mock deploy has no real URL to fetch.
-  const smoke = vercel.mock ? { ok: true, status: 200, mock: true } : await smokeTest(out.url, opts);
-  ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'deployment', target, url: out.url, id: out.id, smoke: smoke.ok ? 'pass' : 'fail', status: smoke.status, forms: formsNote, mock: vercel.mock } }, opts);
+  const smoke = vercel.mock ? { ok: true, status: 200, mock: true } : await smokeTest(out.url, { ...opts, expectTitle: builtTitle(dist) });
+  ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'deployment', target, url: out.url, id: out.id, smoke: smoke.ok ? 'pass' : smoke.protected ? 'protected' : 'fail', status: smoke.status, forms: formsNote, mock: vercel.mock } }, opts);
+  if (smoke.protected) {
+    throw new PermissionDenied(`The ${target} deploy at ${out.url} is behind Vercel's sign-in, so it could not be checked`, {
+      hint: 'It opens for people signed in to the Vercel team. To check it here, turn off Vercel Authentication for previews (Project Settings > Deployment Protection), then deploy again.',
+    });
+  }
   if (!smoke.ok) throw new Unavailable(`The ${target} deploy at ${out.url} failed its smoke test (status ${smoke.status ?? smoke.error})`);
   return { ...out, target, smoke, forms: formsNote };
 }
