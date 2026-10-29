@@ -8,8 +8,8 @@ Status follows the plan: **Not started**, **In development** (code exists, the t
 | --- | --- | --- | --- | --- |
 | A1 | Clean installation | Implemented | `clean-extract-2026-10-29.md`: the ZIP extracted on a Linux machine that never held the repo; setup, doctor and 612 tests pass. Suhani's Windows 11 runs. | A run on a machine or account outside the pair; the `.sh` script's exit code (see the integration log). |
 | A2 | Configuration | Implemented | Config and plugin tests (`tests/unit/config.test.mjs`, `plugins.test.mjs`): a missing value names the variable and the plugin. | Re-run from the clean extraction. |
-| A3 | Mock mode | Not started | | `forge test --mock` and `forge demo` are not built. |
-| A4 | Real-model workflow | In development | `runs/`: the release run reaches P11 on all three sites; with Claude Code, the repair loop clears every gate but content-parity on the business site (`runs/2026-10-29-business-repair.md`). | No command moves a project through P2 to P10, and nothing creates the P5 to P9 tasks, so a new brief cannot reach an accepted preview yet. |
+| A3 | Mock mode | Implemented | `forge test --mock` and `forge demo` (#30), with `tests/build/demo.test.mjs`. | A network log from a demo run for the release record. |
+| A4 | Real-model workflow | In development | `runs/`: the release run reaches P11 on all three sites; with Claude Code, the repair loop clears every gate but content-parity on the business site (`runs/2026-10-29-business-repair.md`). | `forge advance` stops at TECHNICAL_PLAN: nothing creates the P5 to P9 task contracts, so a new brief cannot reach an accepted preview yet. |
 | A5 | Adaptive intake | Implemented | `tests/intake/` (7 sample briefs). | |
 | A6 | Approach selection | Implemented | `tests/decision/` (48 decision briefs). | |
 | A7 | Approach modules | Implemented | `tests/build/` (build, fallback and budget tests for APP-01 to APP-08). | Real-device logs (`docs/device-log.md`); the APP-03 fallback for APP-04. |

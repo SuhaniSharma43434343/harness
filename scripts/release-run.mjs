@@ -7,8 +7,10 @@
 // The briefs are in samples/release/. Each run is the operator's own test, so the approvals
 // the steps need (B1, B2, and an experimental approach's approval) are recorded with a note
 // that says so. --repair also moves the project to QUALITY_REVIEW and runs the repair loop
-// with the Claude Code builder (forge qa --repair), which needs Claude Code signed in. Until
-// the runner moves phases itself, this script does it through advancePhase, recording B3.
+// with the Claude Code builder (forge qa --repair), which needs Claude Code signed in. Every
+// run tries forge advance after the QA review and reports where its exit gates stop; with
+// --repair it records B3 and skips the exit gates that do not hold yet (advancePhase), so the
+// repair loop can run, and the report names the phases it skipped.
 //
 // It never edits site code: anything a model would write is left to the repair loop, so a
 // run without --repair shows what the deterministic pipeline gives and which gates still fail.
@@ -24,6 +26,7 @@ export const SITES = {
   showroom: { brief: 'samples/release/showroom.json', approaches: ['APP-03', 'APP-04', 'APP-07'] },
   story: { brief: 'samples/release/story.json', approaches: ['APP-05', 'APP-06', 'APP-08'] },
 };
+const PHASE_COUNT = 16;
 const NOTE = 'release run (T28): recorded by the operator running scripts/release-run.mjs';
 
 const flag = (args, name) => {
@@ -98,17 +101,32 @@ export async function runSite(name, { fresh = false, repair = false } = {}) {
     // The step's stderr says why; the report shows it.
   }
   step('qa (P11)', ['qa', project]);
+  // forge advance moves the project on while each phase's exit gate holds; the step that
+  // refuses names what is still missing, which is where the release run stops today.
+  const advance = (why) => {
+    for (let i = 0; i < PHASE_COUNT; i++) {
+      const r = step(`advance (${why})`, ['advance', project]);
+      if (r.code !== 0) return r;
+    }
+    return null;
+  };
+  advance('exit gates');
 
   if (repair) {
-    const { advancePhase, loadProject } = await import('../src/core/project.mjs');
+    const { advancePhase, loadProject, nextPhases } = await import('../src/core/project.mjs');
     approve('B3', 'content handed to the repair loop');
+    advance('after B3');
+    // The repair loop runs in QUALITY_REVIEW. Phases whose exit gates do not hold yet (no task
+    // contracts, uncleared licences) are skipped here with advancePhase, and listed in the report.
     const opts = { workspace, actor: 'operator' };
+    const skipped = [];
     try {
       while (loadProject(project, opts).phase !== 'QUALITY_REVIEW') {
-        const { nextPhases } = await import('../src/core/project.mjs');
-        advancePhase(project, nextPhases(loadProject(project, opts).phase)[0], opts);
+        const from = loadProject(project, opts).phase;
+        advancePhase(project, nextPhases(from)[0], opts);
+        skipped.push(from);
       }
-      steps.push({ label: 'phase -> QUALITY_REVIEW', args: [], code: 0, ms: 0, stdout: 'advancePhase', stderr: '' });
+      steps.push({ label: 'phase -> QUALITY_REVIEW', args: [], code: 0, ms: 0, stdout: skipped.length ? `Exit gates skipped for the release run: ${skipped.join(', ')}` : 'Already there', stderr: '' });
     } catch (err) {
       steps.push({ label: 'phase -> QUALITY_REVIEW', args: [], code: 1, ms: 0, stdout: '', stderr: err.message });
     }
@@ -130,7 +148,7 @@ export async function runSite(name, { fresh = false, repair = false } = {}) {
     planned: site.approaches,
     selected,
     repair,
-    steps: steps.map(({ label, args, code, ms, stdout, stderr }) => ({ label, command: args.length ? `forge ${args.join(' ')}` : '(script)', code, ms, output: tail(code === 0 ? stdout : `${stdout}\n${stderr}`) })),
+    steps: steps.map(({ label, args, code, ms, stdout, stderr }) => ({ label, command: args.length ? `forge ${args.join(' ')}` : '(script)', code, ms, output: code === 0 ? tail(stdout) : tail(`${stdout}\n${stderr}`, 20) })),
     gates: results.map((r) => ({ gate: r.gate, status: r.status, findings: r.findings.length, ids: [...new Set(r.findings.map((f) => f.id))], error: r.error?.message })),
     qualityFloor: floor,
     defects: defects ? { review: defects.review, open: defects.defects.filter((d) => d.status === 'open').length, total: defects.defects.length } : null,
@@ -149,7 +167,12 @@ export function toMarkdown(run, { date, machine }) {
   lines.push('', '## Gates', '', '| Gate | Status | Findings | Finding ids |', '| --- | --- | --- | --- |');
   for (const g of run.gates) lines.push(`| ${g.gate} | ${g.status} | ${g.findings} | ${g.error ? `error: ${g.error}` : g.ids.join(', ')} |`);
   if (run.defects) lines.push('', `QA Verifier: review ${run.defects.review}, ${run.defects.open} open defect(s) of ${run.defects.total}. See \`reports/defects.json\` and \`reports/qa-log.md\` in the project.`);
-  const failed = run.steps.filter((s) => s.code !== 0 && !/^gates|^qa \(/.test(s.label));
+  const failed = run.steps.filter((s) => s.code !== 0 && !/^gates|^qa \(|^advance/.test(s.label));
+  const stops = run.steps.filter((s) => s.code !== 0 && /^advance/.test(s.label));
+  if (stops.length) {
+    lines.push('', '## Where forge advance stops', '');
+    for (const s of stops) lines.push(`### ${s.label}`, '', '```', s.output, '```', '');
+  }
   if (failed.length) {
     lines.push('', '## Failed steps', '');
     for (const s of failed) lines.push(`### ${s.label}`, '', '```', s.output, '```', '');
