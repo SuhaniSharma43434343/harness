@@ -7,4 +7,6 @@ workspace/*
 !workspace/.gitkeep
 *.log
 dist/
+# The gate fixtures are built sites: their dist/ is source, not build output.
+!fixtures/sites/*/site/dist/
 .DS_Store
