@@ -8,6 +8,7 @@ import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
 import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
+import { cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
@@ -68,6 +69,8 @@ const COMMANDS = {
   task: { summary: 'Step mode for Cursor: forge task <next|check|submit|abandon> <project> [task]', run: (args) => cmdTask(ROOT, args) },
   hooks: { summary: 'Add the secret-scan pre-commit hook to a repository: forge hooks install [dir]', run: (args) => cmdHooks(ROOT, args) },
   scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
+  package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
+  upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
   site: {
     summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
@@ -82,8 +85,6 @@ const PLANNED = {
   report: 'M3',
   test: 'M5',
   demo: 'M6',
-  package: 'M6',
-  upgrade: 'M6',
 };
 
 function printHelp() {
