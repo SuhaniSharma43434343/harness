@@ -3,10 +3,14 @@
   "name": "Interactive 3D Website",
   "summary": "A lazy-loaded Three.js scene (model or procedural) with camera and scroll interaction, behind a poster. For showrooms, products and data visualisation when the device floor allows it.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app03/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app03/recipes/lib/scene3d.js",
+      "skills/app03/recipes/lib/webgl-slot.js",
+      "skills/app03/recipes/sections/Scene3D.astro"
+    ]
   },
   "selectWhen": {
     "any": [
@@ -79,6 +83,9 @@
       "tests/decision/app03/neg-1.json",
       "tests/decision/app03/neg-2.json",
       "tests/decision/app03/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app03.test.mjs",
+    "fallback": "tests/build/app03.test.mjs",
+    "budget": "tests/build/app03.test.mjs"
   }
 }

@@ -1,0 +1,42 @@
+---
+// APP-03 Scene3D: an interactive Three.js scene behind a poster. Props:
+//   poster: { src, alt, width, height }, required. The first paint, the LCP and the fallback.
+//   model:  a .glb in public/ (meshopt or plain), or none for a procedural object in the
+//           token colours. A model needs a row in assets/register.json (forge approach adds it).
+//   heading, text: copy beside the scene.
+// Three.js loads after the page and only when capability({ webgl: true }) allows. Fallback:
+// the poster with a CSS depth tilt (reduced motion, no WebGL, a low-end device, a slow network,
+// a failed load, frames too slow).
+const { poster, model, heading, text } = Astro.props;
+if (!poster?.src || !poster?.alt || !poster?.width || !poster?.height) {
+  throw new Error('APP-03/Scene3D needs a poster with src, alt, width and height: it is the first paint and the fallback.');
+}
+---
+<section class="section scene3d" data-app03="scene" data-model={model}>
+  <div class="wrap scene3d__grid">
+    {(heading || text) && (
+      <div>
+        {heading && <h2>{heading}</h2>}
+        {text && <p class="lead">{text}</p>}
+      </div>
+    )}
+    <div class="scene3d__stage" style={`aspect-ratio: ${poster.width} / ${poster.height}`}>
+      <img class="scene3d__poster" src={poster.src} alt={poster.alt} width={poster.width} height={poster.height} fetchpriority="high" decoding="async" />
+      <canvas class="scene3d__canvas" hidden tabindex="0" role="img" aria-label={`${poster.alt}. Drag, or use the arrow keys, to turn it.`}></canvas>
+    </div>
+  </div>
+</section>
+<script>
+  import { startScene } from '../../lib/app03/scene3d.js';
+  for (const section of document.querySelectorAll('[data-app03="scene"]')) startScene(section);
+</script>
+<style>
+  .scene3d__grid { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); align-items: center; }
+  .scene3d__stage { position: relative; width: 100%; border-radius: var(--radius); overflow: hidden; background: var(--color-surface); perspective: 900px; }
+  .scene3d__poster, .scene3d__canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scene3d__canvas { touch-action: pan-y; cursor: grab; }
+  .scene3d__canvas:focus-visible { outline: 3px solid var(--color-primary); outline-offset: -3px; }
+  .scene3d__canvas[hidden] { display: none; }
+  .scene3d.is-live .scene3d__poster { visibility: hidden; }
+  .scene3d__stage.is-tilt .scene3d__poster { transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.04); transition: transform 0.2s ease-out; }
+</style>

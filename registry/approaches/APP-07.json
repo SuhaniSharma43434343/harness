@@ -3,7 +3,7 @@
   "name": "AI + 3D + Motion + Real Website",
   "summary": "APP-01, APP-02 and APP-03 (optionally APP-05) in one production site, with performance budgets enforced across them and one WebGL canvas visible at a time. For enterprise flagships at tier L.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app07/SKILL.md",
     "recipes": []
@@ -68,6 +68,9 @@
       "tests/decision/app07/neg-1.json",
       "tests/decision/app07/neg-2.json",
       "tests/decision/app07/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app07.test.mjs",
+    "fallback": "tests/build/app07.test.mjs",
+    "budget": "tests/build/app07.test.mjs"
   }
 }

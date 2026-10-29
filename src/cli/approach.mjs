@@ -42,6 +42,9 @@ export async function cmdApproach(root, args) {
     console.log(s.scene ? `Copied the Spline scene into the site (${Math.round(s.bytes / 1024)} KB).` : `No Spline scene: ${s.reason} The section shows its poster.`);
   }
   console.log(`Applied ${id} ${module.name}: ${r.files.length} files, packages ${r.packages.join(', ') || 'none'}.`);
-  console.log(`Place its sections (${module.sections.map((s) => `${id}/${s}`).join(', ')}) in page frontmatter; see skills/${id.toLowerCase().replace('-', '')}/SKILL.md.`);
+  const sections = module.composedOf
+    ? (r.parts ?? []).flatMap((p) => getModule(p).sections.map((s) => `${p}/${s}`))
+    : module.sections.map((s) => `${id}/${s}`);
+  console.log(`Place its sections (${sections.join(', ')}) in page frontmatter; see skills/${id.toLowerCase().replace('-', '')}/SKILL.md.`);
   return 0;
 }

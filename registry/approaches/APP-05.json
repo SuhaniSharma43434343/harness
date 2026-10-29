@@ -3,10 +3,14 @@
   "name": "Shader / WebGL Website",
   "summary": "A custom GLSL background or transition effect with a quality ladder (full, reduced, off). For accent backgrounds or transitions.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app05/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app05/recipes/lib/shader.js",
+      "skills/app05/recipes/lib/webgl-slot.js",
+      "skills/app05/recipes/sections/ShaderBackground.astro"
+    ]
   },
   "selectWhen": {
     "field": "features.interactive",
@@ -25,7 +29,8 @@
       "reduced-motion",
       "no-webgl",
       "low-end-device",
-      "load-failed"
+      "load-failed",
+      "slow-network"
     ]
   },
   "budget": {
@@ -34,22 +39,10 @@
   },
   "dependencies": [
     {
-      "name": "three",
-      "licence": "MIT",
+      "name": "own GLSL shaders",
+      "licence": "harness (own work)",
       "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
-    },
-    {
-      "name": "ogl",
-      "licence": "Unlicense",
-      "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release. Use three or ogl, not both"
-    },
-    {
-      "name": "third-party noise functions",
-      "licence": "per function",
-      "licenceVerified": false,
-      "note": "Each one needs a licence record"
+      "note": "Plain WebGL with our own value noise; no library and no third-party noise functions"
     }
   ],
   "tests": {
@@ -62,6 +55,9 @@
       "tests/decision/app05/neg-1.json",
       "tests/decision/app05/neg-2.json",
       "tests/decision/app05/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app05.test.mjs",
+    "fallback": "tests/build/app05.test.mjs",
+    "budget": "tests/build/app05.test.mjs"
   }
 }
