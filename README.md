@@ -83,6 +83,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge new <project> [--brief <file>]` | Creates `workspace/<project>/` with its state file and ledger |
 | `forge approve <project> <code>` | Records an operator approval (A0 to A3, B1 to B7) in the ledger |
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
+| `forge go <project> [--brief <file>] [--render] [--model <m>]` | From intake to handoff in one command: asks the intake questions, then B1; after that it runs each phase (Claude Code agents for research, content and the asset register; forge commands for directions, the site build, gates and QA) and stops only to ask for an approval or at a blocker. With B1 you can also give B2 (the recommended direction) and B3 up front. B7 always needs the word "deploy" typed |
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |

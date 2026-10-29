@@ -13,6 +13,17 @@ The walkthrough was run end to end on 2026-10-28 with the `business` sample answ
 
 `--with-test-tools` installs the browser tools that the browser gates need. Without it, those gates report `error` (`UNAVAILABLE`), never a pass. Copy `.env.example` to `.env` only when you need a credential.
 
+## The short way: `forge go`
+
+```bash
+claude                      # once: sign in to Claude Code, which the agents run in
+./forge go harbor           # creates the project if needed, then intake
+```
+
+`forge go` asks the intake questions, shows you the plan and asks for B1. If you say yes, it can also take B2 (the recommended design direction) and B3 (the written content) up front. After that it carries on by itself. Claude's agents write the research, the content and the asset register. Forge proposes the directions, builds the site with the selected approaches, runs the gates and the QA repair loop. It stops only to ask for an approval (B5 and B6 at the preview, and B7, which you confirm by typing `deploy`), or at a blocker it cannot clear, which it names. Run it again after fixing a blocker, and it picks up where it stopped. `--render` takes screenshots of the directions; `--model` picks the Claude model.
+
+The sections below do the same steps one command at a time.
+
 ## 2. Create a project (P0)
 
 ```bash
