@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cmdNew } from '../../src/cli/project.mjs';
 import { cmdSite } from '../../src/cli/site.mjs';
 
-const BRIEF = new URL('../../samples/briefs/business.json', import.meta.url).pathname;
-const DECISION = new URL('../../fixtures/schemas/valid/design-decision.json', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows the pathname is /C:/..., which no file API accepts.
+const BRIEF = fileURLToPath(new URL('../../samples/briefs/business.json', import.meta.url));
+const DECISION = fileURLToPath(new URL('../../fixtures/schemas/valid/design-decision.json', import.meta.url));
 
 function tmpRoot() {
   const root = mkdtempSync(join(tmpdir(), 'forge-root-'));
