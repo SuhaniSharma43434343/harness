@@ -1,12 +1,14 @@
 ---
 // Quotes from real clients. Props: heading, items: [{ quote, name, role? }]. Only quotes the
 // client supplied belong here (the claims file lists them); renders nothing without items.
-const { heading, items = [] } = Astro.props;
+// note: a line under the heading, for example that the items are samples on a demo site.
+const { heading, items = [], note } = Astro.props;
 ---
 {items.length > 0 && (
   <section class="section section--alt">
     <div class="wrap">
       {heading && <h2>{heading}</h2>}
+      {note && <p class="section-note">{note}</p>}
       <ul class="quotes">
         {items.map((t) => (
           <li>

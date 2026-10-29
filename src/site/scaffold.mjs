@@ -120,6 +120,10 @@ export function scaffoldSite(project, { brief, tokens, force = false, starter = 
     filter: (src) => !relative(starter, src).split(sep).some((part) => SKIP.has(part)),
   });
   const result = writeSite(paths.site, { brief, tokens, contentDir: join(paths.dir, 'content/pages'), approaches });
+  // The project's own cleared files (photos, logos) live in assets/public/ and are served from
+  // the site root, so a rebuild never loses them. Asset Rights records each in assets/register.json.
+  const publicDir = join(paths.dir, 'assets/public');
+  if (existsSync(publicDir)) cpSync(publicDir, join(paths.site, 'public'), { recursive: true });
   // Packages are installed by the build (forge site --build), not here.
   for (const id of approaches) getModule(id).apply(paths.site, { install: false, projectDir: paths.dir });
   ledger.append(
