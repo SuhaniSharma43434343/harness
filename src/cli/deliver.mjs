@@ -136,3 +136,26 @@ export async function cmdDemo(root, args) {
   await server.close();
   return 0;
 }
+
+// forge plan <project>: writes the current phase's task contracts onto the board.
+export async function cmdPlan(root, args) {
+  const [project] = args;
+  if (!project || project.startsWith('-')) return usage('forge plan <project>');
+  const { planPhase } = await import('../core/planner.mjs');
+  const workspace = workspaceFor(root);
+  const { phase } = loadProject(project, { workspace });
+  const added = planPhase(project, { workspace });
+  console.log(added.length ? `Planned ${phase}: ${added.map((t) => `${t.id} (${t.agent})`).join(', ')}` : `Nothing to plan in ${phase}: its tasks are on the board already, or a forge command does its work.`);
+  return 0;
+}
+
+// forge check <name>: a planned task's verify command, run in the project folder.
+export async function cmdCheck(root, args) {
+  const [name] = args;
+  if (!name) return usage('forge check <research|content|assets>');
+  const { runCheck } = await import('../core/checks.mjs');
+  const problems = runCheck(name, process.cwd());
+  for (const p of problems) console.log(`- ${p}`);
+  console.log(problems.length ? `${name}: ${problems.length} problem(s)` : `${name}: ok`);
+  return problems.length ? 1 : 0;
+}

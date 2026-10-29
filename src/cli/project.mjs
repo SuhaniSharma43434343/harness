@@ -2,6 +2,7 @@ import { isAbsolute, join } from 'node:path';
 import { listTasks } from '../core/board.mjs';
 import { loadConfig } from '../core/config.mjs';
 import { advanceProject, exitBlockers } from '../core/advance.mjs';
+import { planPhase } from '../core/planner.mjs';
 import { agentsForPhase } from '../core/agents.mjs';
 import { approvals, approve, createProject, loadProject, nextPhases, PHASES } from '../core/project.mjs';
 import { resume } from '../core/recovery.mjs';
@@ -117,6 +118,8 @@ export async function cmdRun(root, args) {
   const runs = [];
   for (;;) {
     const { phase } = loadProject(project, { workspace });
+    // The phase's standing plan goes on the board first (research, content, assets).
+    planPhase(project, { workspace });
     const summary = await runProject(project, { workspace, worker, agents: agentsForPhase(phase) });
     runs.push({ phase, ...summary });
     if (!args.includes('--json')) {

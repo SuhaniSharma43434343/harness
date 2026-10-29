@@ -9,7 +9,7 @@ import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
 import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
-import { cmdAdvance, cmdDemo, cmdDeploy, cmdPreview, cmdReport, cmdTest } from './deliver.mjs';
+import { cmdAdvance, cmdCheck, cmdDemo, cmdDeploy, cmdPlan, cmdPreview, cmdReport, cmdTest } from './deliver.mjs';
 import { cmdAudit, cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
@@ -78,6 +78,8 @@ const COMMANDS = {
   package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
   audit: { summary: 'Release security review: npm audit plus secret scans of the ZIP, workspace and logs: forge audit [--out <dir>]', run: (args) => cmdAudit(ROOT, args) },
   upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
+  plan: { summary: 'Write the task contracts for the current phase: forge plan <project>', run: (args) => cmdPlan(ROOT, args) },
+  check: { summary: 'Run the verify check of a planned task, in the project folder: forge check <research|content|assets>', run: (args) => cmdCheck(ROOT, args) },
   advance: { summary: 'Move to the next phase when its exit gate holds: forge advance <project> [--check]', run: (args) => cmdAdvance(ROOT, args) },
   preview: { summary: 'Serve the built site locally: forge preview <project> [--port <n>] [--once]', run: (args) => cmdPreview(ROOT, args) },
   deploy: { summary: 'Deploy with the vercel plugin: forge deploy <project> --preview | --production', run: (args) => cmdDeploy(ROOT, args) },

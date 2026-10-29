@@ -58,7 +58,7 @@ const EVIDENCE = {
   ASSETS_LICENSING: (dir) => {
     const r = readJson(join(dir, 'assets', 'register.json'));
     if (!r) return ['assets/register.json (the licence register)'];
-    return (r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.path ?? a.package} (${a.status})`);
+    return (r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.file ?? a.path ?? a.package} (${a.status})`);
   },
   TECHNICAL_PLAN: (dir, project, opts) => {
     const tasks = listTasks(project, opts);
