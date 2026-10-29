@@ -19,3 +19,11 @@ How to check:
 | | APP-04 | Mid-range Android (model, version) | Chrome | | | | | |
 | | APP-06 | iPhone (model, iOS version) | Safari | | | | Touch play, skip, sound toggle | |
 | | APP-06 | Mid-range Android (model, version) | Chrome | | | | 30 fps or more while playing | |
+| | APP-03 | iPhone (model, iOS version) | Safari | | | | Drag and turn; poster is the LCP | |
+| | APP-03 | Mid-range Android (model, version) | Chrome | | | | 30 fps or more while turning | |
+| | APP-05 | iPhone (model, iOS version) | Safari | | | | Which ladder level it settles on | |
+| | APP-05 | Mid-range Android (model, version) | Chrome | | | | 8 ms GPU a frame or less (full or reduced) | |
+| | APP-07 | iPhone (model, iOS version) | Safari | | | | One WebGL canvas at a time while scrolling | |
+| | APP-07 | Mid-range Android (model, version) | Chrome | | | | Shared budget; no dropped scroll | |
+| | APP-08 | iPhone (model, iOS version) | Safari | | | | Scrub has no frozen segment | |
+| | APP-08 | Mid-range Android (model, version) | Chrome | | | | Frames 3 MB or less on mobile | |

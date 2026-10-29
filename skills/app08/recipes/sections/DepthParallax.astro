@@ -1,0 +1,34 @@
+---
+// APP-08 DepthParallax: a 2.5D parallax scene from an image and its depth map (white is near).
+// Props: image: { src, alt, width, height }, depthMap: the greyscale map's path, heading, text.
+// The plain image is the first paint and the fallback (reduced motion, no WebGL, a low-end
+// device, a slow network, a failed load). Both files need provenance rows in the register.
+const { image, depthMap, heading, text } = Astro.props;
+if (!image?.src || !image?.alt || !image?.width || !image?.height || !depthMap) {
+  throw new Error('APP-08/DepthParallax needs an image (src, alt, width, height) and a depthMap.');
+}
+---
+<section class="section depth" data-app08="depth" data-depth={JSON.stringify({ image: image.src, map: depthMap })}>
+  <div class="wrap depth__grid">
+    {(heading || text) && (
+      <div>
+        {heading && <h2>{heading}</h2>}
+        {text && <p class="lead">{text}</p>}
+      </div>
+    )}
+    <div class="depth__stage" style={`aspect-ratio: ${image.width} / ${image.height}`}>
+      <img src={image.src} alt={image.alt} width={image.width} height={image.height} loading="lazy" decoding="async" />
+      <canvas class="frames__depth" hidden aria-hidden="true"></canvas>
+    </div>
+  </div>
+</section>
+<script>
+  import { startDepth } from '../../lib/app08/frames.js';
+  for (const section of document.querySelectorAll('[data-app08="depth"]')) startDepth(section);
+</script>
+<style>
+  .depth__grid { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); align-items: center; }
+  .depth__stage { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+  .depth__stage img, .depth__stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .depth__stage canvas[hidden] { display: none; }
+</style>

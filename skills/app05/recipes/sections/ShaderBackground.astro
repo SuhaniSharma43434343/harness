@@ -1,0 +1,40 @@
+---
+// APP-05 ShaderBackground: a section with a GLSL background behind its copy. Props:
+//   heading (required), text, cta: { label, href }, intensity: 1 to 3 (how much the field warps),
+//   colours: { a, b, c } to override the token colours (defaults: bg, primary, accent).
+// The CSS gradient underneath is the fallback (no WebGL, reduced motion shows a still frame,
+// a low-end device, a failed load, frames too slow), and the copy never depends on the canvas.
+const { heading, text, cta, intensity = 2, colours = {} } = Astro.props;
+if (!heading) throw new Error('APP-05/ShaderBackground needs a heading.');
+const vars = [colours.a && `--shader-a:${colours.a}`, colours.b && `--shader-b:${colours.b}`, colours.c && `--shader-c:${colours.c}`].filter(Boolean).join(';');
+---
+<section class="section shader" data-app05="background" data-intensity={Math.min(3, Math.max(1, Number(intensity)))} style={vars || undefined}>
+  <canvas class="shader__canvas" hidden aria-hidden="true"></canvas>
+  <div class="wrap shader__copy">
+    <h2>{heading}</h2>
+    {text && <p class="lead">{text}</p>}
+    {cta && <p><a class="button button--accent" href={cta.href}>{cta.label}</a></p>}
+  </div>
+</section>
+<script>
+  import { startShader } from '../../lib/app05/shader.js';
+  for (const section of document.querySelectorAll('[data-app05="background"]')) startShader(section);
+</script>
+<style>
+  .shader {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: min(80vh, 40rem);
+    display: grid;
+    align-items: center;
+    color: var(--shader-fg, var(--color-on-primary, #fff));
+    background:
+      radial-gradient(120% 80% at 15% 20%, var(--shader-c, var(--color-accent)) 0%, transparent 55%),
+      linear-gradient(135deg, var(--shader-a, var(--color-fg)) 0%, var(--shader-b, var(--color-primary)) 100%);
+  }
+  .shader__canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+  .shader__canvas[hidden] { display: none; }
+  .shader__copy { position: relative; }
+  .shader__copy h2, .shader__copy .lead { color: inherit; max-width: 36rem; text-shadow: 0 1px 12px rgb(0 0 0 / 0.35); }
+</style>

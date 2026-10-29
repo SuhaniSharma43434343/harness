@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { delimiter, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Unavailable } from '../core/errors.mjs';
 import { ROOT } from '../core/workspace.mjs';
 
@@ -21,7 +22,8 @@ export async function loadTool(name) {
     } catch {
       continue;
     }
-    const mod = await import(resolved.startsWith('/') ? `file://${resolved}` : resolved);
+    // A file URL works on every platform; a bare Windows path (C:\...) is not a valid specifier.
+    const mod = await import(pathToFileURL(resolved).href);
     return mod.default ?? mod;
   }
   throw new Unavailable(`${name} is not installed`, { hint: HINTS[name] ?? `Install ${name}.`, details: { tool: name } });

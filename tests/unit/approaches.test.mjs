@@ -34,7 +34,8 @@ for (const m of MODULES.values()) {
 }
 
 test('getModule refuses an approach without a module', () => {
-  assert.throws(() => getModule('APP-08'), /No approach module for APP-08/);
+  // APP-01 is the starter site itself, not a module.
+  assert.throws(() => getModule('APP-01'), /No approach module for APP-01/);
 });
 
 function cliProject(decisions) {

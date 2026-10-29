@@ -8,12 +8,12 @@ Forge has eight website approaches. The selector picks only the ones a brief jus
 | --- | --- | --- | --- |
 | APP-01 AI to Full Website | The multi-page site from the brief, content and tokens. Every project uses it | n/a | Built: the starter (`docs/starter.md`) |
 | APP-02 Cinematic Scroll | Pinned sections, scroll-scrubbed reveals, smooth scroll | Static stacked layout with CSS reveals | Built (T19) |
-| APP-03 Interactive 3D | A lazy-loaded Three.js scene behind a poster | Poster image plus CSS depth | Not built (engine side) |
+| APP-03 Interactive 3D | A lazy-loaded Three.js scene behind a poster | Poster image plus CSS depth | Built (T12) |
 | APP-04 Spline + Website | The operator's Spline scene behind a poster | APP-03 scene or the poster | Built (T20). Experimental, needs B2. Its scene comes in through the spline plugin |
-| APP-05 Shader / WebGL | A GLSL background or transition with a quality ladder | CSS gradient or a static frame | Not built |
+| APP-05 Shader / WebGL | A GLSL background or transition with a quality ladder | CSS gradient or a static frame | Built (T12). No package: plain WebGL and our own shaders |
 | APP-06 Game-Like | One bounded game mechanic over an explainer | The explainer with the same content | Built (T20). Experimental, needs B1 |
-| APP-07 AI + 3D + Motion + Real | APP-01, 02 and 03 in one site under a shared budget | APP-01 plus APP-02 | Not built (needs APP-03) |
-| APP-08 Image to Frame Animation to 3D | A scroll-scrubbed frame sequence and a depth-map parallax scene | A static key frame | Not built |
+| APP-07 AI + 3D + Motion + Real | APP-01, 02 and 03 in one site under a shared budget | APP-01 plus APP-02 | Built (T12): applies APP-02 and APP-03 (and APP-05 when asked), with one shared budget |
+| APP-08 Image to Frame Animation to 3D | A scroll-scrubbed frame sequence and a depth-map parallax scene | A static key frame | Built (T12). No package; ffmpeg (a system tool) extracts frames from a video |
 
 The selection matrix (`registry/selection-matrix.json`) gives each approach's status per project type: default, optional, experimental (needs approval) or excluded. Each registry entry's `verification` is one of `not-started`, `in-development`, `implemented` or `verified`. It moves to `verified` only with real-project and real-device evidence.
 

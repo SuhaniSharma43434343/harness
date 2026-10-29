@@ -24,6 +24,7 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T18: the starter website (APP-01) and `forge site` ([docs/starter.md](docs/starter.md))
 - T19: the APP-02 Cinematic Scroll module and `forge approach` ([docs/approaches.md](docs/approaches.md))
 - T20: the APP-04 Spline and APP-06 Game-Like modules ([docs/approaches.md](docs/approaches.md))
+- T12: the APP-03 Interactive 3D, APP-05 Shader, APP-07 composite and APP-08 Frame Animation modules, so all eight approaches are built ([docs/approaches.md](docs/approaches.md))
 - T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies ([docs/gates.md](docs/gates.md))
 - T22: the browser gates: routes, accessibility, forms, responsive and performance ([docs/gates.md](docs/gates.md))
 - T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
@@ -125,7 +126,7 @@ src/core/                 config, schemas, typed errors, project state, ledger,
 src/site/                 brief -> pages, design tokens, scaffold and build (T18)
 starters/astro-base/      the starter website (APP-01)
 skills/app01/             APP-01 module instructions for builders
-skills/app02/, app04/, app06/  approach modules: skill and recipes (sections, runtime) copied by forge approach
+skills/app02/ to app08/     approach modules: skill and recipes (sections, runtime) copied by forge approach
 src/approaches/           approach modules and applyApproach
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema

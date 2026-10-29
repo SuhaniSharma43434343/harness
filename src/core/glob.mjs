@@ -42,8 +42,9 @@ export function matcher(patterns) {
   };
 }
 
-// Lists files under `root` (as forward-slash relative paths), skipping folders in `skip`.
-export function walk(root, { skip = [] } = {}) {
+// Lists files under `root` (as forward-slash relative paths), skipping the paths in `skip` and
+// any folder named in `skipNames` at any depth.
+export function walk(root, { skip = [], skipNames = [] } = {}) {
   const out = [];
   const visit = (dir) => {
     let entries;
@@ -56,6 +57,7 @@ export function walk(root, { skip = [] } = {}) {
       const full = join(dir, e.name);
       const rel = relative(root, full).replace(/\\/g, '/');
       if (skip.some((s) => rel === s || rel.startsWith(`${s}/`))) continue;
+      if (e.isDirectory() && skipNames.includes(e.name)) continue;
       if (e.isDirectory()) visit(full);
       else if (e.isFile()) out.push(rel);
     }

@@ -3,10 +3,14 @@
   "name": "AI Image to Frame Animation to 3D",
   "summary": "A scroll-scrubbed frame sequence from owned or licensed frames, plus a 2.5D depth-map parallax scene from a supplied or generated depth map. For a parallax or scrubbed hero sequence.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app08/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app08/recipes/lib/frames.js",
+      "skills/app08/recipes/sections/DepthParallax.astro",
+      "skills/app08/recipes/sections/FrameSequence.astro"
+    ]
   },
   "selectWhen": {
     "field": "features.interactive",
@@ -43,28 +47,16 @@
   },
   "dependencies": [
     {
-      "name": "sharp",
-      "licence": "Apache-2.0",
-      "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
-    },
-    {
       "name": "ffmpeg",
       "licence": "LGPL-2.1 or GPL, by build",
       "licenceVerified": false,
-      "note": "System tool, not shipped; doctor checks for it"
-    },
-    {
-      "name": "three",
-      "licence": "MIT",
-      "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+      "note": "System tool, not shipped; only needed to turn a video into frames"
     },
     {
       "name": "frames and depth maps",
-      "licence": "per asset",
+      "licence": "per frame",
       "licenceVerified": false,
-      "note": "Every frame and depth map needs a provenance record, with generator terms"
+      "note": "Every frame and depth map needs a provenance row (registerFrames); generated frames record the generator's terms"
     }
   ],
   "tests": {
@@ -77,6 +69,9 @@
       "tests/decision/app08/neg-1.json",
       "tests/decision/app08/neg-2.json",
       "tests/decision/app08/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app08.test.mjs",
+    "fallback": "tests/build/app08.test.mjs",
+    "budget": "tests/build/app08.test.mjs"
   }
 }

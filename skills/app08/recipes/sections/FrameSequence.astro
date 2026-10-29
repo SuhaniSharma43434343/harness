@@ -1,0 +1,44 @@
+---
+// APP-08 FrameSequence: a scroll-scrubbed image sequence. Props:
+//   frames:   { pattern, count, width, height }. pattern is a path in public/ with %d or %03d for
+//             the 1-based frame number, for example "/frames/hero/%03d.webp".
+//   keyFrame: { src, alt }. The first paint and the fallback; usually the first frame.
+//   heading, text: copy shown over the sequence.
+//   length:   how many screens of scrolling the sequence lasts (default 3).
+// Every frame needs a provenance row in assets/register.json (forge approach adds them).
+const { frames, keyFrame, heading, text, length = 3 } = Astro.props;
+if (!frames?.pattern || !frames?.count || !frames?.width || !frames?.height) {
+  throw new Error('APP-08/FrameSequence needs frames with pattern, count, width and height.');
+}
+if (!keyFrame?.src || !keyFrame?.alt) throw new Error('APP-08/FrameSequence needs a keyFrame with src and alt: it is the first paint and the fallback.');
+const data = JSON.stringify({ pattern: frames.pattern, count: frames.count });
+---
+<section class="frames" data-app08="sequence" data-frames={data} style={`--frames-length: ${Math.max(1, Number(length))}`}>
+  <div class="frames__sticky">
+    <div class="frames__stage" style={`aspect-ratio: ${frames.width} / ${frames.height}`}>
+      <img class="frames__key" src={keyFrame.src} alt={keyFrame.alt} width={frames.width} height={frames.height} fetchpriority="high" decoding="async" />
+      <canvas class="frames__canvas" hidden role="img" aria-label={keyFrame.alt}></canvas>
+    </div>
+    {(heading || text) && (
+      <div class="wrap frames__copy">
+        {heading && <h2>{heading}</h2>}
+        {text && <p class="lead">{text}</p>}
+      </div>
+    )}
+  </div>
+</section>
+<script>
+  import { startFrames } from '../../lib/app08/frames.js';
+  for (const section of document.querySelectorAll('[data-app08="sequence"]')) startFrames(section);
+</script>
+<style>
+  .frames { position: relative; }
+  .frames.is-live { height: calc(var(--frames-length) * 100vh); }
+  .frames__sticky { position: relative; }
+  .frames.is-live .frames__sticky { position: sticky; top: 0; height: 100vh; display: grid; align-content: center; overflow: hidden; }
+  .frames__stage { position: relative; width: 100%; max-height: 100vh; margin-inline: auto; overflow: hidden; background: var(--color-surface); }
+  .frames__key, .frames__canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frames__canvas[hidden] { display: none; }
+  .frames.is-live .frames__key { visibility: hidden; }
+  .frames__copy { padding-block: var(--space); }
+</style>

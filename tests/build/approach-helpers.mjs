@@ -64,3 +64,35 @@ export function addSections(siteDir, slug, yaml) {
   const out = at === -1 ? text.replace(/\n---\n/, `\n${yaml}\n---\n`) : `${text.slice(0, at)}\n${yaml}${text.slice(at)}`;
   writeFileSync(file, out);
 }
+
+// A minimal binary glTF: one triangle. Enough to prove the loader path end to end.
+export function tinyGlb() {
+  const positions = new Float32Array([-1, -1, 0, 1, -1, 0, 0, 1, 0]);
+  const bin = Buffer.from(positions.buffer);
+  const json = Buffer.from(
+    JSON.stringify({
+      asset: { version: '2.0' },
+      scene: 0,
+      scenes: [{ nodes: [0] }],
+      nodes: [{ mesh: 0 }],
+      meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+      buffers: [{ byteLength: bin.length }],
+      bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: bin.length }],
+      accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [-1, -1, 0], max: [1, 1, 0] }],
+    }),
+  );
+  const pad = (b, c) => Buffer.concat([b, Buffer.alloc((4 - (b.length % 4)) % 4, c)]);
+  const j = pad(json, 0x20);
+  const b = pad(bin, 0);
+  const header = Buffer.alloc(12);
+  header.write('glTF', 0);
+  header.writeUInt32LE(2, 4);
+  header.writeUInt32LE(12 + 8 + j.length + 8 + b.length, 8);
+  const chunk = (data, type) => {
+    const h = Buffer.alloc(8);
+    h.writeUInt32LE(data.length, 0);
+    h.writeUInt32LE(type, 4);
+    return Buffer.concat([h, data]);
+  };
+  return Buffer.concat([header, chunk(j, 0x4e4f534a), chunk(b, 0x004e4942)]);
+}
