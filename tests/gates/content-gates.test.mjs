@@ -14,6 +14,7 @@ import { isClaim } from '../../src/gates/claims.mjs';
 import { cmdGates } from '../../src/cli/gates.mjs';
 import { createProject } from '../../src/core/project.mjs';
 import { read as readLedger } from '../../src/core/ledger.mjs';
+import { STARTER_DIR } from '../../src/site/tokens.mjs';
 
 const CONTENT_GATES = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies'];
 const NOW = () => new Date('2026-10-28T00:00:00Z');
@@ -188,4 +189,29 @@ test('dependencies: an optional build-machine binary is reported but does not bl
   const r = await runGate('dependencies', siteDir);
   assert.equal(r.status, 'pass');
   assert.deepEqual(r.findings.map((f) => [f.id, f.severity]), [['build-binary-licence', 'moderate']]);
+});
+
+test('licences: rows for npm packages are left to the dependencies gate, and the starter favicon is own work', async () => {
+  const { dir, siteDir } = materializeFixture('known-good');
+  const regFile = join(dir, 'assets/register.json');
+  const reg = JSON.parse(readFileSync(regFile, 'utf8'));
+  // The rows forge approach writes have a package, not a file.
+  reg.assets = reg.assets.filter((a) => a.file !== 'favicon.svg').concat({ package: 'gsap', licence: 'GSAP Standard', source: 'npm gsap@3.15.0', status: 'uncertain' });
+  writeFileSync(regFile, JSON.stringify(reg));
+  cpSync(join(STARTER_DIR, 'public', 'favicon.svg'), join(siteDir, 'dist', 'favicon.svg'));
+  const r = await runGate('licences', siteDir);
+  assert.equal(r.status, 'pass', JSON.stringify(r.findings));
+});
+
+test('dependencies: a package recorded as uncertain says to confirm its terms', async () => {
+  const { dir, siteDir } = materializeFixture('dependency-gpl');
+  const name = (await runGate('dependencies', siteDir)).findings[0].message.split('@')[0];
+  const regFile = join(dir, 'assets/register.json');
+  const reg = JSON.parse(readFileSync(regFile, 'utf8'));
+  reg.assets.push({ package: name, licence: 'GPL-3.0', status: 'uncertain' });
+  writeFileSync(regFile, JSON.stringify(reg));
+  const r = await runGate('dependencies', siteDir);
+  assert.equal(r.status, 'fail');
+  assert.equal(r.findings[0].id, 'licence-unconfirmed');
+  assert.match(r.findings[0].message, /uncertain: confirm the terms/);
 });

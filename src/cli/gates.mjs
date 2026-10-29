@@ -41,7 +41,13 @@ export async function cmdGates(root, args) {
   }
   for (const r of results) {
     console.log(`${r.status.toUpperCase().padEnd(7)} ${r.gate}${r.error ? `: ${r.error.code} ${r.error.message}` : ''}`);
-    for (const f of r.findings) console.log(`          ${f.severity.padEnd(8)} ${f.id}: ${f.message}`);
+    // Many findings of one kind (one per build binary, say) print as one line; the evidence file has them all.
+    const byId = Map.groupBy(r.findings, (f) => `${f.severity} ${f.id}`);
+    for (const group of byId.values()) {
+      const [f] = group;
+      const more = group.length > 3 ? ` (and ${group.length - 1} more like it in evidence/gates/${r.gate}.json)` : '';
+      for (const g of more ? [f] : group) console.log(`          ${g.severity.padEnd(8)} ${g.id}: ${g.message}${more}`);
+    }
   }
   const notBuilt = (gates.length ? gates : GATE_ORDER).filter((g) => !GATES.has(g));
   if (notBuilt.length) console.log(`No result (gate not available yet): ${notBuilt.join(', ')}`);

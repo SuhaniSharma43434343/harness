@@ -7,7 +7,8 @@ import { deploy, writeReport } from '../core/deliver.mjs';
 import { goProject } from '../core/go.mjs';
 import { approve, createProject, hasApproval, loadProject } from '../core/project.mjs';
 import { runProject } from '../core/runner.mjs';
-import { readJson } from '../core/workspace.mjs';
+import { readJson, writeJsonAtomic } from '../core/workspace.mjs';
+import { actionFor } from '../../plugins/form-function/index.mjs';
 import { runIntake } from '../intake/run.mjs';
 import { runRepairLoop } from '../qa/repair.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
@@ -115,6 +116,15 @@ async function buildWithApproaches(project, root, workspace, ask) {
     }
     await cmdApproach(root, [project, d.approach, '--no-install']);
   }
+  // Forms that go to the form function post to its endpoint; deploy installs the function (B5).
+  const siteFile = join(siteDir, 'src', 'site.json');
+  const site = readJson(siteFile);
+  for (const [id, f] of Object.entries(site.forms ?? {})) if (f.destination === 'form-function' && !f.action) f.action = actionFor(id);
+  // With Vercel hosting the address is known: the vercel plugin names the Vercel project after
+  // the Forge project, so production is <project>.vercel.app (change url if VERCEL_PROJECT differs).
+  const hosting = readJson(join(dir, 'intake', 'brief.json')).constraints?.hosting;
+  if (!site.url && hosting === 'vercel') site.url = `https://${project}.vercel.app`;
+  writeJsonAtomic(siteFile, site);
   const b = buildSite(siteDir);
   if (!b.ok) throw new Error(`The site did not build:\n${b.output.trim().split('\n').slice(-20).join('\n')}`);
   const report = siteReport(b.dist);

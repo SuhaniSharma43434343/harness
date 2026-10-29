@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { advanceProject, exitBlockers } from './advance.mjs';
+import { advanceProject, exitBlockers, latestGateResults } from './advance.mjs';
 import { agentsForPhase } from './agents.mjs';
 import { listTasks } from './board.mjs';
 import { planPhase } from './planner.mjs';
@@ -28,6 +28,17 @@ export const APPROVAL_TEXT = {
 export const UP_FRONT = ['B2', 'B3'];
 
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
+
+// What only the operator can fix before quality review, so the repair loop is not spent on it:
+// gates that could not run for a missing tool, and a site with no address for its canonical URLs.
+export function operatorBlockers(dir) {
+  const out = [];
+  const unavailable = latestGateResults(dir).filter((r) => r.status === 'error' && r.error?.code === 'UNAVAILABLE');
+  if (unavailable.length) out.push(`the browser test tools for the ${unavailable.map((r) => r.gate).join(', ')} gate(s): run sh scripts/setup.sh --with-test-tools`);
+  const site = readJson(join(dir, 'site', 'src', 'site.json'));
+  if (site && !site.url) out.push('the site\'s address for its canonical URLs: hosting is not decided, so set "url" in site/src/site.json (for example https://<name>.vercel.app)');
+  return out;
+}
 
 // goProject(project, { ask, steps, log?, ...opts }) => { phase, stopped?: string[], done?: true }
 // ask: { confirm(question, code) => bool, choose(question, labels, defaultIndex, code) => index | null,
@@ -107,11 +118,16 @@ export async function goProject(project, { ask, steps, log = console.log, ...opt
       case 'BUILD':
         if (!existsSync(join(dir, 'site', 'dist', 'index.html'))) await steps.build();
         break;
-      case 'INTEGRATION_TESTS':
+      case 'INTEGRATION_TESTS': {
         await steps.gates();
+        const needs = operatorBlockers(dir);
+        if (needs.length) return stop(phase, needs);
         break;
+      }
       case 'QUALITY_REVIEW':
       case 'REPAIR': {
+        const needs = operatorBlockers(dir);
+        if (needs.length) return stop(phase, needs);
         const r = await steps.review();
         if (!r.met) return stop(loadProject(project, opts).phase, ['the quality floor: the repair loop escalated (see reports/escalation.md)']);
         break;

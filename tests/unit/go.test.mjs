@@ -151,3 +151,18 @@ test('without a terminal, only the approvals passed as flags are given, and the 
   assert.match(notes[1], /--direction/);
   assert.equal(await ask.typed('Approve B7?', 'deploy', 'B7'), false, 'B7 is never answered without a terminal');
 });
+
+test('operatorBlockers names a missing test tool and a site with no address', async () => {
+  const { dir } = setup();
+  const { operatorBlockers } = await import('../../src/core/go.mjs');
+  assert.deepEqual(operatorBlockers(dir), []);
+  writeJsonAtomic(join(dir, 'site/src/site.json'), { name: 'acme' });
+  writeJsonAtomic(join(dir, 'evidence/gates/performance.json'), {
+    gate: 'performance', gateVersion: '0.1.0', status: 'error', startedAt: '2026-10-29T00:00:00Z', finishedAt: '2026-10-29T00:00:01Z',
+    metrics: {}, findings: [], evidence: [], error: { code: 'UNAVAILABLE', message: 'lighthouse is not installed' },
+  });
+  const needs = operatorBlockers(dir);
+  assert.equal(needs.length, 2, needs.join('; '));
+  assert.match(needs[0], /test tools for the performance gate/);
+  assert.match(needs[1], /"url" in site\/src\/site.json/);
+});
