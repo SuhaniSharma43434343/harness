@@ -29,7 +29,7 @@ command exits 1 unless the quality floor is met: every required gate present and
 
 | Gate | Reads | Findings |
 | --- | --- | --- |
-| `content-parity` | `content/pages/*.md` (locked copy) and the built pages | `route-missing` (critical), `text-missing` (serious). Skipped with `NO_LOCKED_CONTENT` before content is locked. |
+| `content-parity` | `content/pages/*.md` (locked copy) and the built pages; `design/approach-decision.json` and the site's pages | `route-missing` (critical), `text-missing` (serious), `approach-unused` (serious: a selected approach has no section on any page; APP-07 needs APP-02 and APP-03 sections on one page). Skipped with `NO_LOCKED_CONTENT` before content is locked. |
 | `claims` | built text, `content/claims.json`, `research/sources.json` | `unsourced-claim`, `unknown-source`, `no-source` (serious). Threshold `maxUnsourced` (0). |
 | `licences` | every image, video, font and model in the build, `assets/register.json` | `no-licence-record`, `uncertain-rights`, `no-evidence`, `no-register` |
 | `secrets` | `site/` source and build, except `node_modules` | `secret` (redacted, never the value), `env-file` (critical). `.env.example` is allowed. |
