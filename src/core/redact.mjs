@@ -106,7 +106,7 @@ export function scanPaths(paths, { root = ROOT, secrets = knownSecrets() } = {})
     const full = join(root, p);
     let files;
     try {
-      files = statSync(full).isDirectory() ? walk(full, { skip: SKIP }).map((f) => join(full, f)) : [full];
+      files = statSync(full).isDirectory() ? walk(full, { skip: SKIP, skipNames: ['node_modules', '.git'] }).map((f) => join(full, f)) : [full];
     } catch {
       continue;
     }
