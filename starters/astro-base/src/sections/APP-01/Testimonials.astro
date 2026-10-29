@@ -1,0 +1,26 @@
+---
+// Quotes from real clients. Props: heading, items: [{ quote, name, role? }]. Only quotes the
+// client supplied belong here (the claims file lists them); renders nothing without items.
+const { heading, items = [] } = Astro.props;
+---
+{items.length > 0 && (
+  <section class="section section--alt">
+    <div class="wrap">
+      {heading && <h2>{heading}</h2>}
+      <ul class="quotes">
+        {items.map((t) => (
+          <li>
+            <blockquote><p>&ldquo;{t.quote}&rdquo;</p></blockquote>
+            <p class="quotes__who"><strong>{t.name}</strong>{t.role && <span>, {t.role}</span>}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+<style>
+  .quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: calc(var(--space) * 1.5); margin: calc(var(--space) * 2) 0 0; padding: 0; list-style: none; }
+  .quotes li { padding: calc(var(--space) * 1.5); background: var(--color-bg); border-radius: calc(var(--radius) * 2); border-top: 4px solid var(--color-accent); }
+  .quotes blockquote { margin: 0; font-size: var(--step-1); }
+  .quotes__who { margin-bottom: 0; color: var(--color-muted); }
+</style>

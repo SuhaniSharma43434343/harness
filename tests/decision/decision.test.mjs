@@ -70,12 +70,12 @@ test('every approach has 3 positive and 3 negative cases in tests/decision', () 
 // builds for that kind of project, so it should be deliberate.
 const SAMPLES = {
   business: ['APP-01'],
-  event: ['APP-01', 'APP-05'],
-  flagship: ['APP-01', 'APP-02', 'APP-03', 'APP-04', 'APP-07'],
-  launch: ['APP-01', 'APP-02'],
-  nonprofit: ['APP-01', 'APP-06'],
+  event: ['APP-01', 'APP-02', 'APP-05'],
+  flagship: ['APP-01', 'APP-02', 'APP-03', 'APP-04', 'APP-05', 'APP-07'],
+  launch: ['APP-01', 'APP-02', 'APP-05'],
+  nonprofit: ['APP-01', 'APP-02', 'APP-05', 'APP-06'],
   portfolio: ['APP-01'],
-  showroom: ['APP-01', 'APP-03'],
+  showroom: ['APP-01', 'APP-02', 'APP-03', 'APP-05'],
 };
 
 for (const [type, expected] of Object.entries(SAMPLES)) {

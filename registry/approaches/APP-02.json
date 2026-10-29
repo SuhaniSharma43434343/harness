@@ -1,7 +1,7 @@
 {
   "id": "APP-02",
   "name": "Cinematic Scroll Website",
-  "summary": "Pinned sections, scroll-scrubbed reveals and section transitions with synced smooth scroll. For brand stories, launches and premium business sites with motion intensity 2 or 3.",
+  "summary": "Pinned sections, scroll-scrubbed reveals and section transitions with synced smooth scroll. Picked by default at motion intensity 2 or 3, and for launches, flagships and premium sites.",
   "registryVersion": "0.1.0",
   "verification": "implemented",
   "module": {
@@ -32,6 +32,11 @@
         "field": "brand.tone",
         "op": "includes",
         "value": "premium"
+      },
+      {
+        "field": "brand.motionIntensity",
+        "op": "gte",
+        "value": 2
       }
     ]
   },

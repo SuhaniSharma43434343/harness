@@ -1,7 +1,7 @@
 {
-  "case": "A friendly business site at motion 2 with no scroll story",
+  "case": "A friendly business site at motion 1 that asks for a scroll story",
   "expect": "not-selected",
-  "because": "selectWhen",
+  "because": "rejectWhen",
   "brief": {
     "project": "app02-neg-2",
     "schemaVersion": "0.1.0",
@@ -36,13 +36,15 @@
       }
     ],
     "features": {
-      "interactive": []
+      "interactive": [
+        "scroll-story"
+      ]
     },
     "brand": {
       "tone": [
         "friendly"
       ],
-      "motionIntensity": 2
+      "motionIntensity": 1
     },
     "constraints": {
       "deviceFloor": "mid",

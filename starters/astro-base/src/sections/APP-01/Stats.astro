@@ -1,0 +1,24 @@
+---
+// Large figures with labels. Props: heading, items: [{ value, label }]. Only real figures belong
+// here (the claims file lists their source); renders nothing without items.
+const { heading, items = [] } = Astro.props;
+---
+{items.length > 0 && (
+  <section class="section stats">
+    <div class="wrap">
+      {heading && <h2>{heading}</h2>}
+      <dl class="stats__grid">
+        {items.map((s) => (
+          <div><dt>{s.label}</dt><dd>{s.value}</dd></div>
+        ))}
+      </dl>
+    </div>
+  </section>
+)}
+<style>
+  .stats { background: var(--color-primary); color: var(--color-on-primary); }
+  .stats__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: calc(var(--space) * 2); margin: 0; }
+  .stats__grid div { display: flex; flex-direction: column-reverse; }
+  .stats dd { margin: 0; font-family: var(--font-display); font-size: clamp(2.5rem, 4vw + 1rem, 3.75rem); line-height: 1; }
+  .stats dt { margin-top: 0.4em; opacity: 0.85; }
+</style>

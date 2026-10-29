@@ -4,6 +4,7 @@ import { ConfigMissing, PermissionDenied } from '../core/errors.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { assertValid } from '../core/schemas.mjs';
 import { assertProjectExists, readJson } from '../core/workspace.mjs';
+import { getModule } from '../approaches/index.mjs';
 import { planSite, toMarkdown } from './content.mjs';
 import { DEFAULT_TOKENS, STARTER_DIR, assertTokens, fontPackages, fontsCss, tokensFromDirection } from './tokens.mjs';
 
@@ -23,11 +24,12 @@ function listMarkdown(dir) {
 
 // Writes the brief, tokens and content into an existing copy of the starter at `siteDir`.
 // `contentDir` is the project's content/pages/: a locked page there replaces the scaffold page.
+// `approaches` are the ones being applied, so scaffold pages can place their sections.
 // Returns { pages: [{ file, status }], forms, fonts }.
-export function writeSite(siteDir, { brief, tokens = DEFAULT_TOKENS, contentDir } = {}) {
+export function writeSite(siteDir, { brief, tokens = DEFAULT_TOKENS, contentDir, approaches = [] } = {}) {
   if (!brief) throw new ConfigMissing('writeSite needs a brief');
   assertTokens(tokens);
-  const { site, pages } = planSite(brief);
+  const { site, pages } = planSite(brief, { approaches });
 
   writeJson(join(siteDir, 'src/site.json'), site);
   writeJson(join(siteDir, 'src/styles/tokens.json'), tokens);
@@ -73,6 +75,26 @@ export function projectTokens(dir) {
   return DEFAULT_TOKENS;
 }
 
+// Approaches the scaffold applies on its own when P3 selected them without an approval: their
+// sections need no client assets, so the scaffold pages can use them straight away.
+const AUTO_APPLY = new Set(['APP-02', 'APP-05']);
+
+// The approaches a (re)scaffold applies: the ones the old site already had (a rebuild must not
+// drop them), plus the selected ones in AUTO_APPLY.
+function approachesFor(dir) {
+  const ids = new Set();
+  const oldSite = join(dir, 'site/src/site.json');
+  if (existsSync(oldSite)) for (const id of readJson(oldSite).approaches ?? []) ids.add(id);
+  const decisionFile = join(dir, 'design/approach-decision.json');
+  if (existsSync(decisionFile)) {
+    for (const d of readJson(decisionFile).decisions ?? []) {
+      if (d.selected && !d.needsApproval && AUTO_APPLY.has(d.approach)) ids.add(d.approach);
+    }
+  }
+  ids.delete('APP-01');
+  return [...ids].sort();
+}
+
 // Copies the starter template into workspace/<project>/site/ and writes the brief, tokens
 // and content into it. Refuses to overwrite an existing site unless `force` is set.
 export function scaffoldSite(project, { brief, tokens, force = false, starter = STARTER_DIR, actor = 'cli', ...opts } = {}) {
@@ -82,6 +104,7 @@ export function scaffoldSite(project, { brief, tokens, force = false, starter = 
   if (!brief) {
     throw new ConfigMissing(`Project "${project}" has no brief`, { hint: 'Write intake/brief.json or pass --brief <file>.' });
   }
+  const approaches = approachesFor(paths.dir);
   if (existsSync(paths.site)) {
     if (!force) {
       throw new PermissionDenied(`Project "${project}" already has a site`, {
@@ -96,12 +119,14 @@ export function scaffoldSite(project, { brief, tokens, force = false, starter = 
     recursive: true,
     filter: (src) => !relative(starter, src).split(sep).some((part) => SKIP.has(part)),
   });
-  const result = writeSite(paths.site, { brief, tokens, contentDir: join(paths.dir, 'content/pages') });
+  const result = writeSite(paths.site, { brief, tokens, contentDir: join(paths.dir, 'content/pages'), approaches });
+  // Packages are installed by the build (forge site --build), not here.
+  for (const id of approaches) getModule(id).apply(paths.site, { install: false, projectDir: paths.dir });
   ledger.append(
     project,
-    { actor, type: 'note', data: { event: 'site_scaffolded', starter: 'astro-base', tokens: tokens.source, pages: result.pages } },
+    { actor, type: 'note', data: { event: 'site_scaffolded', starter: 'astro-base', tokens: tokens.source, pages: result.pages, approaches } },
     opts,
   );
-  return { siteDir: paths.site, tokens: tokens.source, ...result };
+  return { siteDir: paths.site, tokens: tokens.source, approaches, ...result };
 }
 

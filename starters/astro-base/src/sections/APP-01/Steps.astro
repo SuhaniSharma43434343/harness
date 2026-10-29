@@ -1,0 +1,27 @@
+---
+// Numbered steps in a row. Props: heading, lead, steps: [{ title, text, href? }].
+const { heading, lead, steps = [] } = Astro.props;
+---
+{steps.length > 0 && (
+  <section class="section">
+    <div class="wrap">
+      {heading && <h2>{heading}</h2>}
+      {lead && <p class="lead">{lead}</p>}
+      <ol class="steps">
+        {steps.map((s, i) => (
+          <li>
+            <span class="steps__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{s.href ? <a href={s.href}>{s.title}</a> : s.title}</h3>
+            {s.text && <p>{s.text}</p>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+)}
+<style>
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: calc(var(--space) * 2); margin: calc(var(--space) * 2) 0 0; padding: 0; list-style: none; }
+  .steps li { padding-top: var(--space); border-top: 2px solid var(--color-primary); }
+  .steps__n { font-family: var(--font-display); font-size: 2rem; color: var(--color-accent); }
+  .steps h3 { margin-block: 0.3em; }
+</style>

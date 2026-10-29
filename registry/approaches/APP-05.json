@@ -1,7 +1,7 @@
 {
   "id": "APP-05",
   "name": "Shader / WebGL Website",
-  "summary": "A custom GLSL background or transition effect with a quality ladder (full, reduced, off). For accent backgrounds or transitions.",
+  "summary": "A custom GLSL background or transition effect with a quality ladder (full, reduced, off). Picked by default at motion intensity 2 or 3, or when the brief asks for a shader background.",
   "registryVersion": "0.1.0",
   "verification": "implemented",
   "module": {
@@ -13,9 +13,18 @@
     ]
   },
   "selectWhen": {
-    "field": "features.interactive",
-    "op": "includes",
-    "value": "shader-background"
+    "any": [
+      {
+        "field": "features.interactive",
+        "op": "includes",
+        "value": "shader-background"
+      },
+      {
+        "field": "brand.motionIntensity",
+        "op": "gte",
+        "value": 2
+      }
+    ]
   },
   "rejectWhen": {
     "field": "brand.motionIntensity",

@@ -148,6 +148,16 @@ test('preview serves the built site through the local-preview plugin and smoke-t
   await assert.rejects(startPreview(p.project, { ...p.opts, ...disabled, env: {} }), /not enabled/);
 });
 
+test('the smoke test does not count a sign-in redirect or another page as the site', async () => {
+  const redirect = async () => ({ status: 302, headers: new Headers({ location: 'https://vercel.com/sso-api?url=x' }), text: async () => '' });
+  const r = await smokeTest('https://site.vercel.app/', { fetchFn: redirect });
+  assert.deepEqual([r.ok, r.protected, r.redirect], [false, true, 'https://vercel.com/sso-api']);
+  const other = async () => ({ status: 200, headers: new Headers(), text: async () => '<html><title>Log in to Vercel</title></html>' });
+  assert.equal((await smokeTest('https://site.vercel.app/', { fetchFn: other, expectTitle: 'Harbor Home' })).ok, false);
+  const ours = async () => ({ status: 200, headers: new Headers(), text: async () => '<html><title>Harbor Home</title></html>' });
+  assert.equal((await smokeTest('https://site.vercel.app/', { fetchFn: ours, expectTitle: 'Harbor Home' })).ok, true);
+});
+
 test('the smoke test fails a site that does not answer with HTML', async () => {
   assert.equal((await smokeTest('http://x', { fetchFn: async () => ({ status: 500, text: async () => 'oops', headers: new Headers() }) })).ok, false);
   assert.equal((await smokeTest('http://x', { fetchFn: async () => ({ status: 200, text: async () => '{}', headers: new Headers() }) })).ok, false);
