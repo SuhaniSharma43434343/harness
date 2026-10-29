@@ -1,12 +1,14 @@
 ---
 // Large figures with labels. Props: heading, items: [{ value, label }]. Only real figures belong
 // here (the claims file lists their source); renders nothing without items.
-const { heading, items = [] } = Astro.props;
+// note: a line under the heading, for example that the items are samples on a demo site.
+const { heading, items = [], note } = Astro.props;
 ---
 {items.length > 0 && (
   <section class="section stats">
     <div class="wrap">
       {heading && <h2>{heading}</h2>}
+      {note && <p class="section-note">{note}</p>}
       <dl class="stats__grid">
         {items.map((s) => (
           <div><dt>{s.label}</dt><dd>{s.value}</dd></div>
@@ -21,4 +23,5 @@ const { heading, items = [] } = Astro.props;
   .stats__grid div { display: flex; flex-direction: column-reverse; }
   .stats dd { margin: 0; font-family: var(--font-display); font-size: clamp(2.5rem, 4vw + 1rem, 3.75rem); line-height: 1; }
   .stats dt { margin-top: 0.4em; opacity: 0.85; }
+  .stats .section-note { color: inherit; opacity: 0.8; }
 </style>

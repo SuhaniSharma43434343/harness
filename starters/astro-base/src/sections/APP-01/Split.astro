@@ -28,5 +28,5 @@ const { page, heading, text, items = [], image, reverse = false, index = 0 } = A
   .split__list { margin: var(--space) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space); }
   .split__list li { display: grid; gap: 0.2em; padding-left: var(--space); border-left: 3px solid var(--color-accent); }
   .split__list span { color: var(--color-muted); }
-  .split__image { width: 100%; height: auto; border-radius: var(--radius); object-fit: cover; }
+  .split__image { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: calc(var(--radius) * 2); object-fit: cover; }
 </style>
