@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T22: the browser gates: routes, accessibility, forms, responsive and performance, with Playwright, axe-core and Lighthouse adapters (`docs/gates.md`)
 - T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies, each tested on the gate fixtures (`docs/gates.md`)
 - T23: gate fixtures (`fixtures/sites/`): a blank site, a known-good site and seeded defects for every gate
 - T07 (from M2): the plugin host: manifests, config checks, health checks, permissions and approvals
@@ -87,7 +88,7 @@ The schema names are `task`, `plugin`, `gateResult`, `ledgerEntry`, `config` and
 npm test
 ```
 
-The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands. The build tests in `tests/build/` build a site from every sample brief; they need the starter's dependencies, which `setup` installs, and are skipped with the reason without them.
+The tests validate every fixture in `fixtures/schemas/valid` and check that every fixture in `fixtures/schemas/invalid` is rejected. They also check that there is one valid sample brief per project type, and run the CLI commands. The build tests in `tests/build/` build a site from every sample brief; they need the starter's dependencies, which `setup` installs, and are skipped with the reason without them. The browser gate tests need the test tools (`scripts/setup.sh --with-test-tools`) and are skipped the same way; set `FORGE_SLOW_TESTS=1` to include real Lighthouse runs.
 
 ## Layout
 

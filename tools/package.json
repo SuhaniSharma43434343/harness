@@ -1,0 +1,11 @@
+{
+  "name": "forge-test-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional browser test tools for the Forge gates. Installed by scripts/setup.sh --with-test-tools; the harness loads them from tools/node_modules.",
+  "dependencies": {
+    "axe-core": "4.14.0",
+    "lighthouse": "12.8.2",
+    "playwright": "1.63.0"
+  }
+}

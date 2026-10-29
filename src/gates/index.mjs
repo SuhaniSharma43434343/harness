@@ -2,18 +2,24 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ForgeError, SchemaInvalid } from '../core/errors.mjs';
 import { assertValid } from '../core/schemas.mjs';
+import * as playwright from '../plugins/playwright/index.mjs';
 import { gateContext, visibleText } from './context.mjs';
 import claims from './claims.mjs';
 import contentParity from './content-parity.mjs';
 import dependencies from './dependencies.mjs';
 import licences from './licences.mjs';
+import accessibility from './accessibility.mjs';
+import forms from './forms.mjs';
+import performance from './performance.mjs';
+import responsive from './responsive.mjs';
+import routes from './routes.mjs';
 import secrets from './secrets.mjs';
 import seo from './seo.mjs';
 
 // Each gate: { name, version, thresholds, run(ctx, thresholds) => { status?, findings, metrics?, evidence? } }.
 // A gate's run decides pass or fail from its findings; runGate adds the timing, the schema
 // check and the error handling, so no gate can report a pass it did not earn.
-export const GATES = new Map([contentParity, claims, licences, secrets, seo, dependencies].map((g) => [g.name, g]));
+export const GATES = new Map([contentParity, claims, licences, secrets, seo, dependencies, routes, accessibility, forms, responsive, performance].map((g) => [g.name, g]));
 
 // The order runGates reports them in: cheap file checks first, browser checks after.
 export const GATE_ORDER = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies', 'routes', 'accessibility', 'forms', 'responsive', 'performance'];
@@ -23,6 +29,7 @@ export function registerGate(gate) {
 }
 
 const BLOCKING = new Set(['critical', 'serious']);
+const BROWSER_GATES = new Set(['routes', 'accessibility', 'forms', 'responsive']);
 
 // runGate(name, siteDir, opts?) => Promise<GateResult>
 // Never throws for a site problem: a failing site is status 'fail' with findings. A gate that
@@ -68,16 +75,24 @@ function emptySite(ctx) {
 export async function runGates(siteDir, opts = {}) {
   const names = opts.gates ?? GATE_ORDER.filter((n) => GATES.has(n));
   const order = GATE_ORDER.filter((n) => names.includes(n)).concat(names.filter((n) => !GATE_ORDER.includes(n)));
+  // The browser gates share one browser. If it cannot start, each gate reports that itself.
+  let browser = opts.browser;
+  const own = !browser && order.some((n) => BROWSER_GATES.has(n));
+  if (own) browser = await (opts.adapters?.playwright ?? playwright).launch().catch(() => undefined);
   const results = [];
-  for (const name of order) {
-    if (opts.signal?.aborted) break;
-    const r = await runGate(name, siteDir, { ...opts, thresholds: opts.thresholds?.[name] });
-    results.push(r);
-    if (opts.write !== false) {
-      const file = join(opts.projectDir ?? dirname(siteDir), 'evidence', 'gates', `${name}.json`);
-      mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, JSON.stringify(r, null, 2) + '\n');
+  try {
+    for (const name of order) {
+      if (opts.signal?.aborted) break;
+      const r = await runGate(name, siteDir, { ...opts, browser, thresholds: opts.thresholds?.[name] });
+      results.push(r);
+      if (opts.write !== false) {
+        const file = join(opts.projectDir ?? dirname(siteDir), 'evidence', 'gates', `${name}.json`);
+        mkdirSync(dirname(file), { recursive: true });
+        writeFileSync(file, JSON.stringify(r, null, 2) + '\n');
+      }
     }
+  } finally {
+    if (own && browser) await browser.close();
   }
   return results;
 }

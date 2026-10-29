@@ -8,5 +8,10 @@ command -v git  >/dev/null 2>&1 || { echo "Git 2.40+ is required: https://git-sc
 if [ -f package-lock.json ]; then npm ci; else npm install; fi
 # The starter site's own dependencies (Astro), used by forge site --build and the build tests.
 (cd starters/astro-base && npm ci --no-audit --no-fund)
+# Optional: the browser test tools for the quality gates (Playwright, axe-core, Lighthouse).
+case " $* " in
+  *" --with-test-tools "*)
+    (cd tools && npm ci --no-audit --no-fund && npx playwright install chromium) ;;
+esac
 [ -f forge.config.json ] || cp forge.config.example.json forge.config.json
 ./forge doctor
