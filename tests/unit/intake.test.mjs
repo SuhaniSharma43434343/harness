@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { ConfigInvalid, SchemaInvalid } from '../../src/core/errors.mjs';
 import { draftBrief, validateBrief } from '../../src/intake/brief.mjs';
 import { intakeView, recordAnswer, REQUIRED_FIELDS, selectQuestions } from '../../src/intake/questions.mjs';
+import { matchOption, parseTyped } from '../../src/intake/typed.mjs';
 import { loadQuestionBank, loadRegistry, REGISTRY_DIR } from '../../src/registry/load.mjs';
 
 const bank = loadQuestionBank();
@@ -107,6 +108,39 @@ test('answers are checked against the question kind', () => {
   assert.throws(() => recordAnswer(empty(), byId('q-logo'), 'yes'), SchemaInvalid);
   assert.throws(() => recordAnswer(empty(), byId('q-industry'), ''), SchemaInvalid);
   assert.equal(recordAnswer(empty(), byId('q-motion-intensity'), 0).facts[0].value, 0);
+});
+
+test('typed answers match option numbers, values, labels and the start of a label, in any case', () => {
+  const answer = (id, text) => parseTyped(byId(id), text).answer;
+  // What an operator typed in a real run (2026-10-29), which used to fail at the end of the round.
+  assert.equal(answer('q-project-type', 'A product or campaign launch'), 'launch');
+  assert.equal(answer('q-tier', 'up to 12 pages'), 'M');
+  assert.equal(answer('q-device-floor', 'mid-range phones from the last 3 years'), 'mid');
+  assert.equal(answer('q-motion-intensity', 'cinematic'), 3);
+  assert.deepEqual(answer('q-tone', 'trustworthy'), ['trustworthy']);
+  assert.equal(answer('q-accessibility', 'AAA'), 'WCAG 2.2 AAA');
+  assert.equal(answer('q-accessibility', 'aa'), 'WCAG 2.2 AA');
+  assert.deepEqual(answer('q-interactive', 'A data visualisation'), ['data-visualisation']);
+  // Numbers are positions in the list shown, even when the values are numbers too.
+  assert.equal(answer('q-tier', '2'), 'M');
+  assert.equal(answer('q-motion-intensity', '2'), 1);
+  assert.equal(answer('q-tier', 'l'), 'L');
+  assert.deepEqual(answer('q-interactive', '4, data visualisation, 4'), ['scroll-story', 'data-visualisation']);
+  assert.deepEqual(answer('q-interactive', 'none'), []);
+  assert.equal(answer('q-logo', 'No'), false);
+  assert.equal(answer('q-industry', 'education'), 'education');
+  assert.equal(answer('q-tier', ''), 'use-recommendation');
+});
+
+test('a typed answer that fits no option, or more than one, is an error to ask again, not a guess', () => {
+  const error = (id, text) => parseTyped(byId(id), text).error;
+  assert.match(error('q-tier', 'XL'), /not one of the options/);
+  assert.match(error('q-tier', '9'), /no option 9/);
+  assert.match(error('q-interactive', '3d'), /more than one option/);
+  assert.match(error('q-logo', 'maybe'), /yes or no/);
+  assert.equal(matchOption(byId('q-interactive'), 'a 3d scene').value, '3d-scene');
+  // Every option label in the bank is accepted as typed.
+  for (const q of bank.questions) for (const o of q.options ?? []) assert.equal(matchOption(q, o.label).value, o.value, `${q.id}: ${o.label}`);
 });
 
 test('a question that fills several fields takes an object keyed by field', () => {

@@ -106,7 +106,8 @@ export function selectQuestions(brief, facts, bank, opts = {}) {
   return picked;
 }
 
-function checkAnswer(q, value) {
+// Throws SchemaInvalid unless value is a valid answer to q (the CLI also uses it to re-ask).
+export function checkAnswer(q, value) {
   const fail = (why) => {
     throw new SchemaInvalid(`Answer to ${q.id} is not valid: ${why}`, { details: { question: q.id, value } });
   };
