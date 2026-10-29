@@ -12,7 +12,7 @@ import { FIXTURES_DIR, listDefects, materializeFixture } from '../../src/gates/f
 const GATES = JSON.parse(readFileSync(new URL('../../schemas/gate-result.schema.json', import.meta.url), 'utf8')).properties.gate.enum;
 const routes = (dist) =>
   readdirSync(dist, { recursive: true })
-    .map(String)
+    .map((f) => String(f).replace(/\\/g, '/')) // readdirSync gives backslashes on Windows
     .filter((f) => f.endsWith('.html') && f !== '404.html');
 
 test('the known-good site is complete: pages, sitemap, robots, register, locked content', () => {
