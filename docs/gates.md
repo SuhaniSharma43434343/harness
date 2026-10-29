@@ -29,7 +29,7 @@ command exits 1 unless the quality floor is met: every required gate present and
 
 | Gate | Reads | Findings |
 | --- | --- | --- |
-| `content-parity` | `content/pages/*.md` (locked copy) and the built pages | `route-missing` (critical), `text-missing` (serious). Skipped with `NO_LOCKED_CONTENT` before content is locked. |
+| `content-parity` | `content/pages/*.md` (locked copy) and the built pages; `design/approach-decision.json` and the site's pages | `route-missing` (critical), `text-missing` (serious), `approach-unused` (serious: a selected approach has no section on any page; APP-07 needs APP-02 and APP-03 sections on one page). Skipped with `NO_LOCKED_CONTENT` before content is locked. |
 | `claims` | built text, `content/claims.json`, `research/sources.json` | `unsourced-claim`, `unknown-source`, `no-source` (serious). Threshold `maxUnsourced` (0). |
 | `licences` | every image, video, font and model in the build, `assets/register.json` | `no-licence-record`, `uncertain-rights`, `no-evidence`, `no-register` |
 | `secrets` | `site/` source and build, except `node_modules` | `secret` (redacted, never the value), `env-file` (critical). `.env.example` is allowed. |
@@ -59,7 +59,7 @@ and open it in Chromium. `runGates` starts one browser and shares it across them
 | --- | --- | --- |
 | `routes` | Loads every page, collects console errors, failed requests and internal links, then requests every linked path and an unknown path | `route-status` (critical), `console-error`, `asset-missing`, `broken-link`, `no-404` (serious). Threshold `maxConsoleErrors` (0). |
 | `accessibility` | axe-core, WCAG 2.2 A and AA rules, on every page at 390, 768 and 1440 px, plus a reduced-motion pass at 390 px | The axe rule id (`image-alt`, `label`, `color-contrast`, ...) with axe's impact as its severity, once per page and rule |
-| `forms` | For each form: checks it has an endpoint, submits it empty (the browser must stop it), then filled with the endpoint intercepted to answer 200 and then 500 | `no-endpoint`, `not-sent` (critical); `no-validation`, `no-status`, `no-success-state`, `no-error-state` (serious). No real data is ever sent. |
+| `forms` | For each form: checks it has an endpoint (the form-function endpoint, `/api/form`, when the brief sends the form there), submits it empty (the browser must stop it), then filled with the endpoint intercepted to answer 200 and then 500 | `no-endpoint`, `not-sent` (critical); `wrong-endpoint`, `no-validation`, `no-status`, `no-success-state`, `no-error-state` (serious). No real data is ever sent. |
 | `responsive` | Every page at 360, 390, 768, 1280, 1440 and 1920 px, with motion reduced | `horizontal-overflow` (serious, names the widest element), `small-text` (moderate, threshold `minFontPx` 12). Screenshots go to `evidence/gates/responsive/`. |
 | `performance` | Lighthouse (mobile, simulated throttling) on up to `maxPages` (3) pages, median of `runs` (3) runs each; the APP-01 JavaScript budget on the whole build | `score` (< 0.9), `lcp` (> 2500 ms), `cls` (> 0.1), `tbt` (> 200 ms), `js-budget` (> 150 KB), all serious |
 

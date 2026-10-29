@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "release-showroom",
+  "projectType": "flagship",
+  "tier": "L",
+  "client": {
+    "name": "Lumen Audio",
+    "industry": "high-end loudspeakers",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "demos",
+      "statement": "Book listening-room demos for the new speaker"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Audiophiles and interior designers",
+      "need": "See the speaker in 3D and hear the design story before visiting"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Cinematic reveal of the speaker",
+      "cta": "Book a demo"
+    },
+    {
+      "slug": "/speaker",
+      "title": "Speaker",
+      "purpose": "3D product view and specs",
+      "cta": "Book a demo"
+    },
+    {
+      "slug": "/room",
+      "title": "Listening room",
+      "purpose": "Spline scene of the showroom",
+      "cta": "Book a demo"
+    },
+    {
+      "slug": "/book",
+      "title": "Book",
+      "purpose": "Demo booking",
+      "cta": "Confirm booking"
+    }
+  ],
+  "features": {
+    "interactive": [
+      "3d-product",
+      "scroll-story",
+      "spline-scene"
+    ],
+    "splineSceneUrl": "https://prod.spline.design/example/scene.splinecode",
+    "forms": [
+      {
+        "id": "demo",
+        "purpose": "Demo booking",
+        "fields": [
+          "name",
+          "email",
+          "phone",
+          "date"
+        ],
+        "destination": "form-function"
+      }
+    ]
+  },
+  "brand": {
+    "tone": [
+      "refined",
+      "bold"
+    ],
+    "motionIntensity": 3,
+    "existingAssets": {
+      "logo": true,
+      "models3d": true
+    }
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA",
+    "hosting": "vercel"
+  },
+  "integrations": [
+    "spline",
+    "form-function",
+    "vercel"
+  ],
+  "assumptions": []
+}

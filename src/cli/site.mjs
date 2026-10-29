@@ -17,10 +17,11 @@ function flag(args, name) {
   return i === -1 ? undefined : args[i + 1];
 }
 
-const USAGE = 'Usage: forge site <project> [--brief <file>] [--tokens <file> | --direction <file>] [--force] [--build]';
+const USAGE = 'Usage: forge site <project> [--brief <file>] [--tokens <file> | --direction <file>] [--force] [--build] | forge site <project> --build-only';
 
 // forge site: copy the starter into workspace/<project>/site/ and write the brief, tokens and
 // content into it; with --build, install and build it and check the APP-01 JavaScript budget.
+// --build-only builds the site that is there, after approaches or builders changed it.
 export function cmdSite(root, args) {
   const [project] = args;
   if (!project || project.startsWith('-')) {
@@ -28,6 +29,15 @@ export function cmdSite(root, args) {
     return 2;
   }
   const workspace = workspaceFor(root);
+  if (args.includes('--build-only')) {
+    loadProject(project, { workspace });
+    const siteDir = join(workspace, project, 'site');
+    if (!existsSync(siteDir)) {
+      console.error(`${project} has no site yet. Run forge site ${project} --build first.`);
+      return 1;
+    }
+    return build(siteDir);
+  }
   // intake/brief.json wins over the file given to forge new --brief; scaffoldSite reads it.
   const intake = join(workspace, project, 'intake', 'brief.json');
   const briefFile = flag(args, '--brief') ?? (existsSync(intake) ? undefined : loadProject(project, { workspace }).brief);
@@ -41,8 +51,11 @@ export function cmdSite(root, args) {
   console.log(`Wrote ${r.pages.length} pages to ${r.siteDir} (tokens: ${r.tokens}).`);
   if (scaffold) console.log(`${scaffold} page(s) are scaffolds until Content & UX locks them in content/pages/.`);
   if (!args.includes('--build')) return 0;
+  return build(r.siteDir);
+}
 
-  const b = buildSite(r.siteDir);
+function build(siteDir) {
+  const b = buildSite(siteDir);
   if (!b.ok) {
     console.error(b.output.trim().split('\n').slice(-20).join('\n'));
     console.error(`Build failed (exit ${b.code}).`);

@@ -42,7 +42,7 @@ export async function cmdQa(root, args) {
     const r = await runRepairLoop(project, { ...opts, worker });
     report = r.report;
     met = r.outcome === 'passed';
-    if (!args.includes('--json')) console.log(r.outcome === 'passed' ? `Quality floor met after ${r.loops} repair loop(s).` : `Escalated after ${r.loops} repair loops: see reports/escalation.md.`);
+    if (!args.includes('--json')) console.log(r.outcome === 'passed' ? `Quality floor met after ${r.loops} repair loop(s).` : `Escalated after ${r.loops} repair loop(s): see reports/escalation.md.`);
   } else {
     const r = await qaReview(project, opts);
     report = r.report;

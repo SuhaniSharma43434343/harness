@@ -14,7 +14,7 @@ import { readJson, writeJsonAtomic } from '../../src/core/workspace.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { FIXTURES_DIR, listDefects, materializeFixture } from '../../src/gates/fixtures.mjs';
 import { mergeReview } from '../../src/qa/defects.mjs';
-import { repairTasks, runRepairLoop } from '../../src/qa/repair.mjs';
+import { gateVerifier, repairTasks, runRepairLoop } from '../../src/qa/repair.mjs';
 import { qaReview } from '../../src/qa/review.mjs';
 import { cmdQa } from '../../src/cli/qa.mjs';
 import { launchBrowser, loadTool } from '../../src/tools/load.mjs';
@@ -146,6 +146,41 @@ test('with the default gate verifier, a claimed fix fails its task, and the defe
   const task = readJson(join(p.dir, 'board', 'repair-1-secrets.json'));
   assert.equal(task.status, 'blocked');
   assert.match(readFileSync(join(p.dir, 'evidence/tasks/repair-1-secrets/attempt-2-verify.log'), 'utf8'), /env-file/);
+});
+
+// Found in the T28 real-model run: content-parity is skipped until B3, the builder may not
+// write content/pages/, and three loops of repair tasks for it changed nothing.
+test('a skipped gate gets no repair task, and the loop escalates without repairing', async () => {
+  const p = project('known-good');
+  rmSync(join(p.dir, 'content', 'pages'), { recursive: true, force: true });
+  let calls = 0;
+  const result = await runRepairLoop(p.name, { workspace: p.workspace, gates: ['content-parity'], worker: async (...a) => (calls++, claimingBuilder(...a)) });
+  assert.equal(result.outcome, 'escalated');
+  assert.equal(result.loops, 0);
+  assert.equal(calls, 0);
+  assert.deepEqual(result.report.defects.map((d) => [d.finding, d.status]), [['gate-skipped', 'escalated']]);
+  assert.match(readFileSync(join(p.dir, 'reports/escalation.md'), 'utf8'), /after 0 repair loops \(no open defect can be repaired by a builder\)/);
+});
+
+// Found in the T28 real-model run: the builder set site.url in site/src/site.json, but the gate
+// read the old site/dist, so the fix failed its task three times and was escalated.
+test('the gate verifier builds a site that has sources before it runs the gate', async () => {
+  const p = project('seo-two-h1');
+  const pages = join(p.dir, 'site', 'src', 'pages');
+  mkdirSync(pages, { recursive: true });
+  const builds = [];
+  const build = (siteDir) => {
+    builds.push(siteDir);
+    cpSync(join(KNOWN_GOOD, 'site', 'dist'), join(siteDir, 'dist'), { recursive: true });
+    return { ok: true, code: 0, output: '', dist: join(siteDir, 'dist') };
+  };
+  const r = await gateVerifier(p.name, { workspace: p.workspace, build })(`forge gates ${p.name} --gate seo`);
+  assert.deepEqual(builds, [join(p.dir, 'site')]);
+  assert.equal(r.ok, true, r.output);
+
+  const broken = await gateVerifier(p.name, { workspace: p.workspace, build: () => ({ ok: false, code: 1, output: 'astro: syntax error' }) })(`forge gates ${p.name} --gate seo`);
+  assert.equal(broken.ok, false);
+  assert.match(broken.output, /does not build:\nastro: syntax error/);
 });
 
 test('the known-good site passes the full quality floor with no repair', { skip: noBrowser }, async () => {

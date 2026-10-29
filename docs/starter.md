@@ -2,7 +2,7 @@
 
 `starters/astro-base/` is the site every Forge project starts from. It is APP-01 (AI to Full Website): a static, multi-page [Astro](https://astro.build) site (MIT) built from the brief, the design tokens and the page content. Every other approach adds sections to it; none replaces it.
 
-`forge site <project>` copies the starter into `workspace/<project>/site/` and writes the project's brief, tokens and content into it. `--build` also installs and builds it and checks the JavaScript budget.
+`forge site <project>` copies the starter into `workspace/<project>/site/` and writes the project's brief, tokens and content into it. `--build` also installs and builds it and checks the JavaScript budget. `forge site <project> --build-only` builds the site that is there without scaffolding again, for example after `forge approach`.
 
 ## Template contract
 
