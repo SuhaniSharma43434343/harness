@@ -1,0 +1,10 @@
+/* APP-02 fallback reveals: blocks fade up as they enter the viewport. Only applied when the
+   runtime chose the fallback for a reason other than reduced motion, so without JavaScript or
+   with reduced motion every block is simply visible. Opacity and transform never move layout. */
+html.app02-reveals [data-app02-reveal] {
+  transition: opacity var(--motion-duration) ease-out, transform var(--motion-duration) ease-out;
+}
+html.app02-reveals [data-app02-reveal]:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(var(--motion-distance));
+}

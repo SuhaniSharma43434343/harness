@@ -11,6 +11,7 @@ This repository is at the start of **Milestone 1 (Architecture and Contracts)**.
 - T03 and T04 (core runtime, from M2): project state and phases, the ledger, approval enforcement, the task runner, retries, locks and recovery
 - T05 (from M2): the 8 agent definitions, the Claude Code and Cursor generator, and phase routing
 - T06 (from M2): the Claude Code worker adapter, with recording and replay
+- T19: the APP-02 Cinematic Scroll module and `forge approach`, which applies a selected approach's sections, runtime and packages to a site (`docs/approaches.md`)
 - T24: the QA Verifier and repair loop (`forge qa`): defect reports with evidence, repair tasks for the builder, verification by a fresh review, escalation after 3 loops (`docs/qa.md`)
 - T22: the browser gates: routes, accessibility, forms, responsive and performance, with Playwright, axe-core and Lighthouse adapters (`docs/gates.md`)
 - T21: the content gates (`forge gates`): content parity, claims, licences, secrets, SEO and dependencies, each tested on the gate fixtures (`docs/gates.md`)
@@ -67,6 +68,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |
 | `forge intake <project> [--answers <file>] [--use-recommendations]` | Runs intake (P1): asks only what is unknown, records assumptions, and writes the brief, facts, estimate and plan for B1 |
+| `forge approach <project> <APP-0N> [--no-install]` | Applies a selected approach module to the site: its sections, runtime, packages and licence rows |
 | `forge qa <project> [--gate name] [--repair]` | Runs a QA Verifier review (`reports/defects.json`, fresh evidence), or with `--repair` the repair loop with the builder, escalating after 3 loops |
 | `forge gates <project> [--gate name] [--preview] [--json]` | Runs the automated gates on the built site, writes `evidence/gates/<gate>.json` and a `gate_result` ledger entry per gate, and exits 1 unless the quality floor is met |
 | `forge directions <project> [--count n] [--check]` | Proposes 3 to 5 design directions for P4, renders them at desktop and mobile, or checks them against the design rules |
@@ -106,6 +108,8 @@ src/core/                 config, schemas, typed errors, project state, ledger,
 src/site/                 brief -> pages, design tokens, scaffold and build (T18)
 starters/astro-base/      the starter website (APP-01)
 skills/app01/             APP-01 module instructions for builders
+skills/app02/             APP-02 module: skill and recipes (sections, runtime) copied by forge approach
+src/approaches/           approach modules and applyApproach
 schemas/                  JSON Schemas (M1 interface contracts)
 fixtures/schemas/         valid and invalid examples for every schema
 fixtures/sites/           gate fixtures: blank, known-good and seeded defects

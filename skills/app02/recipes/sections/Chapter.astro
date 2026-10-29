@@ -1,0 +1,30 @@
+---
+// APP-02 Chapter: a full-height chapter opener whose heading, text and optional image scrub in
+// as it crosses the viewport. Props: heading, text, image ({ src, alt, width, height }), eyebrow.
+// The fallback is the same layout with a CSS reveal.
+import '../../lib/app02/app02.css';
+
+const { heading, text, image, eyebrow } = Astro.props;
+---
+<section class="section chapter" data-app02="chapter">
+  <div class="wrap chapter__grid">
+    <div>
+      {eyebrow && <p class="chapter__eyebrow" data-app02-reveal>{eyebrow}</p>}
+      {heading && <h2 data-app02-reveal>{heading}</h2>}
+      {text && <p class="lead" data-app02-reveal>{text}</p>}
+    </div>
+    {image && (
+      <img src={image.src} alt={image.alt} width={image.width} height={image.height} loading="lazy" decoding="async" data-app02-reveal />
+    )}
+  </div>
+</section>
+<script>
+  import { startCinematic } from '../../lib/app02/cinematic.js';
+  startCinematic();
+</script>
+<style>
+  .chapter { min-height: 80vh; display: grid; align-items: center; }
+  .chapter__grid { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); align-items: center; }
+  .chapter__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); font-size: var(--step-n1, 0.875rem); }
+  .chapter img { width: 100%; height: auto; border-radius: var(--radius); }
+</style>

@@ -3,10 +3,15 @@
   "name": "Cinematic Scroll Website",
   "summary": "Pinned sections, scroll-scrubbed reveals and section transitions with synced smooth scroll. For brand stories, launches and premium business sites with motion intensity 2 or 3.",
   "registryVersion": "0.1.0",
-  "verification": "not-started",
+  "verification": "implemented",
   "module": {
     "skill": "skills/app02/SKILL.md",
-    "recipes": []
+    "recipes": [
+      "skills/app02/recipes/sections/ScrollStory.astro",
+      "skills/app02/recipes/sections/Chapter.astro",
+      "skills/app02/recipes/lib/cinematic.js",
+      "skills/app02/recipes/lib/app02.css"
+    ]
   },
   "selectWhen": {
     "any": [
@@ -54,7 +59,7 @@
       "name": "gsap",
       "licence": "GSAP Standard 'no charge' licence",
       "licenceVerified": false,
-      "note": "Own licence, not open source: confirm the terms allow client sites before release"
+      "note": "Own licence, not open source: confirm the terms allow client sites before release. Pinned at 3.15.0 by the APP-02 module."
     },
     {
       "name": "gsap/ScrollTrigger",
@@ -66,7 +71,7 @@
       "name": "lenis",
       "licence": "MIT",
       "licenceVerified": true,
-      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+      "note": "MIT as listed on npm (2026-10-28). Pinned at 1.3.27 by the APP-02 module."
     }
   ],
   "tests": {
@@ -79,6 +84,9 @@
       "tests/decision/app02/neg-1.json",
       "tests/decision/app02/neg-2.json",
       "tests/decision/app02/neg-3.json"
-    ]
+    ],
+    "build": "tests/build/app02.test.mjs",
+    "fallback": "tests/build/app02.test.mjs",
+    "budget": "tests/build/app02.test.mjs"
   }
 }
