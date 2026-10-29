@@ -9,7 +9,7 @@ import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
 import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
-import { cmdPackage, cmdUpgrade } from './package.mjs';
+import { cmdAudit, cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
@@ -75,6 +75,7 @@ const COMMANDS = {
   hooks: { summary: 'Add the secret-scan pre-commit hook to a repository: forge hooks install [dir]', run: (args) => cmdHooks(ROOT, args) },
   scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
   package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
+  audit: { summary: 'Release security review: npm audit plus secret scans of the ZIP, workspace and logs: forge audit [--out <dir>]', run: (args) => cmdAudit(ROOT, args) },
   upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
   site: {
