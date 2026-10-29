@@ -37,7 +37,7 @@ test('known token formats are masked wherever they appear', () => {
 
 test('the values of secret-looking variables in the environment are masked', () => {
   const plain = ['plain', 'value', '123'].join('-');
-  const secrets = secretValues({ VERCEL_TOKEN: plain, FORM_WEBHOOK_URL: 'https://hooks.example.com/T0/abc', HOME: '/home/suhani', SHORT_KEY: 'abc' });
+  const secrets = secretValues({ VERCEL_TOKEN: plain, FORM_WEBHOOK_URL: 'https://hooks.example.com/T0/abc', HOME: '/root', SHORT_KEY: 'abc' });
   assert.deepEqual(secrets.sort(), ['https://hooks.example.com/T0/abc', plain]);
   assert.equal(redactText('posted to https://hooks.example.com/T0/abc ok', { secrets }), `posted to ${MASK} ok`);
 });
