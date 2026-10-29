@@ -85,6 +85,22 @@ test('without the up-front approvals it asks for the direction, and stopping the
   assert.match(ask.asked.at(-1), /Which design direction \(B2\)/);
 });
 
+test('a project already past B1 picks up where it is, and asks for B2 and B3 one by one', async () => {
+  const { opts, steps } = setup();
+  await steps.intake();
+  approve('acme', 'B1', opts);
+  advancePhase('acme', 'RESEARCH', opts);
+  advancePhase('acme', 'APPROACH_SELECTION', opts);
+  await steps.directions();
+  const ask = operator({ choose: [1], confirm: [true] });
+  const r = await goProject('acme', { ask, steps, log: quiet, ...opts });
+  assert.equal(r.phase, 'ASSETS_LICENSING');
+  assert.deepEqual(codes(opts), ['B1', 'B2', 'B3']);
+  assert.equal(ask.asked.length, 2);
+  assert.match(ask.asked[0], /Which design direction/);
+  assert.match(ask.asked[1], /Approve B3, the written content/);
+});
+
 test('production needs B7 typed out, is never given up front, and then hands off', async () => {
   const { opts, steps } = setup();
   // Walk the project to PRODUCTION_DEPLOY directly.
