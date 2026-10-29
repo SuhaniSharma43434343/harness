@@ -187,7 +187,7 @@
         "brand.motionIntensity"
       ],
       "prompt": "How much movement should the site have: none, subtle, expressive or cinematic?",
-      "why": "Motion 2 or more allows cinematic scroll; 0 rules out shaders and frame animation.",
+      "why": "Motion 2 or more adds a scroll story and a shader band by default; 0 rules out shaders and frame animation.",
       "kind": "single",
       "options": [
         {
@@ -217,8 +217,8 @@
       },
       "weight": 7,
       "recommendation": {
-        "value": 1,
-        "reason": "Subtle motion reads as polished without costing performance or accessibility."
+        "value": 2,
+        "reason": "Expressive motion (a scroll story and a shader band) makes the site feel alive; reduced motion and low-end devices still get a still, readable fallback."
       }
     },
     {

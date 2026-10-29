@@ -103,6 +103,56 @@ test('scaffoldSite refuses to overwrite a site unless forced', () => {
   assert.doesNotThrow(() => scaffoldSite(project, { brief, force: true, ...opts }));
 });
 
+test('the home page gets cards for the other pages, the audience and a closing call to action', () => {
+  const brief = sample('business');
+  const home = planSite(brief).pages[0].data.sections.map((s) => s.use);
+  assert.deepEqual(home.slice(0, 3), ['APP-01/Hero', 'APP-01/Features', 'APP-01/Split']);
+  assert.equal(home.at(-1), 'APP-01/CtaBand');
+  const cards = planSite(brief).pages[0].data.sections[1].items;
+  assert.deepEqual(cards.map((c) => c.href), brief.pages.filter((p) => p.slug !== '/').map((p) => p.slug));
+  assert.deepEqual(cards.map((c) => c.text), brief.pages.filter((p) => p.slug !== '/').map((p) => p.purpose), 'card text comes from the brief');
+});
+
+test('selected APP-02 and APP-05 turn the home cards into a scroll story and the closing band into a shader', () => {
+  const brief = sample('business');
+  const home = planSite(brief, { approaches: ['APP-02', 'APP-05'] }).pages[0].data.sections;
+  assert.equal(home[1].use, 'APP-02/ScrollStory');
+  assert.ok(home[1].steps.length >= 2);
+  assert.equal(home.at(-1).use, 'APP-05/ShaderBackground');
+  assert.equal(home.at(-1).heading, brief.pages[0].cta);
+});
+
+test('a page that shows work gets a gallery, and sections asked for start empty', () => {
+  const brief = sample('business');
+  brief.pages.push({ slug: '/our-work', title: 'Our work', purpose: 'Photos of finished kitchens', cta: 'Start', sections: ['testimonials', 'faq'] });
+  const page = planSite(brief).pages.at(-1).data.sections;
+  assert.ok(page.some((s) => s.use === 'APP-01/Gallery'));
+  for (const use of ['APP-01/Testimonials', 'APP-01/Faq']) assert.deepEqual(page.find((s) => s.use === use).items, [], 'no invented quotes or answers');
+});
+
+test('scaffoldSite applies selected APP-02 and APP-05, and a forced rebuild keeps applied approaches', () => {
+  const brief = sample('business');
+  const { project, opts, workspace } = newProject(brief.project);
+  const dir = join(workspace, project);
+  mkdirSync(join(dir, 'design'), { recursive: true });
+  const decisions = [
+    { approach: 'APP-02', selected: true },
+    { approach: 'APP-05', selected: true },
+    { approach: 'APP-04', selected: true, needsApproval: 'B2' },
+  ];
+  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify({ decisions }));
+  const r = scaffoldSite(project, { brief, ...opts });
+  assert.deepEqual(r.approaches, ['APP-02', 'APP-05'], 'one that needs an approval waits for forge approach');
+  const siteJson = () => JSON.parse(readFileSync(join(r.siteDir, 'src/site.json'), 'utf8'));
+  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02', 'APP-05']);
+  assert.ok(existsSync(join(r.siteDir, 'src/sections/APP-05/ShaderBackground.astro')));
+
+  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify({ decisions: [] }));
+  scaffoldSite(project, { brief, force: true, ...opts });
+  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02', 'APP-05'], 'the rebuild re-applied what the old site had');
+  assert.ok(existsSync(join(r.siteDir, 'src/sections/APP-02/ScrollStory.astro')));
+});
+
 test('scaffoldSite reads intake/brief.json and uses locked content over the scaffold', () => {
   const brief = sample('portfolio');
   const { project, opts } = newProject(brief.project);

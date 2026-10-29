@@ -1,16 +1,30 @@
 ---
-// The page heading. Props: heading (defaults to the page title), lead, cta ({ label, href },
-// defaults to the page's call to action; false hides it).
-const { page, heading = page.data.title, lead, cta = page.data.cta } = Astro.props;
+// The page heading, beside a picture. Props: heading (defaults to the page title), lead, cta
+// ({ label, href }, defaults to the page's call to action; false hides it), eyebrow, image
+// ({ src, alt, width, height }; without one a token-coloured placeholder stands in), art: false
+// for a text-only hero.
+import Art from '../../components/Art.astro';
+const { page, heading = page.data.title, lead, cta = page.data.cta, eyebrow, image, art = true } = Astro.props;
 ---
-<section class="section hero">
-  <div class="wrap">
-    <h1>{heading}</h1>
-    {lead && <p class="lead">{lead}</p>}
-    {cta && <a class="button" href={cta.href}>{cta.label}</a>}
+<section class={`section hero${art ? ' hero--split' : ''}`}>
+  <div class="wrap hero__grid">
+    <div class="hero__copy">
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h1>{heading}</h1>
+      {lead && <p class="lead">{lead}</p>}
+      {cta && <a class="button" href={cta.href}>{cta.label}</a>}
+    </div>
+    {art && (image
+      ? <img class="hero__image" src={image.src} alt={image.alt} width={image.width} height={image.height} />
+      : <Art seed={page.id} variant="hero" ratio="5/4" />)}
   </div>
 </section>
 <style>
-  .hero { padding-block: calc(var(--space) * 5); }
+  .hero { padding-block: calc(var(--space) * 5); background: linear-gradient(180deg, var(--color-surface), var(--color-bg)); }
+  .hero h1 { font-size: clamp(2.4rem, 5vw + 1rem, 4.5rem); line-height: 1.05; margin-block: 0.2em 0.35em; }
   .hero .button { margin-top: var(--space); }
+  .hero__grid { display: grid; gap: calc(var(--space) * 3); align-items: center; }
+  .hero--split .hero__grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+  .hero__image { width: 100%; height: auto; border-radius: calc(var(--radius) * 3); object-fit: cover; }
+  .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.12em; font-size: var(--step-n1); font-weight: 700; color: var(--color-accent); }
 </style>

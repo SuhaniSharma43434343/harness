@@ -40,9 +40,19 @@ function formPage(form, pages) {
   return (byId ?? byHint ?? pages[0]).slug;
 }
 
+// Pages that show work get a picture grid; sections a page asks for in the brief get their
+// empty section, which renders nothing until Content & UX fills it with real items.
+const GALLERY = /project|portfolio|gallery|case.?stud|our work|before.and.after|showroom|photo/i;
+const ASKED = [
+  [/faq|question/i, 'APP-01/Faq'],
+  [/testimonial|review|quote from/i, 'APP-01/Testimonials'],
+  [/stat|figure|number/i, 'APP-01/Stats'],
+  [/step|process|how it works/i, 'APP-01/Steps'],
+];
+
 const href = (slug, hash) => (hash ? `${slug === '/' ? '/' : slug}#${hash}` : slug);
 
-export function planSite(brief) {
+export function planSite(brief, { approaches = [] } = {}) {
   assertValid('brief', brief, 'brief');
   const forms = {};
   for (const f of brief.features?.forms ?? []) {
@@ -73,16 +83,48 @@ export function planSite(brief) {
   };
   assertValid('siteConfig', site, 'site.json');
 
+  const motion = new Set(approaches);
   const pages = brief.pages.map((p, order) => {
     const pageForms = Object.entries(forms).filter(([, f]) => f.page === p.slug);
     const onFormPage = pageForms.length > 0;
+    const isHome = p.slug === '/';
     const cta = { label: p.cta, href: onFormPage ? `#${pageForms[0][0]}` : target === p.slug ? '#main' : target };
+    const asked = (p.sections ?? []).join(' ');
+    // The other pages, as cards or story steps: titles and purposes straight from the brief.
+    const tour = brief.pages
+      .filter((q) => q.slug !== '/' && q.slug !== p.slug)
+      .map((q) => ({ title: q.title, text: q.purpose, href: q.slug }));
     const sections = [
-      { use: 'APP-01/Hero', heading: p.slug === '/' ? brief.client.name : p.title, lead: p.purpose, ...(onFormPage && { cta: false }) },
-      { use: 'APP-01/Prose' },
-      ...pageForms.map(([id, f]) => ({ use: 'APP-01/Form', form: id, heading: f.purpose })),
+      {
+        use: 'APP-01/Hero',
+        heading: isHome ? brief.client.name : p.title,
+        lead: p.purpose,
+        ...(isHome && brief.client.industry && { eyebrow: capitalise(brief.client.industry) }),
+        ...(onFormPage && { cta: false }),
+      },
     ];
-    if (!onFormPage) sections.push({ use: 'APP-01/CtaBand' });
+    if (isHome && tour.length) {
+      sections.push(
+        motion.has('APP-02')
+          ? { use: 'APP-02/ScrollStory', heading: `Explore ${brief.client.name}`, steps: tour.slice(0, 6) }
+          : { use: 'APP-01/Features', heading: `Explore ${brief.client.name}`, items: tour },
+      );
+    }
+    if (isHome && brief.audience?.length) {
+      sections.push({ use: 'APP-01/Split', heading: 'Who this is for', items: brief.audience.map((a) => ({ title: a.segment, text: a.need })) });
+    }
+    sections.push({ use: 'APP-01/Prose' });
+    if (GALLERY.test(`${p.slug} ${p.purpose} ${asked}`)) sections.push({ use: 'APP-01/Gallery', heading: p.title });
+    for (const [pattern, use] of ASKED) if (pattern.test(asked)) sections.push({ use, items: [] });
+    sections.push(...pageForms.map(([id, f]) => ({ use: 'APP-01/Form', form: id, heading: f.purpose })));
+    if (!isHome && tour.length > 1) sections.push({ use: 'APP-01/Features', heading: 'Explore more', items: tour.filter((t) => t.href !== cta.href.split('#')[0]) });
+    if (!onFormPage) {
+      sections.push(
+        isHome && motion.has('APP-05')
+          ? { use: 'APP-05/ShaderBackground', heading: p.cta, text: firstForm?.[1].purpose ?? p.purpose, cta, intensity: Math.min(3, Math.max(1, brief.brand.motionIntensity)) }
+          : { use: 'APP-01/CtaBand' },
+      );
+    }
     const todo = [
       `Content & UX: write this page from the brief, then lock it in content/pages/${pageFile(p.slug)}.`,
       `Purpose: ${p.purpose}`,

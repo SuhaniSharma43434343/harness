@@ -1,5 +1,5 @@
 {
-  "case": "A launch at motion 3 that asks for no shader",
+  "case": "A launch at motion 1 that asks for no shader",
   "expect": "not-selected",
   "because": "selectWhen",
   "brief": {
@@ -42,7 +42,7 @@
       "tone": [
         "clear"
       ],
-      "motionIntensity": 3
+      "motionIntensity": 1
     },
     "constraints": {
       "deviceFloor": "mid",
