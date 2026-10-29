@@ -44,6 +44,11 @@ export default {
         findings.push({ id: 'build-binary-licence', severity: 'moderate', message: `${name}@${pkg.version} is ${pkg.license ?? 'unlicensed'}; it is a build-machine binary, so record it in THIRD_PARTY_NOTICES`, location: `site/package-lock.json:${path}` });
         continue;
       }
+      if (row) {
+        const why = row.status === 'uncertain' ? 'its licence record is uncertain: confirm the terms and record the evidence' : 'its licence record has no evidence';
+        findings.push({ id: 'licence-unconfirmed', severity: 'serious', message: `${name}@${pkg.version} is ${pkg.license ?? 'unlicensed'}; ${why} in assets/register.json`, location: `site/package-lock.json:${path}` });
+        continue;
+      }
       findings.push({ id: 'licence-not-allowed', severity: 'serious', message: `${name}@${pkg.version} is ${pkg.license ?? 'unlicensed'}, which needs a licence record`, location: `site/package-lock.json:${path}` });
     }
     return { findings, metrics: { packages: checked } };

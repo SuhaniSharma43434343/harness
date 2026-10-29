@@ -24,9 +24,9 @@ function recommendationText(q) {
   return `${value} (${r.reason})`;
 }
 
-function prompter() {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ask = async (questions, { round }) => {
+// The terminal ask for runIntake, on a readline interface (forge go shares its own).
+export function intakeAsk(rl) {
+  return async (questions, { round }) => {
     console.log(`\nRound ${round}: ${questions.length} question(s). Press Enter to use the recommendation.\n`);
     const answers = [];
     for (const q of questions) {
@@ -46,7 +46,11 @@ function prompter() {
     }
     return answers;
   };
-  return { ask, close: () => rl.close() };
+}
+
+function prompter() {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return { ask: intakeAsk(rl), close: () => rl.close() };
 }
 
 // forge intake: runs P1 for a project. Answers come from the terminal, from an answers file
