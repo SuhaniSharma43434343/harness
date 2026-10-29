@@ -55,7 +55,7 @@ The required fields are `projectType`, `tier`, `client.name`, `client.industry`,
 4. It drafts the brief and validates it. When nothing is missing, the brief becomes `ready`, and it runs `selectApproaches` and `estimateScope` and writes `intake/estimate.json` and `intake/plan.md`.
 5. It writes `intake/facts.json` and `intake/brief.json` either way, and logs each round, each answer and the result as ledger notes. It never records an approval: the operator approves with `forge approve <project> B1` after reading the plan.
 
-`forge intake <project>` asks in the terminal (Enter takes the recommendation). `--answers <file.json>` takes answers keyed by question id, and `--use-recommendations` takes the recommendation for everything else. Typed text for goals, audience, pages, forms and things to avoid becomes the brief shape, one item per line or semicolon (`src/intake/shape.mjs`).
+`forge intake <project>` asks in the terminal (Enter takes the recommendation). `--answers <file.json>` takes answers keyed by question id, and `--use-recommendations` takes the recommendation for everything else. Typed text for goals, audience, pages, forms and things to avoid becomes the brief shape, one item per line or semicolon (`src/intake/shape.mjs`). For a question with options, type the option's number, its value or its label in any case, or just the start of the label (`up to 12 pages`, `AAA`); several options take commas (`1,4`). An answer that fits no option, or more than one, is explained and asked again at once, so a typo never fails the round (`src/intake/typed.mjs`).
 
 ## The estimate
 
