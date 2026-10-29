@@ -96,6 +96,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge hooks install [dir]` | Adds the secret-scan pre-commit hook to a repository |
 | `forge scan [path...]` | Reports files holding something that looks like a credential, and any `.env` file (see `docs/security.md`) |
 | `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
+| `forge audit [--out <dir>]` | Release security review: npm audit plus secret scans of the ZIP, workspace and logs |
 | `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |

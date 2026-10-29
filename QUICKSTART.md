@@ -92,7 +92,7 @@ This copies the starter (`starters/astro-base/`) into `workspace/harbor/site/` a
 
 It then installs and builds the site, and checks the 150 KB JavaScript budget. Pages stay `status: scaffold` until Content & UX locks the copy in `content/pages/` (B3). See `docs/starter.md`.
 
-If the approach decision selects APP-02, APP-04 or APP-06, apply it, then place its sections as its skill describes:
+Apply each approach the decision selects (APP-02 to APP-08), then place its sections as its skill describes:
 
 ```bash
 ./forge approach harbor APP-02
@@ -124,7 +124,7 @@ On a fresh scaffold, expect these gates to fail. Each failure is real work for a
 `forge --help` lists every planned command and its milestone. Running one says it is not built. The main gaps for an end-to-end run are:
 
 - **No command moves a project to the next phase after an approval.** The runner wiring for phases and the task board is engine work in progress. Today the phase commands above run whatever phase the project is in, except `forge qa --repair`, which needs `QUALITY_REVIEW`.
-- **Several commands are not built:** `preview`, `deploy`, `report`, `test --mock`, `demo`, `package` and `upgrade`.
+- **Several commands are not built:** `preview`, `deploy`, `report`, `test --mock` and `demo`. (`package`, `upgrade` and `audit` are built; see `docs/packaging.md` and `docs/security.md`.)
 - **The plugins are built, but no command drives preview or deploy yet.** Enable one with `forge plugins enable <id>` (see `docs/plugins.md`). `forge approach <project> APP-04` already uses the spline plugin to copy the scene in.
 
 See `docs/troubleshooting.md` when something fails.
