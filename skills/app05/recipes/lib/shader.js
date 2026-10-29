@@ -36,7 +36,7 @@ void main() {
   vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2, 1.3) - t));
   float f = fbm(p + uWaves * q);
   vec3 col = mix(uA, uB, smoothstep(0.2, 0.8, f));
-  col = mix(col, uC, smoothstep(0.55, 0.95, q.x * f));
+  col = mix(col, uC, 0.6 * smoothstep(0.55, 0.95, q.x * f));
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -87,7 +87,9 @@ export function startShader(section) {
 
   const u = (name) => gl.getUniformLocation(program, name);
   const style = getComputedStyle(section);
-  gl.uniform3fv(u('uA'), rgb(style.getPropertyValue('--shader-a') || style.getPropertyValue('--color-bg'), '#0f1b2d'));
+  // The field runs from the text colour (dark) to primary, with accent highlights, so the light
+  // copy on top keeps its contrast on light and dark themes alike (as the CSS fallback does).
+  gl.uniform3fv(u('uA'), rgb(style.getPropertyValue('--shader-a') || style.getPropertyValue('--color-fg'), '#0f1b2d'));
   gl.uniform3fv(u('uB'), rgb(style.getPropertyValue('--shader-b') || style.getPropertyValue('--color-primary'), '#1f3a5f'));
   gl.uniform3fv(u('uC'), rgb(style.getPropertyValue('--shader-c') || style.getPropertyValue('--color-accent'), '#c58b2b'));
   gl.uniform1f(u('uWaves'), Number(section.dataset.intensity ?? 2) * 0.9);

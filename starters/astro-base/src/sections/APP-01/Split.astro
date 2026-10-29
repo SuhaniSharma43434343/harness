@@ -1,0 +1,32 @@
+---
+// Text beside a picture. Props: heading, text, items ([{ title, text }], shown as a list),
+// image ({ src, alt, width, height }; a placeholder stands in without one), reverse (picture first).
+import Art from '../../components/Art.astro';
+const { page, heading, text, items = [], image, reverse = false, index = 0 } = Astro.props;
+---
+{(heading || text || items.length > 0) && (
+  <section class="section split">
+    <div class={`wrap split__grid${reverse ? ' split__grid--reverse' : ''}`}>
+      <div>
+        {heading && <h2>{heading}</h2>}
+        {text && <p class="lead">{text}</p>}
+        {items.length > 0 && (
+          <ul class="split__list">
+            {items.map((item) => <li><strong>{item.title}</strong>{item.text && <span>{item.text}</span>}</li>)}
+          </ul>
+        )}
+      </div>
+      {image
+        ? <img class="split__image" src={image.src} alt={image.alt} width={image.width} height={image.height} loading="lazy" />
+        : <Art seed={`${page.id}-${index}`} ratio="4/3" />}
+    </div>
+  </section>
+)}
+<style>
+  .split__grid { display: grid; gap: calc(var(--space) * 3); align-items: center; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+  .split__grid--reverse > :first-child { order: 2; }
+  .split__list { margin: var(--space) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space); }
+  .split__list li { display: grid; gap: 0.2em; padding-left: var(--space); border-left: 3px solid var(--color-accent); }
+  .split__list span { color: var(--color-muted); }
+  .split__image { width: 100%; height: auto; border-radius: var(--radius); object-fit: cover; }
+</style>

@@ -49,8 +49,9 @@ test('intake from client material asks the rest, writes the four files and stops
   assert.equal(check('estimate', r.estimate).valid, true);
   assert.ok(!asked.some((id) => ['q-project-type', 'q-client-name', 'q-industry', 'q-showroom-goals', 'q-interactive'].includes(id)));
   assert.ok(asked.includes('q-models3d'), 'the 3D answer in the material triggers the models follow-up');
-  // The material asked for 3D and the recommended device floor (mid) allows it.
-  assert.deepEqual(r.decision.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-03']);
+  // The material asked for 3D and the recommended device floor (mid) allows it; the recommended
+  // motion (2) adds the scroll story and the shader band.
+  assert.deepEqual(r.decision.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-02', 'APP-03', 'APP-05']);
 
   const entries = ledger.read('atelier', { workspace });
   assert.ok(!entries.some((e) => e.type === 'approval'), 'intake never records an approval');
@@ -141,7 +142,7 @@ test('estimateScope is deterministic, counts approaches and checks the budget', 
   const decision = selectApproaches(brief, approaches, matrix, { now: new Date(0) });
   const a = estimateScope(brief, decision);
   assert.deepEqual(a, estimateScope(brief, decision));
-  assert.deepEqual(a.approaches, ['APP-01', 'APP-02', 'APP-03', 'APP-04', 'APP-07']);
+  assert.deepEqual(a.approaches, ['APP-01', 'APP-02', 'APP-03', 'APP-04', 'APP-05', 'APP-07']);
   assert.ok(a.lines.some((l) => l.item === 'APP-07 module'));
   assert.ok(a.hours.min < a.hours.max);
   assert.equal(a.withinBudget, null);

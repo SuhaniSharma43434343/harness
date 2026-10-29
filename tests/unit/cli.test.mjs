@@ -66,6 +66,6 @@ test('forge select explains the approach decision for a brief', () => {
   assert.match(r.stdout, /APP-04 {2}yes .*\[needs B2\]/);
   assert.match(r.stdout, /APP-06 {2}no /);
   const json = JSON.parse(forge('select', 'samples/briefs/showroom.json', '--json').stdout);
-  assert.deepEqual(json.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-03']);
+  assert.deepEqual(json.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-02', 'APP-03', 'APP-05']);
   assert.equal(forge('select').status, 2);
 });
