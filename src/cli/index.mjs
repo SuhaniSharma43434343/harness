@@ -9,6 +9,7 @@ import { printDoctor, runDoctor } from './doctor.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
 import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
+import { cmdAdvance, cmdDemo, cmdDeploy, cmdPreview, cmdReport, cmdTest } from './deliver.mjs';
 import { cmdAudit, cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
@@ -77,6 +78,12 @@ const COMMANDS = {
   package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
   audit: { summary: 'Release security review: npm audit plus secret scans of the ZIP, workspace and logs: forge audit [--out <dir>]', run: (args) => cmdAudit(ROOT, args) },
   upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
+  advance: { summary: 'Move to the next phase when its exit gate holds: forge advance <project> [--check]', run: (args) => cmdAdvance(ROOT, args) },
+  preview: { summary: 'Serve the built site locally: forge preview <project> [--port <n>] [--once]', run: (args) => cmdPreview(ROOT, args) },
+  deploy: { summary: 'Deploy with the vercel plugin: forge deploy <project> --preview | --production', run: (args) => cmdDeploy(ROOT, args) },
+  report: { summary: 'Write reports/final-report.md from the ledger: forge report <project>', run: (args) => cmdReport(ROOT, args) },
+  test: { summary: 'Run the test suite; --mock puts every plugin in mock mode: forge test [--mock]', run: (args) => cmdTest(ROOT, args) },
+  demo: { summary: 'Replay the sample project to a local preview, with no model or paid API: forge demo [--no-serve]', run: (args) => cmdDemo(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
   site: {
     summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
@@ -86,11 +93,6 @@ const COMMANDS = {
 
 // Planned commands and the milestone that delivers them (see the project plan).
 const PLANNED = {
-  preview: 'M3',
-  deploy: 'M3',
-  report: 'M3',
-  test: 'M5',
-  demo: 'M6',
 };
 
 function printHelp() {
@@ -98,6 +100,7 @@ function printHelp() {
   console.log('Usage: forge <command> [options]\n');
   console.log('Available now:');
   for (const [name, cmd] of Object.entries(COMMANDS)) console.log(`  ${name.padEnd(10)} ${cmd.summary}`);
+  if (!Object.keys(PLANNED).length) return;
   console.log('\nPlanned (not built yet):');
   console.log(
     '  ' +

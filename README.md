@@ -31,7 +31,7 @@ Milestone 1 (architecture and contracts) is in place, along with much of the run
 - T24: the QA Verifier and repair loop (`forge qa`) ([docs/qa.md](docs/qa.md))
 - T25: the operator docs listed below
 
-The licence is still to come before a release. `forge --help` lists the planned commands and the milestone each one belongs to. Running one of them says it is not built yet, rather than pretending to work.
+The licence is still to come before a release. Every command in the plan is built; `forge --help` lists them.
 
 ## Documentation
 
@@ -76,7 +76,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 
 | Command | What it does |
 | --- | --- |
-| `forge --help` | Lists the available and planned commands |
+| `forge --help` | Lists the commands |
 | `forge --version` | Prints the harness version |
 | `forge doctor [--json]` | Checks Node, npm, Git, Claude Code, the config, `.env` and the workspace |
 | `forge validate <schema> <file>` | Validates a JSON file against a schema. A `.jsonl` file is validated line by line |
@@ -98,6 +98,12 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge package [--verify]` | Maintainers: builds and audits the portable ZIP (see `docs/packaging.md`) |
 | `forge audit [--out <dir>]` | Release security review: npm audit plus secret scans of the ZIP, workspace and logs |
 | `forge upgrade --from <dir> [--dry-run]` | Copies `.env`, the config and projects from an older Forge folder |
+| `forge advance <project> [--check]` | Moves to the next phase when its exit gate holds: tasks, evidence and approval |
+| `forge preview <project>` | Serves the built site locally, after a secret scan |
+| `forge deploy <project> --preview\|--production` | Deploys with the vercel plugin and smoke-tests the URL |
+| `forge report <project>` | Writes the final report from the ledger |
+| `forge test [--mock]` | Runs the test suite; `--mock` puts every plugin in mock mode |
+| `forge demo` | Replays the sample project to a local preview, with no model or paid API |
 | `forge resume <project> [--json]` | Requeues tasks left running by an interruption and frees their locks |
 | `forge site <project> [--brief <file>] [--tokens <file> \| --direction <file>] [--force] [--build]` | Copies the starter into `workspace/<project>/site/` and writes the brief, tokens and pages into it. `--build` installs, builds and checks the JavaScript budget |
 
