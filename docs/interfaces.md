@@ -71,6 +71,30 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 | `proposeDirections` | Nidhi | `proposeDirections(brief: Brief, decision: ApproachDecision, opts?: { count?: number }) => Promise<DesignDecision>` | M3 |
 | `runGate` | Nidhi | `runGate(name: GateName, siteDir: string, opts?: { project?: string, thresholds?: object }) => Promise<GateResult>` | M3 |
 
+The types are the schemas: `Brief`, `Facts`, `QuestionBank`, `ApproachEntry`, `SelectionMatrix`, `ApproachDecision`, `DesignDecision` and `GateResult` are the parsed objects those schemas validate. `Question` is one item of `QuestionBank.questions`, `Finding` is one item of `GateResult.findings`, `GateName` is the `gate` enum in `gate-result.schema.json`, and `FallbackTrigger` is the enum in `common.schema.json`. `Worker` is the adapter the runner already takes (`worker({ task, project, projectDir, attempt, idempotencyKey, signal, heartbeat })`), so intake and directions call the model through the same seam as builders. `Estimate` and `DefectReport` have their own schemas (`estimate`, `defectReport`).
+
+### More project-side functions (built)
+
+These are called across the two halves or by the CLI, and are not in the table above. Each says what it is in a comment at its definition.
+
+| Function | Provided by | Signature | Built in |
+| --- | --- | --- | --- |
+| `loadRegistry` | Nidhi | `loadRegistry(root?: string) => { questions: QuestionBank, approaches: ApproachEntry[], matrix: SelectionMatrix }`; throws `ConfigMissing`, `ConfigInvalid` or `SchemaInvalid` | T14, T16 |
+| `draftBrief` | Nidhi | `draftBrief(facts: Facts, opts: { project: string, base?: Partial<Brief> }) => Brief` | T14 |
+| `estimateScope` | Nidhi | `estimateScope(brief: Brief, decision?: ApproachDecision, opts?: { rates?: Rates }) => Estimate` | T15 |
+| `runIntake` | Nidhi | `runIntake(project: string, opts: { ask: (questions: Question[]) => Promise<Answer[]>, worker?: Worker, verifier?, maxRounds?: number, registry?, now?: () => Date, workspace?: string }) => Promise<IntakeResult>` | T15 |
+| `buildSite` | Nidhi | `buildSite(siteDir: string, opts?: { install?: 'auto' \| 'always' \| 'never', env?: object }) => { ok: boolean, code: number, output: string, dist: string \| null }` | T18 |
+| `runGates` | Nidhi | `runGates(siteDir: string, opts?: { gates?: GateName[], projectDir?: string, ...runGate opts }) => Promise<GateResult[]>` | T21 |
+| `qualityFloor` | Nidhi | `qualityFloor(results: GateResult[], required?: GateName[]) => { met: boolean, failing: GateName[] }` | T21 |
+| `applyApproach` | Nidhi (both use it) | `applyApproach(module: ApproachModule, siteDir: string, opts?: { install?: boolean, projectDir?: string }) => { files: string[], packages: string[] }` | T19 |
+
+- **`loadRegistry`** is the only function that reads `registry/` from disk, and it validates every file. The selectors take its output, so tests pass fixtures in directly.
+- **`draftBrief`** and **`estimateScope`** are pure. `draftBrief` copies every `known` or `inferred` fact into the brief, lists the inferred fields in `brief.assumptions`, and never sets `approved`. `estimateScope` takes its rates from `registry/estimate.json`, never from the model, and without a decision estimates APP-01 only and says so.
+- **`runIntake`** is the Project Manager's P1 loop. It moves a new project into `INTAKE`, asks up to `maxRounds` (default 3) rounds of questions through `ask`, writes `intake/brief.json`, `facts.json`, `estimate.json` and `plan.md`, logs each step, and stops before B1. It never records an approval.
+- **`buildSite`** installs when `node_modules` is missing (`npm ci` only when the lockfile matches `package.json`), then runs the site's build. A failing build is a result with `ok: false`, not an exception.
+- **`runGates`** runs the gates in a fixed order without stopping early and writes `evidence/gates/<gate>.json`. **`qualityFloor`** is the P11 exit check: `met` only when every required gate is `pass`; `error`, `skipped` and a missing result count as failing.
+- **Approach modules** (`src/approaches/app0N.mjs`) export `{ id, name, recipes, sections, packages, fallback, budget, apply(siteDir, opts) }`, and `apply` calls `applyApproach`, which copies the recipes into `site/src/sections/<id>/` and `site/src/lib/<app>/`, pins the packages and records their licences. Fallbacks run in the browser through the starter's `capability()` check rather than as a separate function; see `docs/approaches.md`. A module may add its own step, as APP-04's `fetchScene` does through `getPlugin('spline')`.
+
 ### What each runtime function promises
 
 - **`runTask`** runs one task through `ready`, `running`, `submitted`, `verifying` and `done`, retrying up to `budget.retries` times before `blocked`. `RunOptions` carries the `worker` (the claude-code adapter from T06), an optional `verifier`, and `workspace`. It resolves to `TaskResult`: `{ task, status: 'done' | 'blocked', attempts, evidence, reason? }`. A done or blocked task is returned as it is, with `reused: true`, and never run again.
@@ -85,8 +109,6 @@ Registry, question bank and selection matrix files are JSON: `registry/approache
 - **`selectApproaches`** is pure and deterministic, which the decision tests rely on. An approach is selected when its matrix status is not `excluded`, `selectWhen` holds, `rejectWhen` does not, and its required plugins are listed in `brief.integrations`. Experimental selections are marked `needsApproval: 'B2'`, or `'B1'` for APP-06 because the plan confirms play at B1. The output always validates against `approachDecision`. `opts.now` sets `decidedAt`, the only part of the record that is not derived from the inputs, so tests can compare whole records. The rules and the matrix are described in `docs/registry.md`.
 - **`proposeDirections`** may call the model through Suhani's worker adapter. It applies the design rules (T17) and returns at least 3 directions that pass the schema.
 - **`runGate`** never throws for a site problem: a failing site returns `status: 'fail'` with findings. A missing tool or plugin returns `status: 'error'` with the typed error code, which is never counted as a pass.
-
-
 
 
 ## Shared error format
@@ -107,6 +129,7 @@ Every component throws one of the typed errors in `src/core/errors.mjs`: `Config
 | 8 | Error for an illegal phase or task transition | `PermissionDenied`, with the allowed moves in `details`. The shared error set stays as it is; lock conflicts and a busy project use `Unavailable`. |
 | 9 | Where does a task's verify command run? | In the project folder, `workspace/<project>/`. A command that needs the site uses `cd site && ...` or a script in `site/package.json`. |
 | 10 | Phase exit gates | The runtime checks the exit approval (B1, B2, B3, B6, B7). The evidence part of each exit gate comes from `runGate` and `validateBrief`, wired into the runner when those functions are built. B4 and B5 are checked at the action through `requireApproval`. |
+| 11 | Is the QA Verifier the runner's verifier for every task? | No. Tasks keep their shell `verify` command. `qaReview` runs at P11 with fresh evidence each time, and `runRepairLoop` hands open defects to the builder as repair tasks, escalating after 3 loops (`docs/qa.md`). |
 
 ### Workspace layout
 
