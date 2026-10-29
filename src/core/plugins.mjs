@@ -144,7 +144,8 @@ function context(manifest, env, extra) {
 // an unknown plugin or a missing variable, PermissionDenied for a disabled one.
 // opts: { root, dirs, env, project, workspace, mock, actor }
 export async function getPlugin(id, opts = {}) {
-  const { root = ROOT, mock = false, project, actor = 'cli', ...rest } = opts;
+  // FORGE_MOCK=1 (forge test --mock, forge demo) puts every plugin in mock mode.
+  const { root = ROOT, mock = process.env.FORGE_MOCK === '1', project, actor = 'cli', ...rest } = opts;
   const loaded = loadConfig(root, rest.env ? { env: rest.env } : {});
   const plugin = findPlugin(id, { root, ...rest });
   const { manifest } = plugin;

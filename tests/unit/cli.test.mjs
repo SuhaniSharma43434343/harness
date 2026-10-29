@@ -9,23 +9,19 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CLI = join(ROOT, 'src', 'cli', 'index.mjs');
 const forge = (...args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', cwd: ROOT });
 
-test('forge --help lists available and planned commands', () => {
+test('forge --help lists the commands, and every command the plan names is built', () => {
   const r = forge('--help');
   assert.equal(r.status, 0);
-  assert.match(r.stdout, /doctor/);
-  assert.match(r.stdout, /Planned \(not built yet\)/);
+  for (const c of ['doctor', 'new', 'intake', 'approve', 'run', 'status', 'resume', 'preview', 'deploy', 'report', 'plugins', 'task', 'test', 'demo', 'package', 'upgrade']) {
+    assert.match(r.stdout, new RegExp(`^  ${c} `, 'm'), c);
+  }
+  assert.doesNotMatch(r.stdout, /Planned \(not built yet\)/);
 });
 
 test('forge --version prints the package version', () => {
   const r = forge('--version');
   assert.equal(r.status, 0);
   assert.match(r.stdout.trim(), /^\d+\.\d+\.\d+$/);
-});
-
-test('planned commands say they are not built yet instead of pretending', () => {
-  const r = forge('preview', 'demo');
-  assert.equal(r.status, 2);
-  assert.match(r.stderr, /planned for milestone M3 and is not built yet/);
 });
 
 test('unknown commands exit 2', () => {
