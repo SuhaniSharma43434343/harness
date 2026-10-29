@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "release-business",
+  "projectType": "business",
+  "tier": "S",
+  "client": {
+    "name": "Riverline Joinery",
+    "industry": "custom furniture and joinery",
+    "location": "Pune, India",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "leads",
+      "statement": "Get qualified renovation enquiries through the contact form",
+      "metric": "enquiries per month"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Homeowners aged 30 to 55",
+      "need": "A trustworthy contractor with clear pricing"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Show services and proof of quality",
+      "cta": "Request a quote"
+    },
+    {
+      "slug": "/services",
+      "title": "Services",
+      "purpose": "Explain each renovation service",
+      "cta": "Request a quote"
+    },
+    {
+      "slug": "/projects",
+      "title": "Projects",
+      "purpose": "Scroll story of one commission from sketch to install",
+      "cta": "Start your project"
+    },
+    {
+      "slug": "/contact",
+      "title": "Contact",
+      "purpose": "Collect enquiries",
+      "cta": "Send enquiry"
+    }
+  ],
+  "features": {
+    "forms": [
+      {
+        "id": "quote",
+        "purpose": "Quote request",
+        "fields": [
+          "name",
+          "email",
+          "phone",
+          "project type",
+          "message"
+        ],
+        "destination": "form-function"
+      }
+    ],
+    "interactive": [
+      "scroll-story"
+    ]
+  },
+  "brand": {
+    "tone": [
+      "warm",
+      "crafted",
+      "trustworthy"
+    ],
+    "motionIntensity": 2,
+    "existingAssets": {
+      "logo": true,
+      "photography": true
+    }
+  },
+  "constraints": {
+    "deviceFloor": "low",
+    "accessibility": "WCAG 2.2 AA",
+    "hosting": "vercel"
+  },
+  "integrations": [
+    "form-function",
+    "vercel"
+  ],
+  "assumptions": [
+    "constraints.deviceFloor"
+  ]
+}

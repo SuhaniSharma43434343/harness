@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "release-story",
+  "projectType": "nonprofit",
+  "tier": "M",
+  "client": {
+    "name": "Green Roots Trust",
+    "industry": "environmental charity",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "volunteers",
+      "statement": "Recruit volunteers for tree-planting drives"
+    },
+    {
+      "id": "awareness",
+      "statement": "Explain the impact of urban forests"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Students and young professionals",
+      "need": "An easy, fun way to get involved"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Mission and impact",
+      "cta": "Volunteer"
+    },
+    {
+      "slug": "/learn",
+      "title": "Learn",
+      "purpose": "Interactive explainer on urban forests",
+      "cta": "Volunteer"
+    },
+    {
+      "slug": "/volunteer",
+      "title": "Volunteer",
+      "purpose": "Sign-up",
+      "cta": "Sign up"
+    }
+  ],
+  "features": {
+    "interactive": [
+      "shader-background",
+      "game",
+      "frame-sequence"
+    ],
+    "playIsThePoint": true,
+    "forms": [
+      {
+        "id": "volunteer",
+        "purpose": "Volunteer sign-up",
+        "fields": [
+          "name",
+          "email",
+          "city"
+        ],
+        "destination": "form-function"
+      }
+    ]
+  },
+  "brand": {
+    "tone": [
+      "hopeful",
+      "playful"
+    ],
+    "motionIntensity": 2
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA"
+  },
+  "assumptions": [
+    "features.playIsThePoint"
+  ]
+}

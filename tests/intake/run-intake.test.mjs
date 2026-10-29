@@ -62,6 +62,17 @@ test('intake from client material asks the rest, writes the four files and stops
   assert.match(plan, /forge approve atelier B1/);
 });
 
+// Found in the T28 release run: the showroom brief lost its integrations and Spline scene URL,
+// which no question fills, so APP-04 was not selected.
+test('fields of the brief file that no question fills are kept in the brief', async () => {
+  const s = sample('flagship');
+  const { workspace } = setup('orbit', s);
+  const r = await runIntake('orbit', { workspace, ask: recommendAll });
+  assert.deepEqual(r.brief.integrations, s.integrations);
+  assert.equal(r.brief.features.splineSceneUrl, s.features.splineSceneUrl);
+  assert.ok(r.decision.decisions.find((d) => d.approach === 'APP-04').selected);
+});
+
 test('unanswered questions leave intake at needs-answers, and a second run continues', async () => {
   const { workspace, dir } = setup('half-done', { projectType: 'launch' });
   const first = await runIntake('half-done', { workspace, ask: async (qs) => qs.map((q) => (q.id === 'q-tier' ? 'M' : undefined)) });

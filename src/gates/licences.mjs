@@ -19,7 +19,9 @@ export default {
       findings.push({ id: 'no-register', severity: shipped.length ? 'serious' : 'critical', message: 'No licence register at assets/register.json' });
       return { findings, metrics: { assets: shipped.length, registered: 0 } };
     }
-    const matchers = rows.map((r) => ({ row: r, re: globToRegExp(r.file) }));
+    // Rows without a file are package rows (an approach's npm packages); the dependencies gate
+    // checks those.
+    const matchers = rows.filter((r) => typeof r.file === 'string').map((r) => ({ row: r, re: globToRegExp(r.file) }));
     let ok = 0;
     for (const file of shipped) {
       const hit = matchers.find((m) => m.re.test(file))?.row;

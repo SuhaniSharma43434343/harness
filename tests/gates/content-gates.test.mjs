@@ -127,6 +127,18 @@ test('dependencies: a recorded exception passes; a missing lockfile is serious',
   assert.deepEqual((await runGate('dependencies', other)).findings.map((f) => f.id), ['no-lockfile']);
 });
 
+// Found in the T28 release run: forge approach records each npm package as a register row with
+// no file, and the licences gate used to throw on it.
+test('licences: package rows in the register are left to the dependencies gate', async () => {
+  const { dir, siteDir } = materializeFixture('known-good');
+  const regFile = join(dir, 'assets', 'register.json');
+  const reg = JSON.parse(readFileSync(regFile, 'utf8'));
+  reg.assets.push({ package: 'gsap', licence: "GSAP Standard 'no charge' licence", source: 'npm gsap@3.15.0', usage: 'APP-02 Cinematic Scroll', status: 'uncertain' });
+  writeFileSync(regFile, JSON.stringify(reg));
+  const r = await runGate('licences', siteDir, { now: NOW });
+  assert.equal(r.status, 'pass', JSON.stringify(r.error ?? r.findings));
+});
+
 test('a gate that throws is an error, never a pass', async () => {
   const { siteDir } = materializeFixture('known-good');
   writeFileSync(join(siteDir, 'package-lock.json'), '{not json');
