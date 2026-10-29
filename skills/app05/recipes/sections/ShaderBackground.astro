@@ -1,7 +1,8 @@
 ---
 // APP-05 ShaderBackground: a section with a GLSL background behind its copy. Props:
 //   heading (required), text, cta: { label, href }, intensity: 1 to 3 (how much the field warps),
-//   colours: { a, b, c } to override the token colours (defaults: bg, primary, accent).
+//   colours: { a, b, c } to override the token colours (defaults: fg, primary, accent). Keep a and
+//   b dark enough for light text, as with the defaults.
 // The CSS gradient underneath is the fallback (no WebGL, reduced motion shows a still frame,
 // a low-end device, a failed load, frames too slow), and the copy never depends on the canvas.
 const { heading, text, cta, intensity = 2, colours = {} } = Astro.props;
