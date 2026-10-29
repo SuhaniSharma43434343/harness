@@ -6,7 +6,7 @@ One entry per integration session: what was merged, what was checked, and the bl
 
 **Merged on main today:** #7 (M1 signatures), #9 (T18), #14 to #21 (T17, T23, T21, T22, T24, T19, T20, T25), #28 (T12), #29 (T29, `forge audit`), #30 (`forge advance`, preview, deploy, report, test and demo), #31 (the planner), #32 (typed intake answers), and Suhani's later fixes. Every build task from T01 to T25 is on main.
 
-**Tests:** on `bddae26` (before #29), all 609 tests passed on Linux with the browser tools and `FORGE_SLOW_TESTS=1`, none skipped. This branch, merged with main, passes every test on Linux (`npm test` with the browser tools). One APP-05 frame-rate test failed once while three release runs used the same machine, and passed on both re-runs.
+**Tests:** on `bddae26` (before #29), all 609 tests passed on Linux with the browser tools and `FORGE_SLOW_TESTS=1`, none skipped. This branch, merged with main at `21a8e23`: 643 tests with the browser tools and slow tests, 642 pass on the first run; the one failure is a timing test (blocker 10) that passes when re-run.
 
 **Checked in this session:**
 
@@ -34,6 +34,7 @@ One entry per integration session: what was merged, what was checked, and the bl
 | 7 | The T29 follow-ups from the #29 review: no licence section in `forge audit`, approach packages not audited, the workspace path hard-coded, a missing lockfile skipped. | A13 | Suhani | Raised on #29 after it merged. |
 | 8 | The APP-03 fallback for APP-04 is not built; APP-04 falls back to its poster. | A7 | Nidhi | |
 | 9 | No preview has been accepted by a person, and no live 3D, shader or game section has been checked on a real device. | A4, A7 | Both | Look at the three release previews; fill in `docs/device-log.md`. |
+| 10 | Two browser timing tests are flaky on a busy machine: the APP-04 budget test ("runtime at 108 ms, LCP at 144 ms", also on main) and the APP-05 full-quality frame test. Each passed on re-runs. | A7 | Nidhi (APP-04), Suhani (APP-05) | Measure against the page's own LCP entry with a margin, or retry once before failing. |
 
 Resolved today: phase exits and `forge advance` (#30); the P11 exit now needs the quality floor (#30); `forge test --mock` and `forge demo` (#30); the planner writes research, content and asset tasks (#31); the ASSETS_LICENSING blocker now names a register row by its `file` (main).
 
