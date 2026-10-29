@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
+import { flagAsk } from '../../src/cli/go.mjs';
 import { goProject } from '../../src/core/go.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
 import { advancePhase, approvals, approve, createProject, loadProject, PHASES } from '../../src/core/project.mjs';
@@ -135,4 +136,18 @@ test('production needs B7 typed out, is never given up front, and then hands off
   assert.equal(deployed, 1);
   assert.equal(reported, 1);
   assert.match(ask.asked[0], /Approve B7, deploying to production/);
+});
+
+test('without a terminal, only the approvals passed as flags are given, and the rest are listed for the operator', async () => {
+  const { opts, steps } = setup();
+  await steps.intake();
+  const ask = flagAsk({ approved: ['B1'], direction: '2', interactive: false });
+  const r = await goProject('acme', { ask, steps, log: quiet, ...opts });
+  assert.equal(r.phase, 'CONTENT');
+  assert.deepEqual(codes(opts), ['B1', 'B2']);
+  assert.deepEqual(ask.missing, ['B3']);
+  const notes = approvals('acme', opts).map((a) => a.note);
+  assert.match(notes[0], /--approve/);
+  assert.match(notes[1], /--direction/);
+  assert.equal(await ask.typed('Approve B7?', 'deploy', 'B7'), false, 'B7 is never answered without a terminal');
 });

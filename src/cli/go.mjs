@@ -24,7 +24,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge go <project> [--brief <file>] [--render] [--model <model>] [--replay <dir>]';
+const USAGE = 'Usage: forge go <project> [--brief <file>] [--approve <B1,B2,...>] [--direction <n|id>] [--render] [--model <model>] [--replay <dir>]';
 
 // Yes/no, pick-one and type-a-word questions on the terminal. A closed input counts as "no".
 function terminalAsk(rl) {
@@ -61,6 +61,43 @@ function terminalAsk(rl) {
   };
 }
 
+// Answers from flags first: --approve lists the approvals the operator has already given in
+// conversation (when Claude runs forge go for them, as in the Claude desktop app), and --direction
+// is their B2 pick. Anything else is asked on the terminal, or, with no terminal, left unanswered
+// and listed in `missing`, so whoever runs it can ask the operator and run it again.
+export function flagAsk({ approved = [], direction, interactive, terminal }) {
+  const given = new Set(approved);
+  const missing = [];
+  const answer = async (code, ask) => {
+    if (given.has(code)) return true;
+    if (interactive) return ask();
+    if (code !== 'up-front') missing.push(code);
+    return false;
+  };
+  return {
+    missing,
+    note: (code) =>
+      given.has(code)
+        ? 'given by the operator in conversation, passed to forge go --approve'
+        : code === 'B2' && direction !== undefined
+          ? 'picked by the operator in conversation, passed to forge go --direction'
+          : undefined,
+    confirm: (question, code) => answer(code, () => terminal.confirm(question)),
+    typed: (question, word, code) => (interactive ? terminal.typed(question, word) : (missing.push(code), false)),
+    async choose(question, labels, defaultIndex, code) {
+      if (direction !== undefined) {
+        const n = Number(direction);
+        const i = Number.isInteger(n) ? n - 1 : labels.findIndex((l) => l.startsWith(`${direction}:`));
+        if (i >= 0 && i < labels.length) return i;
+      }
+      if (interactive) return terminal.choose(question, labels, defaultIndex);
+      missing.push(code);
+      console.log(`\n${question}\n${labels.map((l, i) => `  ${i + 1}. ${l}${i === defaultIndex ? ' (recommended)' : ''}`).join('\n')}`);
+      return null;
+    },
+  };
+}
+
 // The site with every selected approach applied, then the build (BUILD, P9). The draft site from
 // P5 is written again first, so it carries the content locked at B3.
 async function buildWithApproaches(project, root, workspace, ask) {
@@ -73,7 +110,7 @@ async function buildWithApproaches(project, root, workspace, ask) {
   for (const d of decisions) {
     if (parts.has(d.approach) || applied.includes(d.approach)) continue;
     if (d.needsApproval && !hasApproval(project, d.needsApproval, { workspace })) {
-      if (!(await ask.confirm(`${d.approach} is experimental and needs ${d.needsApproval}. Approve it? (No keeps its fallback.)`))) continue;
+      if (!(await ask.confirm(`${d.approach} is experimental and needs ${d.needsApproval}. Approve it? (No keeps its fallback.)`, d.needsApproval))) continue;
       approve(project, d.needsApproval, { note: `given in forge go for ${d.approach}`, workspace });
     }
     await cmdApproach(root, [project, d.approach, '--no-install']);
@@ -100,10 +137,17 @@ export async function cmdGo(root, args) {
   loadProject(project, opts);
   const replay = flag(args, '--replay');
   const worker = replay ? createReplayWorker({ recordDir: replay }) : createClaudeCodeWorker({ model: flag(args, '--model') });
+  const approved = (args.flatMap((a, i) => (args[i - 1] === '--approve' ? a.split(',') : []))).map((c) => c.trim().toUpperCase()).filter(Boolean);
+  const bad = approved.filter((c) => !/^B[1-6]$/.test(c));
+  if (bad.length) {
+    console.error(`--approve takes B1 to B6, not ${bad.join(', ')}. B7 (production) is only ever typed by the operator in a terminal.`);
+    return 2;
+  }
+  const interactive = Boolean(process.stdin.isTTY);
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ask = terminalAsk(rl);
+  const ask = flagAsk({ approved, direction: flag(args, '--direction'), interactive, terminal: terminalAsk(rl) });
   const steps = {
-    intake: () => runIntake(project, { ask: intakeAsk(rl), ...opts }),
+    intake: () => runIntake(project, { ask: interactive ? intakeAsk(rl) : async (qs) => qs.map(() => undefined), ...opts }),
     directions: () => cmdDirections(root, [project, ...(args.includes('--render') ? [] : ['--no-render'])]),
     scaffold: () => scaffoldSite(project, opts),
     runAgents: (agents) => runProject(project, { ...opts, worker, agents }),
@@ -116,6 +160,15 @@ export async function cmdGo(root, args) {
   };
   try {
     const r = await goProject(project, { ask, steps, ...opts });
+    if (!interactive && r.stopped?.some((x) => x.startsWith('answers to the intake'))) {
+      console.log(`\nThe intake questions need the operator: run ./forge intake ${project} in a terminal, or answer them with --answers <file.json>.`);
+    }
+    if (ask.missing.length) {
+      const codes = [...new Set(ask.missing)];
+      console.log(`\nWaiting for the operator: ${codes.map((c) => (c === 'B7' ? 'B7 (typed "deploy" in a terminal)' : c)).join(', ')}. Ask them; once they say yes, run:`);
+      const more = codes.filter((c) => c !== 'B7' && c !== 'B2');
+      console.log(`  ./forge go ${project}${[...approved, ...more].length ? ` --approve ${[...new Set([...approved, ...more])].join(',')}` : ''}${codes.includes('B2') ? ' --direction <number>' : ''}`);
+    }
     return r.done ? 0 : 1;
   } finally {
     rl.close();

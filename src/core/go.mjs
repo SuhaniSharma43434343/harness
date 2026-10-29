@@ -18,9 +18,9 @@ import { assertProjectExists } from './workspace.mjs';
 
 // What each approval covers, shown before it is asked.
 export const APPROVAL_TEXT = {
-  B1: 'the brief, plan and estimate (intake/plan.md)',
+  B1: 'the brief, plan and estimate in intake/plan.md',
   B2: 'the design direction',
-  B3: 'the written content (content/pages/)',
+  B3: 'the written content in content/pages/',
   B5: 'using Vercel for this project (the integration and its token)',
   B6: 'the preview deploy',
   B7: 'deploying to production',
@@ -30,15 +30,16 @@ export const UP_FRONT = ['B2', 'B3'];
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
 
 // goProject(project, { ask, steps, log?, ...opts }) => { phase, stopped?: string[], done?: true }
-// ask: { confirm(question) => bool, choose(question, labels, defaultIndex) => index | null,
-//        typed(question, word) => bool }
+// ask: { confirm(question, code) => bool, choose(question, labels, defaultIndex, code) => index | null,
+//        typed(question, word, code) => bool, note?(code) => string }. code names the approval
+// asked for ('up-front' for the offer at B1), so a non-interactive ask can answer from flags.
 // steps: the phase work, so the CLI runs the real commands and tests run stand-ins:
 //   intake(), directions(), scaffold(), runAgents(agents) => { blocked, errors }, build(), gates(),
 //   review() => { met }, deployPreview() => { url }, deployProduction() => { url }, report()
 export async function goProject(project, { ask, steps, log = console.log, ...opts }) {
   const { dir } = assertProjectExists(project, opts);
   const upFront = new Set();
-  const note = (code) => (upFront.has(code) ? 'given up front with B1 in forge go' : 'given in forge go');
+  const note = (code) => (upFront.has(code) ? 'given up front with B1 in forge go' : (ask.note?.(code) ?? 'given in forge go'));
   const give = (code) => approve(project, code, { note: note(code), ...opts });
   const stop = (phase, reasons) => {
     log(`\nStopped in ${phase}. Next it needs:\n${reasons.map((r) => `  - ${r}`).join('\n')}`);
@@ -54,10 +55,10 @@ export async function goProject(project, { ask, steps, log = console.log, ...opt
       return true;
     }
     const question = `Approve ${code}, ${APPROVAL_TEXT[code]}?${detail ? ` ${detail}` : ''}`;
-    const yes = code === 'B7' ? await ask.typed(question, 'deploy') : await ask.confirm(question);
+    const yes = code === 'B7' ? await ask.typed(question, 'deploy', code) : await ask.confirm(question, code);
     if (!yes) return false;
     give(code);
-    if (code === 'B1' && (await ask.confirm(`Also approve ${UP_FRONT.join(' and ')} now (the recommended design direction and the written content), so the build does not stop for them?`))) {
+    if (code === 'B1' && (await ask.confirm(`Also approve ${UP_FRONT.join(' and ')} now (the recommended design direction and the written content), so the build does not stop for them?`, 'up-front'))) {
       for (const c of UP_FRONT) upFront.add(c);
     }
     return true;
@@ -88,7 +89,7 @@ export async function goProject(project, { ask, steps, log = console.log, ...opt
         if (record && record.status !== 'chosen') {
           let i = 0;
           if (!upFront.has('B2')) {
-            i = await ask.choose(`Which design direction (B2)? Specimens are in workspace/${project}/design/.`, record.directions.map((d) => `${d.id}: ${d.name}`), 0);
+            i = await ask.choose(`Which design direction (B2)? Specimens are in workspace/${project}/design/.`, record.directions.map((d) => `${d.id}: ${d.name}`), 0, 'B2');
             if (i === null || i === undefined) return stop(phase, ['a chosen design direction (B2)']);
           }
           const entry = give('B2');
