@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/estimate.schema.json",
+  "title": "Project estimate (intake/estimate.json)",
+  "description": "Scope and cost estimate for the client website, approved with the brief and plan at B1. Written by estimateScope from the brief, the approach decision and the operator's rates; never by the model.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project", "tier", "pages", "approaches", "hours", "cost", "assumptions", "rateVersion"],
+  "properties": {
+    "project": { "$ref": "common.schema.json#/definitions/projectId" },
+    "tier": { "$ref": "common.schema.json#/definitions/tier" },
+    "pages": { "type": "integer", "minimum": 1 },
+    "approaches": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/approachId" } },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["item", "hours"],
+        "properties": {
+          "item": { "type": "string", "minLength": 1 },
+          "hours": { "$ref": "#/definitions/range" }
+        }
+      }
+    },
+    "hours": { "$ref": "#/definitions/range" },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max", "currency"],
+      "properties": {
+        "min": { "type": "number", "minimum": 0 },
+        "max": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "withinBudget": { "type": ["boolean", "null"], "description": "null when the brief has no budget." },
+    "assumptions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "rateVersion": { "$ref": "common.schema.json#/definitions/semver" }
+  },
+  "definitions": {
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": { "min": { "type": "number", "minimum": 0 }, "max": { "type": "number", "minimum": 0 } }
+    }
+  }
+}

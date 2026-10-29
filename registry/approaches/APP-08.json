@@ -1,0 +1,82 @@
+{
+  "id": "APP-08",
+  "name": "AI Image to Frame Animation to 3D",
+  "summary": "A scroll-scrubbed frame sequence from owned or licensed frames, plus a 2.5D depth-map parallax scene from a supplied or generated depth map. For a parallax or scrubbed hero sequence.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app08/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "field": "features.interactive",
+    "op": "includes",
+    "value": "frame-sequence"
+  },
+  "rejectWhen": {
+    "any": [
+      {
+        "field": "brand.motionIntensity",
+        "op": "eq",
+        "value": 0
+      },
+      {
+        "field": "constraints.deviceFloor",
+        "op": "eq",
+        "value": "low"
+      }
+    ]
+  },
+  "fallback": {
+    "approach": "APP-01",
+    "description": "A static key frame",
+    "triggers": [
+      "reduced-motion",
+      "no-webgl",
+      "low-end-device",
+      "load-failed",
+      "slow-network"
+    ]
+  },
+  "budget": {
+    "assetsMb": 3
+  },
+  "dependencies": [
+    {
+      "name": "sharp",
+      "licence": "Apache-2.0",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    },
+    {
+      "name": "ffmpeg",
+      "licence": "LGPL-2.1 or GPL, by build",
+      "licenceVerified": false,
+      "note": "System tool, not shipped; doctor checks for it"
+    },
+    {
+      "name": "three",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    },
+    {
+      "name": "frames and depth maps",
+      "licence": "per asset",
+      "licenceVerified": false,
+      "note": "Every frame and depth map needs a provenance record, with generator terms"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app08/pos-1.json",
+      "tests/decision/app08/pos-2.json",
+      "tests/decision/app08/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app08/neg-1.json",
+      "tests/decision/app08/neg-2.json",
+      "tests/decision/app08/neg-3.json"
+    ]
+  }
+}

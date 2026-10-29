@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-showroom-goals",
+      "fills": [
+        "goals"
+      ],
+      "prompt": "What should the website achieve? Name the one or two results that matter most.",
+      "why": "Every page and call to action is planned around these goals.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "showroom"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          {
+            "id": "dealer-leads",
+            "statement": "Let buyers explore the products and contact a seller"
+          }
+        ],
+        "reason": "The usual main goal for a showroom site."
+      }
+    },
+    {
+      "id": "q-showroom-audience",
+      "fills": [
+        "audience"
+      ],
+      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "showroom"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "segment": "Buyers comparing products",
+            "need": "Inspect details and find where to buy"
+          }
+        ],
+        "reason": "The usual main audience for a showroom site; research in P2 refines it."
+      }
+    },
+    {
+      "id": "q-showroom-pages",
+      "fills": [
+        "pages"
+      ],
+      "prompt": "Which pages do you need? A short list of page names is enough.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "showroom"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 8,
+      "recommendation": {
+        "value": [
+          {
+            "slug": "/",
+            "title": "Home",
+            "purpose": "Showcase the collection",
+            "cta": "Explore the collection"
+          },
+          {
+            "slug": "/collection",
+            "title": "Collection",
+            "purpose": "Product views",
+            "cta": "Find a dealer"
+          },
+          {
+            "slug": "/contact",
+            "title": "Contact",
+            "purpose": "Collect enquiries",
+            "cta": "Contact us"
+          }
+        ],
+        "reason": "A standard page set for a showroom site, each with a call to action."
+      }
+    },
+    {
+      "id": "q-showroom-forms",
+      "fills": [
+        "features.forms"
+      ],
+      "prompt": "Should visitors be able to send you anything through a form, and where should it go?",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": [
+          "showroom"
+        ],
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          {
+            "id": "enquiry",
+            "purpose": "Product enquiry",
+            "fields": [
+              "name",
+              "email",
+              "product",
+              "message"
+            ],
+            "destination": "form-function"
+          }
+        ],
+        "reason": "The form a showroom site usually needs, sent through the form plugin."
+      }
+    }
+  ]
+}

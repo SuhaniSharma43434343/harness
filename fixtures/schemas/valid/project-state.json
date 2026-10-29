@@ -5,5 +5,8 @@
   "brief": "samples/briefs/business.md",
   "createdAt": "2026-10-23T09:00:00Z",
   "updatedAt": "2026-10-23T09:31:00Z",
-  "harnessVersion": "0.1.0"
+  "harnessVersion": "0.1.0",
+  "registryVersion": "1.0.0",
+  "questionBankVersion": "1.0.0",
+  "schemaVersion": "1.0.0"
 }

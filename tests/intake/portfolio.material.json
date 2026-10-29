@@ -1,0 +1,75 @@
+{
+  "project": "mira-studio",
+  "schemaVersion": "0.1.0",
+  "facts": [
+    {
+      "field": "projectType",
+      "status": "known",
+      "value": "portfolio",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/portfolio.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "tier",
+      "status": "known",
+      "value": "S",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/portfolio.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.name",
+      "status": "known",
+      "value": "Mira Rao",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/portfolio.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "client.industry",
+      "status": "known",
+      "value": "photography",
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/portfolio.json"
+      },
+      "assumption": false
+    },
+    {
+      "field": "pages",
+      "status": "known",
+      "value": [
+        {
+          "slug": "/",
+          "title": "Home",
+          "purpose": "Selected work",
+          "cta": "View portfolio"
+        },
+        {
+          "slug": "/work",
+          "title": "Work",
+          "purpose": "Full gallery by series",
+          "cta": "Book a shoot"
+        },
+        {
+          "slug": "/about",
+          "title": "About",
+          "purpose": "Background and clients",
+          "cta": "Get in touch"
+        }
+      ],
+      "source": {
+        "kind": "material",
+        "ref": "samples/briefs/portfolio.json"
+      },
+      "assumption": false
+    }
+  ]
+}

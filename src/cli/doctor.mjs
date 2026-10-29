@@ -117,7 +117,7 @@ export function runDoctor(root) {
     checks.push({
       name: 'Plugins',
       status: 'ok',
-      detail: enabled.length ? `enabled: ${enabled.join(', ')} (health checks arrive with the plugin host)` : 'none enabled',
+      detail: enabled.length ? `enabled: ${enabled.join(', ')} (each one's health check is listed below)` : 'none enabled',
     });
   }
 

@@ -5,7 +5,7 @@ import * as ledger from './ledger.mjs';
 import { assertValid } from './schemas.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from './workspace.mjs';
 
-// The task board: one schema-checked task contract per file in workspace/<project>/tasks/.
+// The task board: one schema-checked task contract per file in workspace/<project>/board/.
 // Tasks move pending -> ready -> running -> submitted -> verifying -> done. A failed attempt
 // goes to retry, and back to running; once retries are used up the task is blocked.
 export const TASK_TRANSITIONS = {
@@ -19,7 +19,7 @@ export const TASK_TRANSITIONS = {
   blocked: [],
 };
 
-const taskFile = (project, id, opts) => join(assertProjectExists(project, opts).tasks, `${id}.json`);
+const taskFile = (project, id, opts) => join(assertProjectExists(project, opts).board, `${id}.json`);
 
 export function addTask(project, task, opts = {}) {
   const file = taskFile(project, task.id, opts);
@@ -41,7 +41,7 @@ export function getTask(project, id, opts = {}) {
 }
 
 export function listTasks(project, opts = {}) {
-  const dir = assertProjectExists(project, opts).tasks;
+  const dir = assertProjectExists(project, opts).board;
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.json'))

@@ -50,7 +50,7 @@ export function createProject(project, { brief, ...opts } = {}) {
   if (existsSync(paths.state)) {
     throw new PermissionDenied(`Project "${project}" already exists`, { hint: `Use forge status ${project}.` });
   }
-  for (const dir of [paths.dir, paths.tasks, paths.locks]) mkdirSync(dir, { recursive: true });
+  for (const dir of [paths.dir, paths.board, paths.locks]) mkdirSync(dir, { recursive: true });
   const ts = (opts.now?.() ?? new Date()).toISOString();
   const state = { id: project, phase: 'CREATED', repairLoops: 0, createdAt: ts, updatedAt: ts, harnessVersion: HARNESS_VERSION };
   if (brief) state.brief = brief;

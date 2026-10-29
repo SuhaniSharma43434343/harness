@@ -1,8 +1,11 @@
 import { isAbsolute, join } from 'node:path';
 import { listTasks } from '../core/board.mjs';
 import { loadConfig } from '../core/config.mjs';
+import { agentsForPhase } from '../core/agents.mjs';
 import { approvals, approve, createProject, loadProject, nextPhases, PHASES } from '../core/project.mjs';
 import { resume } from '../core/recovery.mjs';
+import { runProject } from '../core/runner.mjs';
+import { createClaudeCodeWorker, createReplayWorker } from '../workers/claude-code.mjs';
 
 // Workspace folder from forge.config.json (relative paths are relative to the harness root).
 function workspaceFor(root) {
@@ -93,4 +96,32 @@ export function cmdResume(root, args) {
   console.log(`  still running: ${list(report.stillRunning)}`);
   console.log(`  waiting for verification: ${list(report.toVerify)}`);
   return 0;
+}
+
+// forge run: runs every task that can start, through Claude Code or from recordings (--replay).
+export async function cmdRun(root, args) {
+  const [project] = args;
+  if (!project || project.startsWith('-')) {
+    console.error('Usage: forge run <project> [--replay <recordings dir>] [--model <model>] [--json]');
+    return 2;
+  }
+  const replay = flag(args, '--replay');
+  const worker = replay ? createReplayWorker({ recordDir: replay }) : createClaudeCodeWorker({ model: flag(args, '--model') });
+  const workspace = workspaceFor(root);
+  const { phase } = loadProject(project, { workspace });
+  const summary = await runProject(project, { workspace, worker, agents: agentsForPhase(phase) });
+  if (args.includes('--json')) {
+    console.log(JSON.stringify(summary, null, 2));
+  } else {
+    const list = (xs) => xs.join(', ') || 'none';
+    console.log(`Ran ${project} in phase ${phase}${replay ? ' from recordings' : ''}.`);
+    console.log(`  done: ${list(summary.done)}`);
+    for (const b of summary.blocked) console.log(`  blocked: ${b.task} (${b.reason})`);
+    for (const w of summary.waiting) {
+      const why = w.notInPhase ? ` (${w.notInPhase} does not work in ${phase})` : w.on.length ? ` on ${w.on.join(', ')}` : '';
+      console.log(`  waiting: ${w.task}${why}`);
+    }
+    for (const e of summary.errors) console.log(`  error: ${e.task}: ${e.code} ${e.message}`);
+  }
+  return summary.blocked.length || summary.errors.length ? 1 : 0;
 }

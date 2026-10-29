@@ -3,8 +3,15 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ForgeError } from '../core/errors.mjs';
+import { cmdAgents } from './agents.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
-import { cmdApprove, cmdNew, cmdResume, cmdStatus } from './project.mjs';
+import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
+import { cmdHooks, cmdScan } from './scan.mjs';
+import { cmdTask } from './task.mjs';
+import { cmdPackage, cmdUpgrade } from './package.mjs';
+import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
+import { cmdIntake } from './intake.mjs';
+import { cmdSelect } from './select.mjs';
 import { validateFile } from './validate.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -16,8 +23,13 @@ const COMMANDS = {
   version: { summary: 'Print the harness version', run: () => console.log(VERSION) },
   doctor: {
     summary: 'Check Node, npm, Git, Claude Code, config and workspace (--json for machine output)',
-    run: (args) => {
+    run: async (args) => {
       const report = runDoctor(ROOT);
+      const pluginChecks = await pluginDoctorChecks(ROOT).catch((err) => [
+        { name: 'Plugins', status: 'fail', detail: err.message, hint: err.hint },
+      ]);
+      report.checks.push(...pluginChecks);
+      report.ok = report.checks.every((c) => c.status !== 'fail');
       if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
       else printDoctor(report);
       return report.ok ? 0 : 1;
@@ -30,22 +42,29 @@ const COMMANDS = {
   new: { summary: 'Create a project: forge new <project> [--brief <file>]', run: (args) => cmdNew(ROOT, args) },
   approve: { summary: 'Record an operator approval: forge approve <project> <B1-B7>', run: (args) => cmdApprove(ROOT, args) },
   status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
+  run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
+  agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
+  intake: {
+    summary: 'Run intake (P1): forge intake <project> [--answers <file.json>] [--use-recommendations]',
+    run: (args) => cmdIntake(ROOT, args),
+  },
+  select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
+  plugins: { summary: 'List plugins, or enable, disable or health-check one: forge plugins [list|enable|disable|check] [id]', run: (args) => cmdPlugins(ROOT, args) },
+  task: { summary: 'Step mode for Cursor: forge task <next|check|submit|abandon> <project> [task]', run: (args) => cmdTask(ROOT, args) },
+  hooks: { summary: 'Add the secret-scan pre-commit hook to a repository: forge hooks install [dir]', run: (args) => cmdHooks(ROOT, args) },
+  scan: { summary: 'Scan files for credentials and .env files: forge scan [path...] [--json]', run: (args) => cmdScan(ROOT, args) },
+  package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
+  upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
 };
 
 // Planned commands and the milestone that delivers them (see the project plan).
 const PLANNED = {
-  intake: 'M2',
-  run: 'M3',
   preview: 'M3',
   deploy: 'M3',
   report: 'M3',
-  plugins: 'M2',
-  task: 'M5',
   test: 'M5',
   demo: 'M6',
-  package: 'M6',
-  upgrade: 'M6',
 };
 
 function printHelp() {

@@ -1,0 +1,24 @@
+{
+  "rateVersion": "0.1.0",
+  "currency": "USD",
+  "hourlyRate": { "min": 45, "max": 75 },
+  "setupHours": {
+    "S": { "min": 6, "max": 10 },
+    "M": { "min": 10, "max": 16 },
+    "L": { "min": 16, "max": 28 }
+  },
+  "hoursPerPage": { "min": 2, "max": 4 },
+  "hoursPerForm": { "min": 2, "max": 3 },
+  "approachHours": {
+    "APP-01": { "min": 0, "max": 0 },
+    "APP-02": { "min": 12, "max": 20 },
+    "APP-03": { "min": 20, "max": 36 },
+    "APP-04": { "min": 8, "max": 16 },
+    "APP-05": { "min": 8, "max": 14 },
+    "APP-06": { "min": 24, "max": 44 },
+    "APP-07": { "min": 16, "max": 28 },
+    "APP-08": { "min": 12, "max": 24 }
+  },
+  "qaShare": 0.2,
+  "note": "Operator-editable rates. They are starting values, to be replaced with the studio's own rates; the model never sets them. APP-07's hours are on top of its parts (APP-02 and APP-03), which are counted separately."
+}

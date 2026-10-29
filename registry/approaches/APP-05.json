@@ -1,0 +1,67 @@
+{
+  "id": "APP-05",
+  "name": "Shader / WebGL Website",
+  "summary": "A custom GLSL background or transition effect with a quality ladder (full, reduced, off). For accent backgrounds or transitions.",
+  "registryVersion": "0.1.0",
+  "verification": "not-started",
+  "module": {
+    "skill": "skills/app05/SKILL.md",
+    "recipes": []
+  },
+  "selectWhen": {
+    "field": "features.interactive",
+    "op": "includes",
+    "value": "shader-background"
+  },
+  "rejectWhen": {
+    "field": "brand.motionIntensity",
+    "op": "eq",
+    "value": 0
+  },
+  "fallback": {
+    "approach": "APP-01",
+    "description": "CSS gradient or a static frame",
+    "triggers": [
+      "reduced-motion",
+      "no-webgl",
+      "low-end-device",
+      "load-failed"
+    ]
+  },
+  "budget": {
+    "gpuMsPerFrame": 8,
+    "extraJsKbGzip": 80
+  },
+  "dependencies": [
+    {
+      "name": "three",
+      "licence": "MIT",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release"
+    },
+    {
+      "name": "ogl",
+      "licence": "Unlicense",
+      "licenceVerified": true,
+      "note": "Licence as listed on npm (2026-10-28); recheck the package before release. Use three or ogl, not both"
+    },
+    {
+      "name": "third-party noise functions",
+      "licence": "per function",
+      "licenceVerified": false,
+      "note": "Each one needs a licence record"
+    }
+  ],
+  "tests": {
+    "positiveBriefs": [
+      "tests/decision/app05/pos-1.json",
+      "tests/decision/app05/pos-2.json",
+      "tests/decision/app05/pos-3.json"
+    ],
+    "negativeBriefs": [
+      "tests/decision/app05/neg-1.json",
+      "tests/decision/app05/neg-2.json",
+      "tests/decision/app05/neg-3.json"
+    ]
+  }
+}

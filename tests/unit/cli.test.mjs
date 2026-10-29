@@ -23,7 +23,7 @@ test('forge --version prints the package version', () => {
 });
 
 test('planned commands say they are not built yet instead of pretending', () => {
-  const r = forge('run', 'demo');
+  const r = forge('preview', 'demo');
   assert.equal(r.status, 2);
   assert.match(r.stderr, /planned for milestone M3 and is not built yet/);
 });
@@ -62,4 +62,14 @@ test('version helpers compare correctly', () => {
   assert.equal(versionAtLeast('2.39.9', '2.40.0'), false);
   assert.equal(versionAtLeast('10.9', '10.0.0'), true);
   assert.equal(versionAtLeast('garbage', '1.0.0'), false);
+});
+
+test('forge select explains the approach decision for a brief', () => {
+  const r = forge('select', 'samples/briefs/flagship.json');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /APP-04 {2}yes .*\[needs B2\]/);
+  assert.match(r.stdout, /APP-06 {2}no /);
+  const json = JSON.parse(forge('select', 'samples/briefs/showroom.json', '--json').stdout);
+  assert.deepEqual(json.decisions.filter((d) => d.selected).map((d) => d.approach), ['APP-01', 'APP-03']);
+  assert.equal(forge('select').status, 2);
 });
