@@ -30,6 +30,17 @@ export const SCHEMAS = {
   // Starter template (Nidhi, T18).
   tokens: 'tokens.schema.json',
   siteConfig: 'site-config.schema.json',
+  // Design workflow: one file holds the definitions of every specification.
+  methodology: 'design-spec.schema.json#/definitions/methodology',
+  positioning: 'design-spec.schema.json#/definitions/positioning',
+  designDirection: 'design-spec.schema.json#/definitions/direction',
+  designSystem: 'design-spec.schema.json#/definitions/designSystem',
+  sectionPlan: 'design-spec.schema.json#/definitions/sectionPlan',
+  motionPlan: 'design-spec.schema.json#/definitions/motionPlan',
+  assetPlan: 'design-spec.schema.json#/definitions/assetPlan',
+  siteCopy: 'design-spec.schema.json#/definitions/siteCopy',
+  designReview: 'design-spec.schema.json#/definitions/designReview',
+  visualReview: 'design-spec.schema.json#/definitions/visualReview',
 };
 
 let ajv;

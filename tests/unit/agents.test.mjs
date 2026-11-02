@@ -19,8 +19,8 @@ import { PHASES } from '../../src/core/project.mjs';
 
 const agents = loadAgents();
 
-test('there is one definition for each of the 8 agent roles in the task contract', () => {
-  assert.equal(AGENT_IDS.length, 8);
+test('there is one definition for each of the agent roles in the task contract', () => {
+  assert.equal(AGENT_IDS.length, 9);
   assert.deepEqual(agents.map((a) => a.id).sort(), [...AGENT_IDS].sort());
 });
 
@@ -48,7 +48,7 @@ test('an agent outside its phases is refused with the agents that are allowed', 
 
 test('generated files keep the source instructions and mark themselves as generated', () => {
   const files = generatedFiles(agents);
-  assert.equal(Object.keys(files).length, 19);
+  assert.equal(Object.keys(files).length, 21);
   for (const rel of ['CLAUDE.md', 'AGENTS.md', '.cursor/rules/forge.mdc']) {
     assert.match(files[rel], /You are the Project Manager/, rel);
     assert.match(files[rel], /forge task submit/, rel);

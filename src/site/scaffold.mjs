@@ -75,21 +75,16 @@ export function projectTokens(dir) {
   return DEFAULT_TOKENS;
 }
 
-// Approaches the scaffold applies on its own when P3 selected them without an approval: their
-// sections need no client assets, so the scaffold pages can use them straight away.
-const AUTO_APPLY = new Set(['APP-02', 'APP-05']);
-
 // The approaches a (re)scaffold applies: the ones the old site already had (a rebuild must not
-// drop them), plus the selected ones in AUTO_APPLY.
+// drop them), plus the design direction's primary approach and any justified combination.
 function approachesFor(dir) {
   const ids = new Set();
   const oldSite = join(dir, 'site/src/site.json');
   if (existsSync(oldSite)) for (const id of readJson(oldSite).approaches ?? []) ids.add(id);
-  const decisionFile = join(dir, 'design/approach-decision.json');
-  if (existsSync(decisionFile)) {
-    for (const d of readJson(decisionFile).decisions ?? []) {
-      if (d.selected && !d.needsApproval && AUTO_APPLY.has(d.approach)) ids.add(d.approach);
-    }
+  const directionFile = join(dir, 'design/direction.json');
+  if (existsSync(directionFile)) {
+    const d = readJson(directionFile);
+    for (const id of [d.primaryApproach, ...(d.combination ?? []).map((c) => c.approach)]) ids.add(id);
   }
   ids.delete('APP-01');
   return [...ids].sort();
@@ -124,6 +119,9 @@ export function scaffoldSite(project, { brief, tokens, force = false, starter = 
   // the site root, so a rebuild never loses them. Asset Rights records each in assets/register.json.
   const publicDir = join(paths.dir, 'assets/public');
   if (existsSync(publicDir)) cpSync(publicDir, join(paths.site, 'public'), { recursive: true });
+  // Header and footer read the site copy, when it has been written.
+  const copyFile = join(paths.dir, 'content/copy.json');
+  if (existsSync(copyFile)) cpSync(copyFile, join(paths.site, 'src/copy.json'));
   // Packages are installed by the build (forge site --build), not here.
   for (const id of approaches) getModule(id).apply(paths.site, { install: false, projectDir: paths.dir });
   ledger.append(

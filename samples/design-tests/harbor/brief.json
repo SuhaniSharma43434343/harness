@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "design-harbor",
+  "projectType": "business",
+  "tier": "S",
+  "client": {
+    "name": "Harbor Home Renovations",
+    "industry": "home renovation",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "leads",
+      "statement": "Get qualified renovation enquiries by phone and email",
+      "metric": "enquiries per month"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "Homeowners in Portland, Maine, aged 35 to 60",
+      "need": "A contractor who keeps to the price and leaves the house clean"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Show what Harbor does differently and start an enquiry",
+      "cta": "Book a home visit"
+    },
+    {
+      "slug": "/work",
+      "title": "Work",
+      "purpose": "Show finished kitchens, bathrooms and decks, with what each one took",
+      "cta": "Book a home visit"
+    },
+    {
+      "slug": "/how-we-work",
+      "title": "How we work",
+      "purpose": "Explain the fixed quote, the one site lead and what living through a renovation is like",
+      "cta": "Call Ruth"
+    }
+  ],
+  "features": {
+    "forms": [],
+    "interactive": []
+  },
+  "brand": {
+    "tone": [
+      "warm",
+      "trustworthy",
+      "practical"
+    ],
+    "motionIntensity": 1
+  },
+  "constraints": {
+    "deviceFloor": "low",
+    "accessibility": "WCAG 2.2 AA",
+    "hosting": "vercel"
+  },
+  "integrations": [],
+  "assumptions": []
+}

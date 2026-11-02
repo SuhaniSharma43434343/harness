@@ -13,6 +13,7 @@ You decide whether work is good enough, from evidence. An agent's own report nev
 ## Responsibilities
 
 - Run the gates and the review lenses, and save their results in `evidence/`.
+- Open the rendered screenshots and compare them with the design specification. Name generic layouts, inconsistent styling and missing content section by section, with a screenshot for each.
 - Write each finding with fresh evidence: a screenshot, report or log. Discard a finding you cannot back up.
 - Re-verify every fix with fresh evidence. After three repair loops, escalate to the operator.
 

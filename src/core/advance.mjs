@@ -10,6 +10,7 @@ import { patternsOverlap } from './locks.mjs';
 import { PHASES, advancePhase, hasApproval, loadProject, nextPhases } from './project.mjs';
 import { check } from './schemas.mjs';
 import { assertProjectExists } from './workspace.mjs';
+import { CHECKS as SPEC, FILES, isSuperseded, readiness } from '../design/spec.mjs';
 
 // Phase exits (the plan's workflow table). advanceProject moves a project to its next phase
 // only when the phase's exit gate holds: its evidence (below), its tasks finished, and its exit
@@ -35,7 +36,13 @@ function deployments(project, opts) {
 }
 
 // Evidence each phase needs before it can end. Each check returns a list of what is missing.
+// forge demo (mock mode) replays the runtime without a model, so it has no design specification.
+const mockRun = () => process.env.FORGE_MOCK === '1';
+const stageEvidence = (dir, ...stages) => (mockRun() ? [] : stages.flatMap((s) => SPEC[s](dir)));
 const EVIDENCE = {
+  RESEARCH: (dir) => stageEvidence(dir, 'research'),
+  UX_DESIGN_SYSTEM: (dir) => stageEvidence(dir, 'design-system', 'section-plan', 'motion-plan', 'asset-plan'),
+  CONTENT: (dir) => stageEvidence(dir, 'copy'),
   INTAKE: (dir) => {
     const brief = readJson(join(dir, 'intake', 'brief.json'));
     const facts = readJson(join(dir, 'intake', 'facts.json'));
@@ -46,7 +53,7 @@ const EVIDENCE = {
   APPROACH_SELECTION: (dir) => {
     const d = readJson(join(dir, 'design', 'approach-decision.json'));
     if (!d) return ['design/approach-decision.json (run forge directions or forge select)'];
-    return check('approachDecision', d).errors.map((e) => `approach decision: ${e}`);
+    return [...check('approachDecision', d).errors.map((e) => `approach decision: ${e}`), ...stageEvidence(dir, 'direction')];
   },
   CREATIVE_DIRECTIONS: (dir) => {
     const d = readJson(join(dir, 'design', 'directions.json'));
@@ -58,16 +65,22 @@ const EVIDENCE = {
   ASSETS_LICENSING: (dir) => {
     const r = readJson(join(dir, 'assets', 'register.json'));
     if (!r) return ['assets/register.json (the licence register)'];
-    return (r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.file ?? a.path ?? a.package} (${a.status})`);
+    return [...(r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.file ?? a.path ?? a.package} (${a.status})`), ...stageEvidence(dir, 'asset-files')];
   },
   TECHNICAL_PLAN: (dir, project, opts) => {
     const tasks = listTasks(project, opts);
     if (!tasks.length) return ['task contracts on the board'];
-    const problems = [];
-    for (let i = 0; i < tasks.length; i++) {
-      for (let j = i + 1; j < tasks.length; j++) {
-        const clash = tasks[i].owns_files.find((a) => tasks[j].owns_files.some((b) => patternsOverlap(a, b)));
-        if (clash) problems.push(`${tasks[i].id} and ${tasks[j].id} both own ${clash}`);
+    // Development does not start without a complete, reviewed specification.
+    const problems = mockRun() ? [] : readiness(dir).stages.flatMap((x) => x.problems.map((p) => `${x.label}: ${p}`));
+    const review = readJson(join(dir, FILES.review));
+    if (!mockRun() && !review) problems.push('design/review.json (the Design Manager has not reviewed the specification)');
+    else if (!mockRun() && review.verdict !== 'ready') problems.push(`design/review.json says ${review.verdict}`);
+    // A finished task holds no claim on its files: a fix task may own them next.
+    const active = tasks.filter((t) => t.status !== 'done');
+    for (let i = 0; i < active.length; i++) {
+      for (let j = i + 1; j < active.length; j++) {
+        const clash = active[i].owns_files.find((a) => active[j].owns_files.some((b) => patternsOverlap(a, b)));
+        if (clash) problems.push(`${active[i].id} and ${active[j].id} both own ${clash}`);
       }
     }
     return problems;
@@ -94,8 +107,10 @@ export function exitBlockers(project, opts = {}) {
   const { phase } = loadProject(project, opts);
   const blockers = [];
   const agents = new Set(agentsForPhase(phase));
-  for (const t of listTasks(project, opts)) {
+  const tasks = listTasks(project, opts);
+  for (const t of tasks) {
     if (!agents.has(t.agent)) continue;
+    if (t.status === 'blocked' && isSuperseded(t, tasks)) continue;
     if (t.status === 'blocked') blockers.push(`task ${t.id} is blocked: ${t.blocked_reason}`);
     else if (t.status !== 'done') blockers.push(`task ${t.id} is ${t.status}`);
   }

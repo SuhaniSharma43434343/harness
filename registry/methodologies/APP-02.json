@@ -1,0 +1,69 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-02",
+  "name": "Cinematic Scroll Website",
+  "philosophy": "The page is a film and the visitor holds the playhead. Scroll is time: every section is a scene with an entrance, a beat and an exit, telling one story from start to finish.",
+  "principles": [
+    "One narrative arc across the page, not a list of sections",
+    "Scroll position drives motion, so the visitor stays in control",
+    "Each scene has a single idea and a single focal point",
+    "A still frame of any scene should look composed"
+  ],
+  "visualIdentity": "Cinematic: full-viewport scenes, strong contrast, big type treated as an image, dramatic scale changes and letterbox-like framing.",
+  "artDirection": "Think in shots: establishing shot, close-up, reveal, closing shot. A consistent light and colour grade across imagery. One recurring visual motif carries through the scenes.",
+  "layout": {
+    "patterns": [
+      "full-bleed",
+      "pinned-scene",
+      "horizontal-story",
+      "scene-stack",
+      "statement",
+      "overlap",
+      "chapter-opener"
+    ],
+    "composition": "Full-height scenes composed around one focal point, with type and image overlapping. A pinned horizontal strip or stepped sequence for the central part of the story. Almost no card grids."
+  },
+  "typography": "Very large display type with tight leading, revealed line by line. Short lines. Body copy is sparse and placed like subtitles.",
+  "colour": "A controlled grade that may shift by scene: dark scenes are allowed when the story earns them, with palette changes used as chapter breaks.",
+  "contentPresentation": "Script, not brochure: short lines in sequence, one idea per scene, the product or offer revealed after the story sets it up, a closing scene with the call to action.",
+  "assets": "Large, high-quality stills or video with room for type. Video needs dense keyframes for scrubbing (the team hit lag with 2 keyframes in 241 frames). Authored vector scenes are fine when they have depth and layers.",
+  "animation": "GSAP ScrollTrigger timelines: scrubbed reveals, pinned scenes, parallax between layers, split-line headlines, colour transitions between chapters. Motion always explains the story order.",
+  "scrolling": "Lenis smooth scroll synced to ScrollTrigger. At least one pinned scene and one scrubbed sequence. Never trap the visitor: scenes end on their own and a skip is always possible by scrolling.",
+  "responsive": "Scenes stay full height on mobile with recomposed framing. Horizontal strips become vertical steps or swipe. Reduced motion shows the stacked static layout with every word readable.",
+  "useCases": [
+    "Product launches",
+    "Brand stories",
+    "Premium business sites with a story to tell"
+  ],
+  "avoidFor": [
+    "Information-heavy service sites",
+    "Low-motion or low-end-device audiences"
+  ],
+  "signals": {
+    "required": [
+      "pinned"
+    ],
+    "forbidden": [
+      "webgl"
+    ]
+  },
+  "compatibleWith": [
+    {
+      "approach": "APP-05",
+      "when": "One shader scene is itself a chapter of the story"
+    },
+    {
+      "approach": "APP-08",
+      "when": "A frame sequence is the central scrubbed scene"
+    }
+  ],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: narrative storytelling with scrubbed timelines; 9-scene journey, pinned horizontal services strip, scrubbed product video, door transition, palette drift and sync issues",
+      "Skill: pinned ScrollStory and Chapter sections, GSAP, Lenis, fallbacks"
+    ],
+    "interpreted": [
+      "Film language, shot thinking, script-style copy"
+    ]
+  }
+}

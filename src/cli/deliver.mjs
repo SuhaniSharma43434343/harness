@@ -152,9 +152,9 @@ export async function cmdPlan(root, args) {
 // forge check <name>: a planned task's verify command, run in the project folder.
 export async function cmdCheck(root, args) {
   const [name] = args;
-  if (!name) return usage('forge check <research|content|assets>');
+  if (!name) return usage('forge check <stage>, for example research, direction, section-plan, copy, assets, site-build');
   const { runCheck } = await import('../core/checks.mjs');
-  const problems = runCheck(name, process.cwd());
+  const problems = await runCheck(name, process.cwd());
   for (const p of problems) console.log(`- ${p}`);
   console.log(problems.length ? `${name}: ${problems.length} problem(s)` : `${name}: ok`);
   return problems.length ? 1 : 0;

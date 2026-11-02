@@ -1,0 +1,61 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-03",
+  "name": "Interactive 3D Website",
+  "philosophy": "The product is an object you can handle. The site is a showroom built around one 3D subject, and interaction replaces description.",
+  "principles": [
+    "One hero object, not a scene full of things",
+    "Touching it teaches something: each interaction reveals a real feature",
+    "The poster must already sell it before WebGL loads",
+    "Interface stays out of the way of the object"
+  ],
+  "visualIdentity": "A studio: clean stage, controlled lighting, generous negative space, interface labels that attach to the object like annotations.",
+  "artDirection": "Direct the object like a product shoot: lighting, material, camera angles chosen per section. The page background is the studio backdrop.",
+  "layout": {
+    "patterns": [
+      "object-stage",
+      "annotated-object",
+      "full-bleed",
+      "editorial-split",
+      "statement"
+    ],
+    "composition": "The object anchors the composition and moves between sections, with text placed around it. Few, large sections."
+  },
+  "typography": "Precise and technical: clean display type with small annotation labels, numerals for specifications.",
+  "colour": "Neutral stage colours that make the object's material the richest thing on the page.",
+  "contentPresentation": "Short feature statements tied to parts of the object, then a specification list and a call to action.",
+  "assets": "A licensed or authored glTF model under 3 MB with a poster for every scene. Procedural geometry is allowed when it is on purpose.",
+  "animation": "Drag or orbit, camera moves tied to scroll, hotspots that focus the camera. Idle motion is subtle.",
+  "scrolling": "Native scroll drives camera interpolation between saved views.",
+  "responsive": "Mobile keeps the object with touch rotation or falls to the poster. Profile mobile: the team removed 3D for stutter on one site.",
+  "useCases": [
+    "Showrooms",
+    "Physical products",
+    "Data shown as a spatial object"
+  ],
+  "avoidFor": [
+    "Low-end device floors",
+    "Service businesses with no object"
+  ],
+  "signals": {
+    "required": [
+      "webgl"
+    ],
+    "forbidden": []
+  },
+  "compatibleWith": [
+    {
+      "approach": "APP-02",
+      "when": "The story needs pinned chapters around the object; use APP-07 for a flagship"
+    }
+  ],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: real-time 3D with cursor and camera; scroll-driven camera, lazy GLB, HTML overlays synced to scroll; mobile unprofiled",
+      "Skill: Scene3D behind a poster"
+    ],
+    "interpreted": [
+      "Studio art direction, one-object rule"
+    ]
+  }
+}

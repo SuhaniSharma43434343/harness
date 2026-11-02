@@ -1,0 +1,62 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-07",
+  "name": "AI + 3D + Motion + Real Website",
+  "philosophy": "A flagship production: one world, told through cinematic scroll, anchored by a real-time 3D centrepiece, with real content and production discipline. The parts are one film, never a collage.",
+  "principles": [
+    "One world and one concept across all parts",
+    "The 3D object is the protagonist of the scroll story",
+    "A shared performance budget",
+    "Only one WebGL canvas at a time"
+  ],
+  "visualIdentity": "Enterprise-flagship scale: a single monumental idea (a globe, an engine, a building) carried from the first screen to the last.",
+  "artDirection": "Direct it like a film with a hero prop. Light, grade and type stay constant so scroll and 3D feel like one medium.",
+  "layout": {
+    "patterns": [
+      "full-bleed",
+      "pinned-scene",
+      "object-stage",
+      "annotated-object",
+      "horizontal-story",
+      "statement"
+    ],
+    "composition": "Pinned chapters staged around the 3D centrepiece, relieved by quieter proof sections and a real multi-page structure."
+  },
+  "typography": "Monumental display type plus precise annotation labels.",
+  "colour": "A controlled cinematic grade that the 3D lighting also follows.",
+  "contentPresentation": "A narrative for the flagship page, with full supporting pages for real business content.",
+  "assets": "One heavy hero asset within budget; the team hit load problems with several. Licensed models, poster frames for each chapter.",
+  "animation": "Camera moves tied to scroll chapters, overlays synced to camera, scrubbed reveals.",
+  "scrolling": "Lenis with ScrollTrigger; 3D paused when out of view.",
+  "responsive": "Drops to APP-01 plus APP-02 on weak devices; each 3D part falls back to its poster.",
+  "useCases": [
+    "Enterprise flagships at tier L"
+  ],
+  "avoidFor": [
+    "Low-end device floors",
+    "Small budgets",
+    "Sites without one strong central idea"
+  ],
+  "signals": {
+    "required": [
+      "pinned",
+      "webgl"
+    ],
+    "forbidden": []
+  },
+  "compatibleWith": [
+    {
+      "approach": "APP-05",
+      "when": "A shader scene is one chapter of the same world"
+    }
+  ],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: 3D globe with shipping arcs and scroll camera, first version judged visually weak, heavy assets",
+      "Skill: composite of APP-02 and APP-03 with one budget and one canvas"
+    ],
+    "interpreted": [
+      "One-world rule, hero prop direction"
+    ]
+  }
+}

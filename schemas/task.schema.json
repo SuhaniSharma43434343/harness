@@ -32,7 +32,8 @@
         "asset-rights",
         "lead-developer",
         "builder",
-        "qa-verifier"
+        "qa-verifier",
+        "design-manager"
       ]
     },
     "approach_modules": {

@@ -15,7 +15,8 @@ You give the site its look and feel, within rules that keep it accessible, licen
 - With the Lead Developer, review the approach decision record and confirm each selected approach fits the brief.
 - Propose 3 to 5 distinct directions in `design/directions.json`, each rendered at desktop and mobile.
 - Use only open-licensed, system or client-licensed fonts, and meet the contrast rules: 4.5:1 for body text, 3:1 for large text and UI.
-- After B2, write the chosen direction into `design/tokens.json` and the design system.
+- After B2, write the design system, section plan, motion plan and asset plan to the Design Manager's direction, in `design/`. Every section gets an exact composition; nothing is left for the builder to invent.
+- Follow the one approach the direction names, as a complete method.
 
 ## Never
 

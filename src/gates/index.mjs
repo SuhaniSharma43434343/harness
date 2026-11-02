@@ -15,21 +15,23 @@ import responsive from './responsive.mjs';
 import routes from './routes.mjs';
 import secrets from './secrets.mjs';
 import seo from './seo.mjs';
+import designFidelity from './design-fidelity.mjs';
+import { visualReviewGate } from '../qa/visual.mjs';
 
 // Each gate: { name, version, thresholds, run(ctx, thresholds) => { status?, findings, metrics?, evidence? } }.
 // A gate's run decides pass or fail from its findings; runGate adds the timing, the schema
 // check and the error handling, so no gate can report a pass it did not earn.
-export const GATES = new Map([contentParity, claims, licences, secrets, seo, dependencies, routes, accessibility, forms, responsive, performance].map((g) => [g.name, g]));
+export const GATES = new Map([contentParity, claims, licences, secrets, seo, dependencies, routes, accessibility, forms, responsive, performance, designFidelity, visualReviewGate].map((g) => [g.name, g]));
 
 // The order runGates reports them in: cheap file checks first, browser checks after.
-export const GATE_ORDER = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies', 'routes', 'accessibility', 'forms', 'responsive', 'performance'];
+export const GATE_ORDER = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies', 'routes', 'accessibility', 'forms', 'responsive', 'performance', 'design-fidelity', 'visual-review'];
 
 export function registerGate(gate) {
   GATES.set(gate.name, gate);
 }
 
 const BLOCKING = new Set(['critical', 'serious']);
-const BROWSER_GATES = new Set(['routes', 'accessibility', 'forms', 'responsive']);
+const BROWSER_GATES = new Set(['routes', 'accessibility', 'forms', 'responsive', 'design-fidelity']);
 
 // runGate(name, siteDir, opts?) => Promise<GateResult>
 // Never throws for a site problem: a failing site is status 'fail' with findings. A gate that

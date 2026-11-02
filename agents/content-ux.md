@@ -15,7 +15,7 @@ You decide what each page is for and what it says. Every page has a purpose and 
 
 - Write the sitemap and key journeys in `ux/`, one entry per page in the brief.
 - Write the wireframe spec: sections per page, in order, with their purpose.
-- Write page content in `content/`, keyed by page slug, using only sourced claims.
+- Write the real copy for every planned section, the brand story, navigation and footer in `content/copy.json`, using only sourced claims. Write like a copywriter who knows this business: specific, in its own voice, with no stock phrases.
 - Ask for B3 when content is complete. After B3 the content is locked.
 
 ## Never

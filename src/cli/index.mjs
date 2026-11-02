@@ -11,6 +11,7 @@ import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
 import { cmdAdvance, cmdCheck, cmdDemo, cmdDeploy, cmdPlan, cmdPreview, cmdReport, cmdTest } from './deliver.mjs';
 import { cmdAudit, cmdPackage, cmdUpgrade } from './package.mjs';
+import { cmdDesign } from './design.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
@@ -78,6 +79,7 @@ const COMMANDS = {
   package: { summary: 'Maintainers: build the portable ZIP and audit it: forge package [--out <dir>] [--verify]', run: (args) => cmdPackage(ROOT, args) },
   audit: { summary: 'Release security review: npm audit plus secret scans of the ZIP, workspace and logs: forge audit [--out <dir>]', run: (args) => cmdAudit(ROOT, args) },
   upgrade: { summary: 'Copy .env, config and workspace from an older Forge: forge upgrade --from <dir> [--dry-run]', run: (args) => cmdUpgrade(ROOT, args) },
+  design: { summary: 'Run or inspect the design workflow: forge design status|run|qa <project> [--model <m>] [--max-usd <n>]', run: (args) => cmdDesign(ROOT, args) },
   plan: { summary: 'Write the task contracts for the current phase: forge plan <project>', run: (args) => cmdPlan(ROOT, args) },
   check: { summary: 'Run the verify check of a planned task, in the project folder: forge check <research|content|assets>', run: (args) => cmdCheck(ROOT, args) },
   advance: { summary: 'Move to the next phase when its exit gate holds: forge advance <project> [--check]', run: (args) => cmdAdvance(ROOT, args) },

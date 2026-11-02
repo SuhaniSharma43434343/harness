@@ -33,10 +33,18 @@ export function workerSettings(nodePath = process.execPath) {
 }
 
 const MAX_RECORDED_BYTES = 2 * 1024 * 1024;
+const WEB_TOOLS = new Set(['WebSearch', 'WebFetch']);
+
+// What the previous attempt's verify command said, so a retry knows what to fix.
+function lastVerifyOutput(projectDir, taskId, attempt) {
+  if (attempt < 2) return null;
+  const log = join(projectDir, 'evidence', 'tasks', taskId, `attempt-${attempt - 1}-verify.log`);
+  return existsSync(log) ? readFileSync(log, 'utf8').slice(-6000) : null;
+}
 
 const list = (xs) => (xs.length ? xs.map((x) => `- ${x}`).join('\n') : '- (none)');
 
-export function buildPrompt(task, { project, attempt }) {
+export function buildPrompt(task, { project, attempt, lastFailure }) {
   const sections = [
     `You are the ${task.agent} agent in the Forge website harness, working on task "${task.id}" for project "${project}". Work only inside the current folder.`,
     `You may create or change only these paths (globs allowed):\n${list(task.owns_files)}`,
@@ -47,6 +55,7 @@ export function buildPrompt(task, { project, attempt }) {
   ];
   if (task.approach_modules.length) sections.push(`Approach modules: ${task.approach_modules.join(', ')}.`);
   if (attempt > 1) sections.push(`This is attempt ${attempt}. Files from an earlier attempt may exist; continue from them.`);
+  if (lastFailure) sections.push(`The last attempt failed verification. Fix exactly this:\n${lastFailure}`);
   sections.push(
     'End your reply with one line holding only a JSON object that lists the files proving the acceptance criteria, relative to the current folder:\n{"evidence": ["path/one", "path/two"]}',
   );
@@ -150,10 +159,14 @@ function runClaude({ command, args, prompt, cwd, env, signal }) {
 export function createClaudeCodeWorker(options = {}) {
   const { command = ['claude'], model, tools = DEFAULT_TOOLS, record = true, recordDir, env = process.env } = options;
   let roles = options.roles;
+  let webTools;
 
   return async function claudeCodeWorker({ task, project, projectDir, attempt, idempotencyKey, signal }) {
-    const prompt = buildPrompt(task, { project, attempt });
-    const args = ['-p', '--output-format', 'json', '--permission-mode', 'acceptEdits', '--no-session-persistence', '--allowedTools', tools.join(',')];
+    const prompt = buildPrompt(task, { project, attempt, lastFailure: lastVerifyOutput(projectDir, task.id, attempt) });
+    // An agent's role may add the web tools (research). Nothing here can add a shell.
+    webTools ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.tools.filter((t) => WEB_TOOLS.has(t))]));
+    const allowed = [...new Set([...tools, ...(options.tools ? [] : (webTools[task.agent] ?? []))])];
+    const args = ['-p', '--output-format', 'json', '--permission-mode', 'acceptEdits', '--no-session-persistence', '--allowedTools', allowed.join(',')];
     if (model) args.push('--model', model);
     roles ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.body]));
     if (roles[task.agent]) args.push('--append-system-prompt', roles[task.agent]);

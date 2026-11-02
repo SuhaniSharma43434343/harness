@@ -1,0 +1,56 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-06",
+  "name": "Game-Like Website",
+  "philosophy": "The visitor learns by playing. One bounded mechanic turns the message into something you do, and the explainer holds the same content for anyone who skips.",
+  "principles": [
+    "One mechanic only",
+    "Playing reveals the actual content",
+    "Skip is always visible",
+    "Completion leads to the call to action"
+  ],
+  "visualIdentity": "A small invented world with its own rules, characters or tokens, with an interface styled as part of the game.",
+  "artDirection": "Build a coherent little world: consistent sprite or shape language, sound on demand, score and progress as design elements.",
+  "layout": {
+    "patterns": [
+      "game-stage",
+      "statement",
+      "list-editorial",
+      "full-bleed"
+    ],
+    "composition": "A stage section that dominates, then the explainer below with the same items in readable form."
+  },
+  "typography": "Characterful display type that fits the world; plain body type in the explainer.",
+  "colour": "A saturated, world-specific palette, with enough contrast for play.",
+  "contentPresentation": "Content unlocks as items in the game, each with a short title and text mirrored in the explainer.",
+  "assets": "Authored sprites or shapes; licensed sound; everything recorded in the register.",
+  "animation": "Game physics and feedback: collect, unlock, celebrate. Keyboard and touch both work.",
+  "scrolling": "Scrolling is paused only while the visitor is actively playing and focus is on the stage.",
+  "responsive": "Touch controls and a smaller stage on mobile; fallback to the explainer on weak devices.",
+  "useCases": [
+    "Branded games",
+    "Virtual showrooms",
+    "Only when the client confirms play is the point"
+  ],
+  "avoidFor": [
+    "Any brief where play is not the point"
+  ],
+  "signals": {
+    "required": [
+      "game"
+    ],
+    "forbidden": [
+      "pinned"
+    ]
+  },
+  "compatibleWith": [],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: no tools, demo or evidence yet",
+      "Skill: one bounded mechanic with progress, sound and skip"
+    ],
+    "interpreted": [
+      "All design guidance: no team evidence yet"
+    ]
+  }
+}
