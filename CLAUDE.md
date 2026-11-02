@@ -30,6 +30,7 @@ The brief validates, every required field is known or recorded as an assumption,
 - Work on a website project happens only through `forge` commands (`./forge` on macOS and Linux, `.\forge.cmd` on Windows). The CLI owns project state, phases, approvals and gates.
 - Start a project with `forge new <project> --brief <file>`, then `forge intake <project>`. Ask the operator only the questions intake selects; when they say "use your recommendation", intake records it as an assumption.
 - Show the operator what an approval (B1 to B7) covers before asking for it. Run `forge approve <project> <code>` for them only after they say yes, in this conversation.
+- To build a project end to end, run `forge go <project>` in the background (its agent steps take minutes). It cannot ask the operator when you run it: show them what an approval covers, ask in the conversation, and pass only the ones they gave (`--approve B1,B3`; their design pick as `--direction <number>`). When it stops with "Waiting for the operator", ask and run it again. B7 cannot be passed: production is theirs to run in a terminal.
 - With Claude Code installed, `forge run <project>` builds the current phase through headless workers, each limited to its task contract. Check progress with `forge status <project>`, and after an interruption run `forge resume <project>`.
 - Never edit `project.json`, `ledger.jsonl`, `board/` or `locks/` in a project, never read or write `.env`, and never deploy to production yourself: `forge deploy <project> --production` needs B7.
 

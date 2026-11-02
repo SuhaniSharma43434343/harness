@@ -14,6 +14,7 @@ import { cmdAudit, cmdPackage, cmdUpgrade } from './package.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdGates } from './gates.mjs';
+import { cmdGo } from './go.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdQa } from './qa.mjs';
 import { cmdSelect } from './select.mjs';
@@ -48,6 +49,10 @@ const COMMANDS = {
   new: { summary: 'Create a project: forge new <project> [--brief <file>]', run: (args) => cmdNew(ROOT, args) },
   approve: { summary: 'Record an operator approval: forge approve <project> <B1-B7>', run: (args) => cmdApprove(ROOT, args) },
   status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
+  go: {
+    summary: 'From intake to handoff in one command, stopping only for approvals and blockers: forge go <project> [--brief <file>] [--approve <B1,...>] [--direction <n>] [--render] [--model <m>]',
+    run: (args) => cmdGo(ROOT, args),
+  },
   run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
   agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
   intake: {

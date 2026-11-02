@@ -1,4 +1,13 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { globToRegExp } from '../core/glob.mjs';
+import { STARTER_DIR } from '../site/tokens.mjs';
+
+// A file the starter itself ships unchanged (its favicon) is the harness's own work.
+const fromStarter = (dist, file) => {
+  const own = join(STARTER_DIR, 'public', file);
+  return existsSync(own) && readFileSync(own).equals(readFileSync(join(dist, file)));
+};
 
 // Files a visitor downloads that carry rights: images, video, audio, fonts and 3D models.
 const ASSET = /\.(png|jpe?g|gif|webp|avif|svg|ico|mp4|webm|mov|mp3|ogg|wav|m4a|woff2?|ttf|otf|glb|gltf|hdr|ktx2)$/i;
@@ -19,9 +28,14 @@ export default {
       findings.push({ id: 'no-register', severity: shipped.length ? 'serious' : 'critical', message: 'No licence register at assets/register.json' });
       return { findings, metrics: { assets: shipped.length, registered: 0 } };
     }
-    const matchers = rows.map((r) => ({ row: r, re: globToRegExp(r.file) }));
+    // Rows for npm packages (`package`, written by forge approach) are the dependencies gate's.
+    const matchers = rows.filter((r) => typeof r.file === 'string').map((r) => ({ row: r, re: globToRegExp(r.file) }));
     let ok = 0;
     for (const file of shipped) {
+      if (fromStarter(ctx.dist, file)) {
+        ok++;
+        continue;
+      }
       const hit = matchers.find((m) => m.re.test(file))?.row;
       if (!hit) {
         findings.push({ id: 'no-licence-record', severity: 'serious', message: `${file} ships with no licence record`, location: file });

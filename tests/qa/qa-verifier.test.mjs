@@ -228,3 +228,16 @@ test('forge qa reviews a project and lists its open defects', async () => {
   assert.match(out.join('\n'), /D-001 open\s+seo h1-count/);
   assert.ok(existsSync(join(p.dir, 'reports/defects.json')));
 });
+
+test('the repair verifier builds a site with sources before it runs the gate, and a broken build fails it', async () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'forge-rebuild-'));
+  createProject('rb', { workspace });
+  const site = join(workspace, 'rb', 'site');
+  mkdirSync(join(site, 'src', 'pages'), { recursive: true });
+  mkdirSync(join(site, 'node_modules'));
+  writeFileSync(join(site, 'package.json'), JSON.stringify({ name: 'rb', private: true, scripts: { build: 'node -e "process.exit(3)"' } }));
+  const { gateVerifier } = await import('../../src/qa/repair.mjs');
+  const r = await gateVerifier('rb', { workspace })('forge gates rb --gate seo');
+  assert.equal(r.ok, false);
+  assert.match(r.output, /did not build after the repair/);
+});

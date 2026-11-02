@@ -7,6 +7,7 @@ import { advancePhase, loadProject, MAX_REPAIR_LOOPS } from '../core/project.mjs
 import { runTask } from '../core/runner.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
 import { runGate } from '../gates/index.mjs';
+import { buildSite } from '../site/build.mjs';
 import { openDefects } from './defects.mjs';
 import { qaReview, readDefects, REPORT } from './review.mjs';
 
@@ -53,10 +54,16 @@ export function repairTasks(project, report, loop, opts = {}) {
 
 // A verifier for repair tasks that runs the gate in the task's verify command in-process
 // (the same check as the forge gates command, without needing a shell or the CLI config).
+// The builder edits site sources but cannot run a build, so a site with sources is built first:
+// otherwise the gate would check the old site/dist and no fix could ever pass.
 export function gateVerifier(project, opts = {}) {
   return async (command) => {
     const gates = [...command.matchAll(/--gate\s+([a-z-]+)/g)].map((m) => m[1]);
     const dir = assertProjectExists(project, opts).dir;
+    if (existsSync(join(dir, 'site', 'src', 'pages'))) {
+      const b = buildSite(join(dir, 'site'));
+      if (!b.ok) return { ok: false, code: b.code ?? 1, output: `The site did not build after the repair:\n${b.output.trim().split('\n').slice(-20).join('\n')}` };
+    }
     const lines = [];
     let ok = gates.length > 0;
     for (const g of gates) {
