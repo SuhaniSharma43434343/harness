@@ -1,6 +1,8 @@
+import { readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { loadConfig } from '../core/config.mjs';
-import { loadProject } from '../core/project.mjs';
+import { approve, loadProject } from '../core/project.mjs';
+import { releaseChecks } from '../design/release.mjs';
 import { designStatus, runDesignWorkflow } from '../design/manager.mjs';
 import { openDefects } from '../qa/defects.mjs';
 import { runRepairLoop } from '../qa/repair.mjs';
@@ -12,19 +14,21 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge design status <project> | forge design run <project> [--model <m>] [--max-usd <n>] | forge design qa <project> [--model <m>]';
+const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>]';
 
-// The gates visual QA repairs against. The rest of the floor (SEO, forms, performance) needs a
-// real domain and endpoint and is checked before release.
-export const DESIGN_QA_GATES = ['content-parity', 'routes', 'accessibility', 'responsive', 'design-fidelity', 'visual-review'];
+// The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
+// something only the operator has, and are reported by forge design release.
+export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibility', 'responsive', 'performance', 'design-fidelity', 'visual-review'];
 
 // forge design: the Design Manager's workflow.
 //   status  what the specification has and lacks
 //   run     runs every phase up to visual QA; stops only for an approval or an escalation
 //   qa      the render, review and repair loop, up to the retry limit
+//   release every gate on the finished site: passed, failed, blocked or not applicable
+//   choose  the operator's B2: records the approval and the chosen direction
 export async function cmdDesign(root, args) {
   const [action, project] = args;
-  if (!project || !['status', 'run', 'qa'].includes(action)) {
+  if (!project || !['status', 'run', 'qa', 'release', 'choose'].includes(action)) {
     console.error(USAGE);
     return 2;
   }
@@ -39,6 +43,30 @@ export async function cmdDesign(root, args) {
       for (const p of st.problems) console.log(`          - ${p}`);
     }
     return s.ready ? 0 : 1;
+  }
+
+  if (action === 'choose') {
+    const file = join(workspace, project, 'design', 'directions.json');
+    const decision = JSON.parse(readFileSync(file, 'utf8'));
+    const id = args[2];
+    if (!decision.directions.some((d) => d.id === id)) {
+      console.error(`No direction ${id}. Directions: ${decision.directions.map((d) => d.id).join(', ')}`);
+      return 2;
+    }
+    const entry = approve(project, 'B2', { workspace, note: flag(args, '--note') ?? `Chose ${id}` });
+    writeFileSync(file, JSON.stringify({ ...decision, status: 'chosen', chosen: id, approval: { code: 'B2', ledgerSeq: entry.seq } }, null, 2) + '\n');
+    console.log(`Recorded B2 for ${project}: ${id} (ledger #${entry.seq}).`);
+    return 0;
+  }
+
+  if (action === 'release') {
+    const r = await releaseChecks(project, { workspace });
+    for (const row of r.rows) {
+      console.log(`${row.outcome.padEnd(15)} ${row.gate}${row.reason ? `: ${row.reason}` : ''}`);
+      for (const f of row.findings) console.log(`                  - ${f}`);
+    }
+    console.log(r.releasable ? 'Every check passed or does not apply.' : 'Not releasable.');
+    return r.releasable ? 0 : 1;
   }
 
   const worker = createClaudeCodeWorker({ model: flag(args, '--model') });

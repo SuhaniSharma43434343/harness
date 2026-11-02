@@ -116,6 +116,7 @@ export async function runRepairLoop(project, opts = {}) {
   let { report, floor } = await qaReview(project, rest);
   let loops = 0;
   while (!floor.met || openDefects(report).length) {
+    if (rest.budgetExhausted?.()) return { outcome: 'budget', loops, report };
     if (loadProject(project, rest).repairLoops >= MAX_REPAIR_LOOPS) return escalate(project, report, rest);
     advancePhase(project, 'REPAIR', { actor: 'qa-verifier', ...rest });
     loops = loadProject(project, rest).repairLoops;

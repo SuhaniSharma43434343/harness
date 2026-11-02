@@ -1,0 +1,57 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import * as ledger from '../core/ledger.mjs';
+import { assertProjectExists } from '../core/workspace.mjs';
+import { GATE_ORDER, runGates } from '../gates/index.mjs';
+
+const BLOCKING = new Set(['critical', 'serious']);
+const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
+
+// classifyGate(result, facts) => { outcome, reason? }. Four outcomes, and only a gate's own pass is
+// "passed". "blocked" means the fix is not the harness's to make: it needs something only the
+// operator can give. It stays a stop on release, and no finding is hidden by it.
+export function classifyGate(result, { siteUrl, forms, uncertainPackages }) {
+  const blocking = result.findings.filter((f) => BLOCKING.has(f.severity));
+  if (result.gate === 'forms' && !forms) return { outcome: 'not-applicable', reason: 'The brief has no forms' };
+  if (result.status === 'pass') return { outcome: 'passed' };
+  if (result.status === 'error' || result.status === 'skipped') return { outcome: 'blocked', reason: `The gate could not run: ${result.error?.code ?? ''} ${result.error?.message ?? ''}`.trim() };
+  if (result.gate === 'seo' && !siteUrl && blocking.length && blocking.every((f) => f.id === 'canonical-missing')) {
+    return { outcome: 'blocked', reason: 'The operator has not given a site URL, so canonical URLs cannot be set' };
+  }
+  if (result.gate === 'dependencies' && blocking.length && blocking.every((f) => f.id === 'licence-not-allowed' && uncertainPackages.some((p) => f.message.startsWith(`${p}@`)))) {
+    return { outcome: 'blocked', reason: `A licence decision is needed from the operator: ${uncertainPackages.join(', ')}` };
+  }
+  return { outcome: 'failed' };
+}
+
+// releaseChecks(project) runs every gate on the finished site, writes the evidence and a report,
+// and returns one row per gate. It changes nothing on the site.
+export async function releaseChecks(project, opts = {}) {
+  const { dir } = assertProjectExists(project, opts);
+  const results = await runGates(join(dir, 'site'), { ...opts, project, projectDir: dir, gates: GATE_ORDER });
+  const site = readJson(join(dir, 'site', 'src', 'site.json'));
+  const brief = readJson(join(dir, 'intake', 'brief.json'));
+  const register = readJson(join(dir, 'assets', 'register.json'));
+  const facts = {
+    siteUrl: site?.url ?? null,
+    forms: (brief?.features?.forms ?? []).length > 0,
+    uncertainPackages: (register?.assets ?? []).filter((a) => a.package && a.status !== 'cleared').map((a) => a.package),
+  };
+  const rows = results.map((r) => {
+    const { outcome, reason } = classifyGate(r, facts);
+    return {
+      gate: r.gate,
+      outcome,
+      ...(reason ? { reason } : {}),
+      findings: r.findings.filter((f) => BLOCKING.has(f.severity)).map((f) => `${f.id}${f.location ? ` [${f.location}]` : ''}: ${f.message}`),
+      metrics: r.metrics ?? {},
+      evidence: `evidence/gates/${r.gate}.json`,
+    };
+  });
+  const summary = Object.fromEntries(['passed', 'failed', 'blocked', 'not-applicable'].map((o) => [o, rows.filter((x) => x.outcome === o).map((x) => x.gate)]));
+  const report = { project, ranAt: (opts.now?.() ?? new Date()).toISOString(), releasable: !summary.failed.length && !summary.blocked.length, summary, rows };
+  mkdirSync(join(dir, 'reports'), { recursive: true });
+  writeFileSync(join(dir, 'reports', 'release-checks.json'), JSON.stringify(report, null, 2) + '\n');
+  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'release_checks', releasable: report.releasable, ...summary } }, opts);
+  return report;
+}

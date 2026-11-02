@@ -86,6 +86,8 @@ function probePage({ ids, minVisible }) {
 }
 
 const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
+// The words that turn a picture of something into a picture of a job done for this client.
+const STOCK_CLAIM = /\b(finished|completed|our|we|built by|renovated by|project|the kind we)\b/i;
 
 // One motion on a fresh page, before anything has scrolled: does the element named by the plan
 // change when it should? A reveal that runs once can only be seen the first time, so this picks
@@ -170,6 +172,8 @@ export default {
     const copyById = new Map(copy.pages.flatMap((p) => p.sections.map((s) => [s.id, s])));
     const motions = new Map((motion?.motions ?? []).map((m) => [m.id, m]));
     const planAssets = new Map((assets?.assets ?? []).map((a) => [a.id, a]));
+    // Names the client's own material uses for its past jobs, from the copy's project titles.
+    const clientWords = copy.pages.flatMap((p) => p.sections).flatMap((x) => (x.headline.match(/\b[A-Z][a-z]+ (?:Hill|Cove|Street|Lane)\b/g) ?? [])).map((w) => w.toLowerCase());
     const display = system?.typography?.display;
     const body = system?.typography?.body;
 
@@ -243,6 +247,16 @@ export default {
               if (planned.pattern === 'horizontal-story' && !probe.signals.pinned) add('pattern-mismatch', 'serious', `Section ${planned.id} is planned as a horizontal story, but nothing is pinned`, where);
             }
             if (vp.name === 'mobile' && s.width > vp.width + 1) add('mobile-overflow', 'serious', `Section ${planned.id} is ${s.width}px wide on a ${vp.width}px phone`, where);
+          }
+
+          // A stock or licensed photo must not be presented as this client's own finished work.
+          for (const hit of await page.evaluate((files) => [...document.querySelectorAll('img')].flatMap((img) => {
+            const src = img.getAttribute('src') ?? '';
+            if (!files.some((f) => src.endsWith(f))) return [];
+            const caption = img.closest('figure')?.querySelector('figcaption')?.textContent ?? '';
+            return [{ src, text: `${caption} ${img.alt ?? ''}` }];
+          }), [...planAssets.values()].filter((a) => a.source === 'licensed' && a.file).map((a) => a.file))) {
+            if (STOCK_CLAIM.test(hit.text) || clientWords.some((w) => hit.text.toLowerCase().includes(w))) add('stock-as-client-work', 'critical', `Stock photo ${hit.src} is presented as the client's work: "${hit.text.trim().slice(0, 100)}"`, where);
           }
 
           // One screenshot per section, scrolled into place, so the review sees what a visitor sees.

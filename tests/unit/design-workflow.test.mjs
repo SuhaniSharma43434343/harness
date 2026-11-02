@@ -11,6 +11,8 @@ import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
 import { MAX_STAGE_RETURNS, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
 import { CHECKS, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
+import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
+import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
 import { newProject } from './helpers.mjs';
 
@@ -303,6 +305,60 @@ test('a blocked stage task stops counting once its fix task is done, and the wor
   assert.equal(tasks.find((t) => t.id === 'section-plan').status, 'blocked');
   assert.equal(tasks.find((t) => t.id === 'section-plan-fix-1').status, 'done');
   assert.ok(!tasks.some((t) => t.id === 'section-plan-fix-2'), 'one return was enough');
+});
+
+test('a claim in the copy needs a registered source before anything is built', () => {
+  const s = spec();
+  const copy = structuredClone(s['content/copy.json']);
+  copy.pages[0].sections[0].body = ['Every job carries a 5-year written guarantee on all the work we do for you, in writing and signed.'];
+  const { dir } = fullProject({ 'content/copy.json': copy });
+  assert.ok(CHECKS.copy(dir).some((p) => /makes a claim/.test(p)));
+  write(dir, 'content/claims.json', { claims: [{ text: '5-year written guarantee', source: 'nowhere' }] });
+  assert.ok(CHECKS.copy(dir).some((p) => /cites nowhere/.test(p)));
+  write(dir, 'content/claims.json', { claims: [{ text: '5-year written guarantee', source: 'brief' }] });
+  assert.ok(!CHECKS.copy(dir).some((p) => /claim|cites/.test(p)));
+});
+
+test('the spending limit is hard, survives restarts, and counts failed attempts', async () => {
+  const { dir } = fullProject();
+  const file = join(dir, 'reports', 'spend.json');
+  const budgets = [createBudget({ file, limitUsd: 1 }), createBudget({ file: join(dir, 'reports', 'total.json'), limitUsd: 5 })];
+  const seen = [];
+  const worker = limitedWorker(async (job) => {
+    seen.push(job.maxBudgetUsd);
+    if (seen.length === 2) throw Object.assign(new Error('failed'), { costUsd: 0.3 });
+    return { evidence: ['x'], costUsd: 0.6 };
+  }, budgets);
+  await worker({});
+  await worker({}).catch(() => {});
+  assert.deepEqual(seen, [1, 0.4], 'the call may spend only what is left');
+  await assert.rejects(worker({}), /spending limit/);
+  assert.equal(seen.length, 2, 'no call started');
+  assert.equal(createBudget({ file, limitUsd: 1 }).spent(), 0.9, 'a new process sees what was spent');
+  assert.equal(budgets[1].spent(), 0.9);
+});
+
+test('the workflow stops for the budget instead of sending stages back', async () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'UX_DESIGN_SYSTEM');
+  write(dir, 'design/section-plan.json', '{}');
+  const r = await runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }), budgetExhausted: () => true, stopBefore: 'CONTENT' });
+  assert.equal(r.reason, 'budget');
+  assert.deepEqual(listTasks(project, opts), []);
+});
+
+test('release outcomes: only a pass is passed; what needs the operator is blocked, not hidden', () => {
+  const facts = { siteUrl: null, forms: true, uncertainPackages: ['gsap'] };
+  const gate = (name, status, ...ids) => ({ gate: name, status, findings: ids.map((id) => ({ id, severity: 'serious', message: 'gsap@3.15.0 licence' })) });
+  assert.equal(classifyGate(gate('routes', 'pass'), facts).outcome, 'passed');
+  assert.equal(classifyGate(gate('claims', 'fail', 'unsourced-claim'), facts).outcome, 'failed');
+  assert.equal(classifyGate(gate('seo', 'fail', 'canonical-missing'), facts).outcome, 'blocked');
+  assert.equal(classifyGate(gate('seo', 'fail', 'canonical-missing', 'title-missing'), facts).outcome, 'failed', 'a real SEO fault is not excused');
+  assert.equal(classifyGate(gate('seo', 'fail', 'canonical-missing'), { ...facts, siteUrl: 'https://x.example' }).outcome, 'failed');
+  assert.equal(classifyGate(gate('dependencies', 'fail', 'licence-not-allowed'), facts).outcome, 'blocked');
+  assert.equal(classifyGate(gate('dependencies', 'fail', 'licence-not-allowed'), { ...facts, uncertainPackages: [] }).outcome, 'failed');
+  assert.equal(classifyGate(gate('forms', 'pass'), { ...facts, forms: false }).outcome, 'not-applicable');
+  assert.equal(classifyGate({ gate: 'performance', status: 'error', findings: [], error: { code: 'UNAVAILABLE' } }, facts).outcome, 'blocked');
 });
 
 test('the spend limit stops the workflow', async () => {

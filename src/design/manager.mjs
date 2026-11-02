@@ -130,7 +130,7 @@ async function commandStep(project, phase, opts) {
 // opts: { worker, verifier?, workspace, stopBefore?, maxUsd?, onStep? (called after each phase) }
 // Runs from the current phase until an approval is needed, a stage escalates, or the project
 // reaches stopBefore (QUALITY_REVIEW by default: QA has its own loop).
-export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY_REVIEW', maxUsd = Infinity, onStep = () => {}, ...opts } = {}) {
+export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY_REVIEW', maxUsd = Infinity, budgetExhausted = () => false, onStep = () => {}, ...opts } = {}) {
   let spent = 0;
   const log = [];
   const counted = async (job) => {
@@ -144,6 +144,7 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
   for (let guard = 0; guard < 80; guard++) {
     const { phase } = loadProject(project, opts);
     if (phase === stopBefore) return stop('reached');
+    if (budgetExhausted()) return stop('budget');
     await commandStep(project, phase, opts);
     planPhase(project, opts);
     const summary = await runProject(project, { ...opts, worker: counted, agents: agentsForPhase(phase), verifier: opts.verifier });
@@ -152,6 +153,7 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
 
     // A task that ran out of attempts is a stage that failed: send it back once with its findings
     // rather than handing a half-made specification to the next agent.
+    if (budgetExhausted()) return stop('budget');
     if (summary.errors.length) return stop('error', { errors: summary.errors });
     const tasks = listTasks(project, opts);
     const blocked = summary.blocked.filter((b) => !isSuperseded(tasks.find((t) => t.id === b.task), tasks));

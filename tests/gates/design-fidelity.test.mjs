@@ -120,6 +120,15 @@ test('the chosen approach is checked as a whole: pinning in APP-01 and none in A
   assert.ok(ids(r).includes('approach-missing'));
 });
 
+test('a stock photo presented as the client\'s own work is caught; a plain description is not', { skip }, async () => {
+  const assets = { assets: [{ id: 'beam', kind: 'svg', source: 'authored' }, { id: 'photo', kind: 'photo', source: 'licensed', file: 'images/kitchen.jpg' }] };
+  const page = (caption) => GOOD.replace('<p>Text</p>', `<p>Text</p><figure><img src="/images/kitchen.jpg" alt="A kitchen with a wooden island" width="100" height="100"><figcaption>${caption}</figcaption></figure>`);
+  const bad = await fidelity(project(page('The Munjoy Hill kitchen, finished in 5 weeks.'), { 'design/asset-plan.json': assets }));
+  assert.ok(ids(bad).includes('stock-as-client-work'));
+  const fine = await fidelity(project(page('A kitchen with a wooden island.'), { 'design/asset-plan.json': assets }));
+  assert.ok(!ids(fine).includes('stock-as-client-work'));
+});
+
 test('text hidden under reduced motion is caught', { skip }, async () => {
   const html = GOOD.replace('</style>', '@media (prefers-reduced-motion: reduce){[data-section] h2{opacity:0}}</style>');
   assert.ok(ids(await fidelity(project(html))).includes('reduced-motion-hidden'));

@@ -161,13 +161,14 @@ export function createClaudeCodeWorker(options = {}) {
   let roles = options.roles;
   let webTools;
 
-  return async function claudeCodeWorker({ task, project, projectDir, attempt, idempotencyKey, signal }) {
+  return async function claudeCodeWorker({ task, project, projectDir, attempt, idempotencyKey, signal, maxBudgetUsd }) {
     const prompt = buildPrompt(task, { project, attempt, lastFailure: lastVerifyOutput(projectDir, task.id, attempt) });
     // An agent's role may add the web tools (research). Nothing here can add a shell.
     webTools ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.tools.filter((t) => WEB_TOOLS.has(t))]));
     const allowed = [...new Set([...tools, ...(options.tools ? [] : (webTools[task.agent] ?? []))])];
     const args = ['-p', '--output-format', 'json', '--permission-mode', 'acceptEdits', '--no-session-persistence', '--allowedTools', allowed.join(',')];
     if (model) args.push('--model', model);
+    if (maxBudgetUsd) args.push('--max-budget-usd', String(maxBudgetUsd));
     roles ??= Object.fromEntries(loadAgents().map((a) => [a.id, a.body]));
     if (roles[task.agent]) args.push('--append-system-prompt', roles[task.agent]);
     const settingsFile = join(tmpdir(), `forge-worker-${process.pid}-${task.id}-${attempt}.json`);
@@ -213,7 +214,10 @@ export function createClaudeCodeWorker(options = {}) {
       writeFileSync(file, JSON.stringify({ ...redact({ ...rec, files: null }), files: rec.files }, null, 2) + '\n');
     }
 
-    if (error) throw error;
+    if (error) {
+      error.costUsd = reply?.total_cost_usd ?? null;
+      throw error;
+    }
     return { evidence, costUsd: reply.total_cost_usd ?? null };
   };
 }

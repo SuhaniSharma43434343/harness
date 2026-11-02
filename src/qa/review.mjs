@@ -28,7 +28,7 @@ export async function qaReview(project, opts = {}) {
   const number = (previous?.review ?? 0) + 1;
   const evidenceDir = `evidence/qa/review-${number}`;
   const required = opts.gates ?? GATE_ORDER;
-  if (opts.visualWorker && required.includes('visual-review')) await lookAtTheSite(project, paths.dir, number, opts);
+  if (opts.visualWorker && required.includes('visual-review') && !opts.budgetExhausted?.()) await lookAtTheSite(project, paths.dir, number, opts);
   const results = await runGates(join(paths.dir, 'site'), { ...rest, project, projectDir: paths.dir, gates: required.filter((g) => GATES.has(g)), write: false, now });
 
   mkdirSync(join(paths.dir, evidenceDir), { recursive: true });

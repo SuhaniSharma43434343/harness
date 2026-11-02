@@ -6,6 +6,8 @@ Forge writes a complete design specification before any site code exists, builds
 forge design status <project>                      # what the specification has and lacks
 forge design run <project> [--model m] [--max-usd n]   # every phase up to visual QA
 forge design qa <project> [--model m]              # render, review, repair, up to 3 loops
+forge design choose <project> <direction id>       # the operator's B2
+forge design release <project>                     # every gate: passed, failed, blocked, not applicable
 ```
 
 `forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
@@ -66,3 +68,11 @@ Two gates join the quality floor:
 Findings become defects in `reports/defects.json`, then one builder repair task with the screenshots. The loop re-renders and re-reviews up to 3 times, then escalates through the existing repair loop.
 
 `forge demo` runs in mock mode and has no model, so it skips the design evidence. It shows the runtime, not the design output.
+
+## Release checks
+
+`forge design release` runs all 13 gates on the finished site and writes `reports/release-checks.json`. Only a gate's own pass is "passed". "Blocked" means the fix needs the operator: a site URL for SEO, or a licence decision on a package. It still stops a release. Any other fault in those gates is "failed".
+
+## Spending limit
+
+`createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped at what remains with `claude --max-budget-usd`. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.

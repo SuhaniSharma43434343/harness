@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { check } from '../core/schemas.mjs';
+import { isClaim } from '../gates/claims.mjs';
 import { ROOT } from '../core/workspace.mjs';
 import { toMarkdown, pageFile } from '../site/content.mjs';
 import { tokensFromDirection } from '../site/tokens.mjs';
@@ -94,6 +95,7 @@ export function copyStrings(section) {
   return out;
 }
 
+const normaliseText = (s) => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
 const pascal = (id) => id.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 export const sectionUse = (approach, id) => `${approach}/${pascal(id)}`;
 export const pagesOf = (plan) => plan?.pages ?? [];
@@ -265,6 +267,19 @@ export const CHECKS = {
     for (const [open, n] of openings) if (n >= 3 && written.size >= 5) problems.push(`content/copy.json: ${n} headlines start with "${open}"; vary them`);
     const pages = c.pages.length || 1;
     if (total / pages < 80) problems.push(`content/copy.json: about ${Math.round(total / pages)} words a page is too thin`);
+    // Every checkable claim is registered with a real source, before anything is built. The claims
+    // gate applies the same rule to the built pages.
+    const claims = read(dir, 'content/claims.json');
+    const sources = new Set((read(dir, 'research/sources.json')?.sources ?? []).map((x) => x.id));
+    const registered = (claims?.claims ?? []).map((x) => normaliseText(x.text));
+    for (const x of claims?.claims ?? []) if (!sources.has(x.source)) problems.push(`content/claims.json: "${String(x.text).slice(0, 60)}" cites ${x.source}, which is not in research/sources.json`);
+    for (const s of written.values()) {
+      for (const t of copyStrings(s)) {
+        if (!isClaim(t)) continue;
+        const said = normaliseText(t);
+        if (!registered.some((r) => said.includes(r) || r.includes(said))) problems.push(`${s.id}: "${t.slice(0, 70)}" makes a claim that is not in content/claims.json with a source`);
+      }
+    }
     const name = brief?.client?.name;
     if (name && !JSON.stringify(c).includes(name)) problems.push(`content/copy.json: never names ${name}`);
     for (const p of brief?.pages ?? []) if (!c.pages.some((x) => x.slug === p.slug)) problems.push(`content/copy.json: page ${p.slug} is missing`);
