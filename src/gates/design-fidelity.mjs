@@ -121,14 +121,18 @@ async function motionWorks(page, id, kind) {
     await page.mouse.move(0, 0);
     return { ok: before !== after, why: 'hover changes nothing visible' };
   }
+  // A scrubbed motion may run over several screens, so walk through the element's whole range.
   const before = await style();
-  await handle.evaluate((el) => {
+  const { from, to } = await handle.evaluate((el) => {
     const r = el.getBoundingClientRect();
-    scrollTo(0, r.top + scrollY - innerHeight / 2 + Math.min(r.height, innerHeight) / 2);
+    return { from: r.top + scrollY - innerHeight, to: r.bottom + scrollY + innerHeight };
   });
-  await page.waitForTimeout(900);
-  const after = await style();
-  if (before !== after) return { ok: true };
+  const steps = 6;
+  for (let i = 1; i <= steps; i++) {
+    await page.evaluate((y) => scrollTo(0, Math.max(0, y)), from + ((to - from) * i) / steps);
+    await page.waitForTimeout(500);
+    if ((await style()) !== before) return { ok: true };
+  }
   // Already in view at load: the entrance has played. Watch it from the start on a reload.
   await page.evaluate(() => scrollTo(0, 0));
   await page.reload({ waitUntil: 'commit' });

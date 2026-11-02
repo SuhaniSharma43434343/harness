@@ -34,3 +34,9 @@
 - T01: CLI skeleton with `--help`, `--version`, `doctor` and `validate`; launchers for macOS/Linux and Windows; config loader with safe defaults; setup scripts.
 - T02: runtime schemas for the task contract, plugin manifest, gate result, ledger entry and config, with valid and invalid fixtures and tests.
 - T13: project schemas for the brief, facts, question bank, approach registry, selection matrix, approach decision, design decision and rule condition, with valid and invalid fixtures, 7 sample briefs (one per project type) and tests. Project-side function signatures added to `docs/interfaces.md`.
+
+## Design workflow (2026-11-02)
+
+- Each of the 8 approaches is a complete methodology in `registry/methodologies/`, and a site follows one.
+- A full design specification is required before the build: direction, design system, section, motion and asset plans, and real copy.
+- New Design Manager agent, `forge design status|run|qa`, and the `design-fidelity` and `visual-review` gates.
