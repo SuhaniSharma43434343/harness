@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, join } from 'node:path';
 import { loadConfig } from '../core/config.mjs';
+import * as ledger from '../core/ledger.mjs';
 import { approve, loadProject } from '../core/project.mjs';
 import { releaseChecks } from '../design/release.mjs';
 import { designStatus, runDesignWorkflow } from '../design/manager.mjs';
@@ -14,7 +15,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>]';
+const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision>';
 
 // The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
 // something only the operator has, and are reported by forge design release.
@@ -28,7 +29,7 @@ export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibi
 //   choose  the operator's B2: records the approval and the chosen direction
 export async function cmdDesign(root, args) {
   const [action, project] = args;
-  if (!project || !['status', 'run', 'qa', 'release', 'choose'].includes(action)) {
+  if (!project || !['status', 'run', 'qa', 'release', 'choose', 'accept-licence'].includes(action)) {
     console.error(USAGE);
     return 2;
   }
@@ -56,6 +57,26 @@ export async function cmdDesign(root, args) {
     const entry = approve(project, 'B2', { workspace, note: flag(args, '--note') ?? `Chose ${id}` });
     writeFileSync(file, JSON.stringify({ ...decision, status: 'chosen', chosen: id, approval: { code: 'B2', ledgerSeq: entry.seq } }, null, 2) + '\n');
     console.log(`Recorded B2 for ${project}: ${id} (ledger #${entry.seq}).`);
+    return 0;
+  }
+
+  // The operator's decision on a licence the harness cannot verify. Only a person can make it, so
+  // it goes in the ledger as theirs, and the register row points to that entry.
+  if (action === 'accept-licence') {
+    const pkg = args[2];
+    const note = flag(args, '--note');
+    if (!pkg || !note) {
+      console.error(USAGE);
+      return 2;
+    }
+    const entry = ledger.append(project, { actor: 'operator', type: 'note', data: { event: 'licence_accepted', package: pkg, message: note } }, { workspace });
+    const file = join(workspace, project, 'assets', 'register.json');
+    const register = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { assets: [] };
+    const row = { package: pkg, licence: note, source: `npm ${pkg}`, usage: 'Operator decision', status: 'cleared', evidence: `ledger.jsonl #${entry.seq}` };
+    register.assets = [...(register.assets ?? []).filter((a) => a.package !== pkg), row];
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(register, null, 2) + '\n');
+    console.log(`Recorded the licence decision for ${pkg} (ledger #${entry.seq}).`);
     return 0;
   }
 

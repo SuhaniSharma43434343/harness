@@ -8,6 +8,7 @@ forge design run <project> [--model m] [--max-usd n]   # every phase up to visua
 forge design qa <project> [--model m]              # render, review, repair, up to 3 loops
 forge design choose <project> <direction id>       # the operator's B2
 forge design release <project>                     # every gate: passed, failed, blocked, not applicable
+forge design accept-licence <project> <package> --note <decision>   # the operator's licence decision, recorded in the ledger
 ```
 
 `forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
