@@ -1,5 +1,6 @@
 ---
-// A grid of cards. Props: heading, lead, items: [{ title, text, href?, linkLabel? }].
+// A grid of cards. Props: heading, lead, items: [{ title, text, href?, linkLabel?, image? }],
+// where image is { src, alt, width, height } and replaces the drawn icon.
 import Art from '../../components/Art.astro';
 const { heading, lead, items = [] } = Astro.props;
 ---
@@ -11,7 +12,9 @@ const { heading, lead, items = [] } = Astro.props;
       <ul class="features">
         {items.map((item) => (
           <li class="card">
-            <Art seed={item.title} variant="icon" ratio="1/1" />
+            {item.image
+              ? <img class="card__image" src={item.image.src} alt={item.image.alt ?? ''} width={item.image.width} height={item.image.height} loading="lazy" />
+              : <Art seed={item.title} variant="icon" ratio="1/1" />}
             <h3>{item.href ? <a href={item.href}>{item.title}</a> : item.title}</h3>
             {item.text && <p>{item.text}</p>}
             {item.href && item.linkLabel && <p class="card__more">{item.linkLabel} <span aria-hidden="true">&rarr;</span></p>}
@@ -25,6 +28,8 @@ const { heading, lead, items = [] } = Astro.props;
   .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: calc(var(--space) * 1.5); margin: calc(var(--space) * 2) 0 0; padding: 0; list-style: none; }
   .card { position: relative; padding: calc(var(--space) * 1.5); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: calc(var(--radius) * 2); transition: transform 0.2s ease, box-shadow 0.2s ease; }
   .card:hover { transform: translateY(-3px); box-shadow: 0 1rem 2rem -1.25rem color-mix(in srgb, var(--color-fg) 40%, transparent); }
+  .card__image { width: calc(100% + var(--space) * 3); max-width: none; margin: calc(var(--space) * -1.5) calc(var(--space) * -1.5) 0; aspect-ratio: 4/3; object-fit: cover; border-radius: calc(var(--radius) * 2) calc(var(--radius) * 2) 0 0; }
+  .card { overflow: hidden; }
   .card h3 { margin-block: 0.75em 0.35em; }
   .card h3 a { color: inherit; text-decoration: none; }
   .card h3 a::after { content: ""; position: absolute; inset: 0; }

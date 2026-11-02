@@ -24,6 +24,9 @@ a:hover { text-decoration-thickness: 2px; }
 .section { padding-block: calc(var(--space) * 4); }
 .section--alt { background: var(--color-surface); }
 .lead { font-size: var(--step-1); color: var(--color-muted); }
+.section-note { font-size: var(--step-n1); color: var(--color-muted); font-style: italic; }
+h2 { letter-spacing: -0.01em; }
+h1 { letter-spacing: -0.02em; }
 
 .skip-link { position: absolute; left: var(--space); top: -10rem; z-index: 10; padding: 0.5em 1em; background: var(--color-fg); color: var(--color-bg); border-radius: var(--radius); }
 .skip-link:focus { top: var(--space); }

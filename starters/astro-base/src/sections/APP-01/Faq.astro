@@ -5,7 +5,7 @@ const { heading = 'Questions', items = [] } = Astro.props;
 ---
 {items.length > 0 && (
   <section class="section">
-    <div class="wrap faq">
+    <div class="wrap"><div class="faq">
       <h2>{heading}</h2>
       {items.map((item) => (
         <details>
@@ -13,7 +13,7 @@ const { heading = 'Questions', items = [] } = Astro.props;
           <p>{item.a}</p>
         </details>
       ))}
-    </div>
+    </div></div>
   </section>
 )}
 <style>
