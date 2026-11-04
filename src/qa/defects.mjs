@@ -75,10 +75,11 @@ export function mergeReview(previous, review) {
   }
 
   // Open defects this review did not find are verified, but only for gates that ran and left
-  // evidence in this review: a gate that was not re-run proves nothing.
+  // evidence in this review: a gate that was not re-run proves nothing. An escalated defect that
+  // no longer reproduces closes the same way, so a later fix is not reported as open forever.
   const ran = new Set(review.results.filter((r) => r.status === 'pass' || r.status === 'fail').map((r) => r.gate));
   for (const d of defects) {
-    if (d.status !== 'open' || seen.has(d.key) || !ran.has(d.gate)) continue;
+    if ((d.status !== 'open' && d.status !== 'escalated') || seen.has(d.key) || !ran.has(d.gate)) continue;
     const evidence = review.evidenceFor(d.gate);
     if (!evidence?.length) continue;
     d.status = 'verified';

@@ -61,7 +61,7 @@ log('workflow stopped in', result.stoppedAt, '-', result.reason, ...(result.bloc
 
 let qa = null;
 if (result.reason === 'reached') {
-  qa = await runRepairLoop(project, { workspace, worker, gates: DESIGN_QA_GATES, budgetExhausted: exhausted });
+  qa = await runRepairLoop(project, { workspace, worker, gates: DESIGN_QA_GATES, budgetExhausted: exhausted, budgetRemaining: () => Math.min(...budgets.map((b) => b.remaining())) });
   log('visual QA:', qa.outcome, 'after', qa.loops, 'repair loops; open defects', openDefects(qa.report).length);
 }
 

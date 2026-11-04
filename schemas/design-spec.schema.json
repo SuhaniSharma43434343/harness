@@ -693,6 +693,19 @@
                     },
                     "patternReason": {
                       "type": "string"
+                    },
+                    "transition": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["toNext"],
+                      "properties": {
+                        "toNext": {
+                          "type": "string"
+                        },
+                        "device": {
+                          "type": "string"
+                        }
+                      }
                     }
                   }
                 }

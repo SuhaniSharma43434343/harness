@@ -49,6 +49,13 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
       saveTask(project, { ...t, depends_on: t.depends_on.map((d) => (d === stage.task || d.startsWith(`${stage.task}-fix-`) ? fix.id : d)) }, opts);
     }
   }
+  // A copy rewrite makes the section plan's quoted beats stale, and a stale plan sets later
+  // reviewers against earlier ones. The plan syncs in the same pass, after the copy fix.
+  if (stageId === 'copy' && !listTasks(project, opts).some((t) => t.id === `section-plan-sync-${n}` )) {
+    const sync = specTask(project, 'section-plan', brief, { fix: n, problems: ['Update the section plan to match the corrected copy: every beat, staged line or operational fact the plan quotes must exist in content/copy.json as it now stands. Change only what the copy correction touched.'] });
+    addTask(project, { ...sync, id: `section-plan-sync-${n}`, idempotency_key: `${project}:section-plan-sync-${n}:v1`, depends_on: [fix.id] }, opts);
+    ledger.append(project, { actor, type: 'note', data: { event: 'design_plan_synced', stage: 'section-plan', after: fix.id } }, opts);
+  }
   return { returned: true, stage: stageId, attempt: n };
 }
 

@@ -18,6 +18,8 @@ const GATE_FILES = {
   dependencies: ['site/package.json', 'site/package-lock.json', 'assets/register.json'],
 };
 const NEVER = ['evidence/**', 'reports/**', 'intake/**', 'content/pages/**', 'board/**', 'project.json', 'ledger.jsonl'];
+// Below this, a repair plus the review that must confirm it cannot both run.
+const MIN_VERIFIABLE_REPAIR_USD = 1.5;
 
 function approaches(dir) {
   const file = join(dir, 'design', 'approach-decision.json');
@@ -117,6 +119,12 @@ export async function runRepairLoop(project, opts = {}) {
   let loops = 0;
   while (!floor.met || openDefects(report).length) {
     if (rest.budgetExhausted?.()) return { outcome: 'budget', loops, report };
+    // A repair the budget cannot re-verify would end as a permanently stale review, worse than
+    // stopping now: the last verified state stays authoritative.
+    if (rest.budgetRemaining && rest.budgetRemaining() < MIN_VERIFIABLE_REPAIR_USD) {
+      ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_skipped_budget', remainingUsd: rest.budgetRemaining(), neededUsd: MIN_VERIFIABLE_REPAIR_USD } }, rest);
+      return { outcome: 'insufficient-budget', loops, report };
+    }
     if (loadProject(project, rest).repairLoops >= MAX_REPAIR_LOOPS) return escalate(project, report, rest);
     advancePhase(project, 'REPAIR', { actor: 'qa-verifier', ...rest });
     loops = loadProject(project, rest).repairLoops;

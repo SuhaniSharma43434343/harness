@@ -245,6 +245,44 @@ test('sending work back returns to the stage with its findings, and voids only w
   assert.equal(hasApproval(project, 'B2', opts), true);
 });
 
+test('a copy return also syncs the section plan, so later reviews never judge against stale beats', () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'TECHNICAL_PLAN');
+  sendBack(project, 'copy', ['the-pour: invented recipe steps'], opts);
+  const fix = listTasks(project, opts).find((t) => t.id === 'copy-fix-1');
+  const sync = listTasks(project, opts).find((t) => t.id === 'section-plan-sync-1');
+  assert.ok(fix && sync, 'both the copy fix and the plan sync are on the board');
+  assert.deepEqual(sync.depends_on, [fix.id], 'the plan syncs after the corrected copy exists');
+  assert.equal(sync.agent, 'creative-director');
+  assert.ok(sync.acceptance.some((a) => /match the corrected copy/.test(a)));
+  assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_plan_synced'));
+});
+
+test('a section plan cannot invent operational facts, and a registered claim covers real ones', () => {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  plan.pages[0].sections[0].composition = 'A day-on-site timeline from 9:00 to 4:30pm runs across eight columns, each stop priced from ₹120';
+  const { dir } = fullProject({ 'design/section-plan.json': plan });
+  const problems = CHECKS['section-plan'](dir);
+  assert.ok(problems.some((p) => /operational fact/.test(p) && /9:00/.test(p)), JSON.stringify(problems));
+  const covered = fullProject({
+    'design/section-plan.json': plan,
+    'content/claims.json': { claims: [{ text: 'A day-on-site timeline from 9:00 to 4:30pm runs across eight columns, each stop priced from ₹120', source: 'brief' }] },
+  });
+  assert.ok(!CHECKS['section-plan'](covered.dir).some((p) => /operational fact/.test(p)));
+});
+
+test('a transition that says nothing is refused; a real one passes', () => {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  plan.pages[0].sections[0].transition = { toNext: 'fades' };
+  plan.pages[0].sections[1].transition = { toNext: 'The rule carries across the seam into the next section, which answers it', device: 'On mobile the rule becomes the top border' };
+  const { dir } = fullProject({ 'design/section-plan.json': plan });
+  const problems = CHECKS['section-plan'](dir);
+  assert.ok(problems.some((p) => /transition.toNext/.test(p)));
+  assert.equal(problems.filter((p) => /transition.toNext/.test(p)).length, 1, 'only the empty one is refused');
+});
+
 test('a stage sent back too many times escalates instead of looping', () => {
   const { project, opts, dir } = fullProject();
   setPhase(dir, 'UX_DESIGN_SYSTEM');

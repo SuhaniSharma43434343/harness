@@ -10,6 +10,13 @@ const CLAIM = [
   /\b(best|leading|largest|biggest|fastest|cheapest|top-rated|best-rated|highest-rated|most trusted|number one|no\. ?1|#1|award-winning|award winning|world-class|the only)\b/i,
   /\b(trusted|used|chosen|loved) by\b/i,
   /\b(guarantee[ds]?|certified|accredited|proven)\b/i,
+  // Operational specifics are claims too: invented schedule times and durations slipped past the
+  // earlier list twice (Harbor's 9:00/12:30/4:00 site times; the cafe film's process steps).
+  /\b\d{1,2}:\d{2}\s*(am|pm)?\b/i,
+  /\b\d{1,2}\s*(am|pm)\b/i,
+  /\b\d[\d,.]*\s*(minutes?|mins?|hours?|days?|weeks?|months?|years?)\b/i,
+  /(₹|\brs\.?\s?)\s?\d/i,
+  /\b(every (day|morning|evening|week)|daily|all (seven )?days|7 days)\b/i,
 ];
 
 const sentences = (text) => text.split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/).map((s) => s.trim()).filter(Boolean);

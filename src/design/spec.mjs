@@ -86,6 +86,22 @@ const LABEL_HEADLINE = /^(services|our services|about|about us|features|our work
 const CARD_PATTERNS = /card|grid|tile/;
 const words = (s) => String(s ?? '').trim().split(/\s+/).filter(Boolean).length;
 
+// The operational-fact patterns a section plan may not invent: clock times, am/pm hours, prices
+// and durations. Deliberately narrower than the claims gate, so layout numbers (a 3:2 crop,
+// 8.5rem, 6% grain, 16:9) never match.
+const OPERATIONAL = [
+  /\b\d{1,2}:[0-5]\d(?:\s*(?:am|pm))?\b/gi,
+  /(?<![:\d])\b\d{1,2}\s*(?:am|pm)\b/gi,
+  /(?:₹|\brs\.?\s?)\s?\d(?:[\d,.]*\d)?/gi,
+  /\b\d[\d,.]*\s*(?:minutes?|mins?|hours?|days?|weeks?|months?|years?)\b/gi,
+];
+export function operationalClaims(section) {
+  const text = [section.purpose, section.composition, section.hierarchy].join(' ');
+  const hits = [];
+  for (const re of OPERATIONAL) for (const m of text.matchAll(re)) hits.push(m[0].trim());
+  return [...new Set(hits)];
+}
+
 export function copyStrings(section) {
   const out = [];
   for (const key of ['eyebrow', 'headline', 'subheadline', 'note']) if (section[key]) out.push(section[key]);
@@ -162,6 +178,11 @@ export const CHECKS = {
     const [direction] = load(dir, 'direction', 'designDirection');
     const [motion] = load(dir, 'motionPlan');
     const [assets] = load(dir, 'assetPlan');
+    // Operational specifics in a plan (clock times, prices, durations) end up on the page, so they
+    // are claims and need a registered source like any other. Layout numbers (3:2 crops, rem sizes,
+    // percentages) are not matched. This is the write-time firewall for the invented-times class.
+    const registered = (read(dir, 'content/claims.json')?.claims ?? []).map((x) => normaliseText(x.text));
+    const coveredClaim = (said) => registered.some((r) => said.includes(r) || r.includes(said));
     const method = direction ? loadMethodology(direction.primaryApproach) : null;
     const slugs = new Set(pagesOf(plan).map((p) => p.slug));
     for (const p of brief?.pages ?? []) if (!slugs.has(p.slug)) problems.push(`design/section-plan.json: page ${p.slug} has no sections`);
@@ -178,6 +199,10 @@ export const CHECKS = {
         if (words(s.composition) < 12) problems.push(`${s.id}: composition is too vague; give the exact layout (columns, placement, overlap, scale)`);
         if (words(s.hierarchy) < 5) problems.push(`${s.id}: hierarchy is too vague; say what is seen first, second and third`);
         if (s.responsive.mobile.trim() === s.responsive.desktop.trim()) problems.push(`${s.id}: mobile behaviour must differ from desktop`);
+        for (const hit of operationalClaims(s)) {
+          if (!coveredClaim(normaliseText(hit))) problems.push(`${s.id}: "${hit.slice(0, 60)}" states an operational fact (a time, price or duration) with no matching row in content/claims.json; use only facts from the client notes, with a claim row`);
+        }
+        if (s.transition && words(s.transition.toNext) < 3) problems.push(`${s.id}: transition.toNext must say how this section hands over to the next`);
         run = s.pattern === last ? run + 1 : 1;
         last = s.pattern;
         if (run === 3) problems.push(`${page.slug}: three sections in a row use "${s.pattern}"; vary the rhythm`);

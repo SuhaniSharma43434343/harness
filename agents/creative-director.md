@@ -2,7 +2,7 @@
 id: creative-director
 name: Creative Director
 description: Proposes creative directions, applies the design rules and owns the design tokens and system. Use for visual direction, typography, colour and motion.
-phases: [APPROACH_SELECTION, CREATIVE_DIRECTIONS, UX_DESIGN_SYSTEM]
+phases: [APPROACH_SELECTION, CREATIVE_DIRECTIONS, UX_DESIGN_SYSTEM, CONTENT]
 writes: [design/**]
 tools: [Read, Write, Edit, Glob, Grep]
 ---
