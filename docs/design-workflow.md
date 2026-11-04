@@ -9,6 +9,7 @@ forge design qa <project> [--model m]              # render, review, repair, up 
 forge design choose <project> <direction id>       # the operator's B2
 forge design release <project>                     # every gate: passed, failed, blocked, not applicable
 forge design accept-licence <project> <package> --note <decision>   # the operator's licence decision, recorded in the ledger
+forge design retry <project> <stage> --note <decision>   # the operator's answer to an escalation, recorded in the ledger
 ```
 
 `forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
@@ -45,6 +46,8 @@ When a stage fails after its task ran, or the review asks for changes, the Desig
 4. voids only the approval whose subject changes: B2 for the direction, B3 for the copy.
 
 Each stage may be sent back twice. The third time it escalates to the operator.
+
+An escalation is the operator's to answer. `forge design retry <project> <stage> --note <decision>` records the decision, stops the stage's blocked tasks counting, and gives the stage a fresh fix task and a fresh limit of returns. Reaching the spending limit stops the workflow without using up any returns.
 
 ## One approach
 
