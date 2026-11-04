@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cmdNew } from '../../src/cli/project.mjs';
 import { cmdSite } from '../../src/cli/site.mjs';
+import { STARTER_DIR } from '../../src/site/tokens.mjs';
+import { linkModules } from '../build/approach-helpers.mjs';
 
 // fileURLToPath, not URL.pathname: on Windows the pathname is /C:/..., which no file API accepts.
 const BRIEF = fileURLToPath(new URL('../../samples/briefs/business.json', import.meta.url));
@@ -53,4 +55,29 @@ test('forge site --direction styles the site from a design direction', () => {
 test('forge site prints usage without a project', () => {
   const { root } = tmpRoot();
   assert.equal(quiet(() => cmdSite(root, [])).code, 2);
+});
+
+test('forge site --build-only needs a site', () => {
+  const { root } = tmpRoot();
+  quiet(() => cmdNew(root, ['harbor-home', '--brief', BRIEF]));
+  const r = quiet(() => cmdSite(root, ['harbor-home', '--build-only']));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /has no site yet/);
+});
+
+const noStarter = !existsSync(join(STARTER_DIR, 'node_modules', 'astro')) && 'starter dependencies are not installed: run scripts/setup.sh';
+
+// Found in the T28 release run: rebuilding after forge approach used to mean scaffolding again.
+test('forge site --build-only builds the site that is there and keeps its changes', { skip: noStarter }, () => {
+  const { root, workspace } = tmpRoot();
+  quiet(() => cmdNew(root, ['harbor-home', '--brief', BRIEF]));
+  quiet(() => cmdSite(root, ['harbor-home']));
+  const siteDir = join(workspace, 'harbor-home', 'site');
+  linkModules(siteDir);
+  const page = join(siteDir, 'src/content/pages/services.md');
+  writeFileSync(page, readFileSync(page, 'utf8').replace(/title: .*/, 'title: Rebuilt services'));
+  const r = quiet(() => cmdSite(root, ['harbor-home', '--build-only']));
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /Built 4 routes/);
+  assert.match(readFileSync(join(siteDir, 'dist/services/index.html'), 'utf8'), /Rebuilt services/);
 });

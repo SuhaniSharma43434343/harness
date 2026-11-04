@@ -82,6 +82,11 @@ async function startingFacts(project, bank, { worker, verifier, ...ctx }) {
   return { project, schemaVersion: SCHEMA_VERSION, facts: [] };
 }
 
+function briefFile(state) {
+  const file = state.brief ? resolve(state.brief) : null;
+  return file && existsSync(file) ? readJson(file) : {};
+}
+
 function writeText(file, text) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, text);
@@ -107,7 +112,9 @@ export async function runIntake(project, opts = {}) {
   const stamp = now ? { now: now() } : {};
   let facts = await startingFacts(project, registry.questions, { worker, verifier, ...ctx });
   // A brief from an earlier run keeps what the operator edited by hand; facts decide the rest.
-  const previous = existsSync(join(paths.dir, 'intake', 'brief.json')) ? readJson(join(paths.dir, 'intake', 'brief.json')) : {};
+  // On the first run, a brief file from forge new --brief is the base, so the fields no question
+  // fills (integrations, features.splineSceneUrl) are kept.
+  const previous = existsSync(join(paths.dir, 'intake', 'brief.json')) ? readJson(join(paths.dir, 'intake', 'brief.json')) : briefFile(state);
   const { status: _s, approval: _a, assumptions: _x, ...base } = previous;
 
   for (let round = 1; round <= maxRounds; round++) {

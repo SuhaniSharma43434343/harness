@@ -39,6 +39,9 @@ export default {
       const findings = [];
       const add = (id, severity, message, at) => findings.push({ id, severity, message, location: at });
       let count = 0;
+      // A form the brief sends through the form-function plugin must post to that plugin's
+      // endpoint; any other action passes the browser checks but sends nothing once deployed.
+      const destinations = new Map((ctx.json('intake/brief.json', null)?.features?.forms ?? []).map((f) => [f.id, f.destination]));
       for (const route of ctx.routes()) {
         const forms = ctx.doc(route).querySelectorAll('form');
         for (let i = 0; i < forms.length; i++) {
@@ -50,6 +53,9 @@ export default {
           if (!action) {
             add('no-endpoint', 'critical', `${at} has no action, so nothing is sent`, at);
             continue;
+          }
+          if (destinations.get(name) === 'form-function' && !new URL(action, 'http://site.invalid').pathname.startsWith('/api/form')) {
+            add('wrong-endpoint', 'serious', `${at} posts to ${action}, but the brief sends it through form-function, whose endpoint is /api/form?form=${name}`, at);
           }
           if (!forms[i].querySelector('.form-status')) add('no-status', 'serious', `${at} has no .form-status element to show the result`, at);
 
@@ -69,6 +75,9 @@ export default {
           const emptyState = await state(page, selector);
           if (sent > 0 || emptyState === 'success' || emptyState === 'sending') add('no-validation', 'serious', `${at} sent an empty submission: mark its required fields required`, at);
 
+          if (destinations.get(name) === 'form-function' && !new URL(action, 'http://site.invalid').pathname.startsWith('/api/form')) {
+            add('wrong-endpoint', 'serious', `${at} posts to ${action}, but the brief sends it through form-function, whose endpoint is /api/form?form=${name}`, at);
+          }
           if (!forms[i].querySelector('.form-status')) {
             await context.close();
             continue;

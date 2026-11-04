@@ -127,6 +127,37 @@ test('dependencies: a recorded exception passes; a missing lockfile is serious',
   assert.deepEqual((await runGate('dependencies', other)).findings.map((f) => f.id), ['no-lockfile']);
 });
 
+// Found in the T28 real-model runs: all three release sites met the floor with every approach
+// installed but none placed on a page.
+test('content-parity: a selected approach that no page uses is a finding', async () => {
+  const { mkdirSync } = await import('node:fs');
+  const { dir, siteDir } = materializeFixture('known-good');
+  mkdirSync(join(dir, 'design'), { recursive: true });
+  const decision = (ids) => ({ decisions: ['APP-01', ...ids].map((approach) => ({ approach, selected: true })) });
+  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify(decision(['APP-02', 'APP-07'])));
+  const pages = join(siteDir, 'src/content/pages');
+  mkdirSync(pages, { recursive: true });
+  writeFileSync(join(pages, 'index.md'), '---\ntitle: Home\nsections:\n  - use: "APP-01/Hero"\n  - use: "APP-02/ScrollStory"\n---\n');
+  writeFileSync(join(pages, 'story.md'), '---\ntitle: Story\nsections:\n  - use: APP-03/Scene3D\n---\n');
+  let r = await runGate('content-parity', siteDir, { now: NOW });
+  assert.deepEqual(r.findings.map((f) => [f.id, f.location]), [['approach-unused', 'APP-07']], 'APP-07 needs APP-02 and APP-03 on one page');
+  writeFileSync(join(pages, 'index.md'), '---\ntitle: Home\nsections:\n  - use: "APP-02/ScrollStory"\n  - use: "APP-03/Scene3D"\n---\n');
+  r = await runGate('content-parity', siteDir, { now: NOW });
+  assert.equal(r.status, 'pass', JSON.stringify(r.findings));
+});
+
+// Found in the T28 release run: forge approach records each npm package as a register row with
+// no file, and the licences gate used to throw on it.
+test('licences: package rows in the register are left to the dependencies gate', async () => {
+  const { dir, siteDir } = materializeFixture('known-good');
+  const regFile = join(dir, 'assets', 'register.json');
+  const reg = JSON.parse(readFileSync(regFile, 'utf8'));
+  reg.assets.push({ package: 'gsap', licence: "GSAP Standard 'no charge' licence", source: 'npm gsap@3.15.0', usage: 'APP-02 Cinematic Scroll', status: 'uncertain' });
+  writeFileSync(regFile, JSON.stringify(reg));
+  const r = await runGate('licences', siteDir, { now: NOW });
+  assert.equal(r.status, 'pass', JSON.stringify(r.error ?? r.findings));
+});
+
 test('a gate that throws is an error, never a pass', async () => {
   const { siteDir } = materializeFixture('known-good');
   writeFileSync(join(siteDir, 'package-lock.json'), '{not json');

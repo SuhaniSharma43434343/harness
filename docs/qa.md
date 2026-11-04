@@ -48,11 +48,13 @@ A defect is matched across reviews by `gate|finding|location`.
    owns only the files that gate's fixes need (`site/src/**` and `site/public/**`, plus
    `content/claims.json` for claims and `assets/register.json` for licences and dependencies), and
    must not touch `evidence/`, `reports/`, `intake/`, `content/pages/` or the board. Its verify
-   command is `forge gates <project> --gate <gate>`, run in-process by `gateVerifier`.
+   command is `forge gates <project> --gate <gate>`, run in-process by `gateVerifier`, which first
+   builds the site when it has sources, because the gates read `site/dist`.
 3. Run each task through the runner (`runTask`), with its retries, locks and verify log.
 4. Move back to `QUALITY_REVIEW` and review again. A finished repair task does not close
    anything; only this review does.
-5. After 3 repair loops with defects still open, escalate: the defects become `escalated`,
+5. After 3 repair loops with defects still open, or as soon as no open defect can be repaired by a
+   builder (a skipped gate, such as content-parity before B3, gets no repair task), escalate: the defects become `escalated`,
    `reports/escalation.md` lists them with their evidence and repair tasks, and the ledger gets a
    `repair_escalated` note. The operator decides before B6.
 
