@@ -130,6 +130,15 @@ const STEP_MODE = [
   'Never mark a task done yourself, and do not start a second task while one is open (`forge task abandon` gives one up).',
 ];
 
+// The first thing anyone (or any agent) sees on loading this folder: how to actually use it.
+const QUICK_START = [
+  'First time here? Read `GETTING-STARTED.md` (the client-facing tour) and `QUICKSTART.md` (the full worked walkthrough). `./scripts/setup.sh --with-test-tools` then `./forge doctor` gets a machine ready.',
+  'A website project runs: `forge new <project>` -> `forge intake <project>` (the client questions, ending in a brief and estimate) -> `forge approve <project> B1` -> `forge run <project> --advance`, which builds phase after phase and stops only where an operator approval (B1-B7) is due.',
+  '`forge status <project>` shows the phase, approvals and open tasks at any moment; `forge preview <project>` serves the built site locally; `forge demo` replays a finished sample project with no AI spend.',
+  'Quality is verified, never claimed: `forge qa <project> --repair` reviews the site with all 14 gates, hands defects to the builder, re-tests the fixes and runs a full regression review; the hand-over summary is `reports/qa-report.md`.',
+  'Approvals belong to the operator alone, every factual claim on a site needs a source in `content/claims.json`, and `.env` is never read by agents.',
+];
+
 const HARNESS_RULES = [
   'Run `npm test` before you commit; it must pass.',
   'Agent roles are defined in `agents/`; after changing one, run `forge agents generate` and commit the generated files.',
@@ -151,6 +160,10 @@ export function renderOperatorRules(pm, { cursorRule = false } = {}) {
     '# Forge',
     '',
     'This folder is the Forge website harness. Opening it only loads these instructions; nothing runs until a `forge` command does.',
+    '',
+    '## How to use this harness',
+    '',
+    bullets(QUICK_START),
     '',
     '## When the operator asks for a website project',
     '',

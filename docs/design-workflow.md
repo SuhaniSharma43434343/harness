@@ -72,7 +72,7 @@ Findings become defects in `reports/defects.json`, then one builder repair task 
 
 ## Release checks
 
-`forge design release` runs all 13 gates on the finished site and writes `reports/release-checks.json`. Only a gate's own pass is "passed". "Blocked" means the fix needs the operator: a site URL for SEO, or a licence decision on a package. It still stops a release. Any other fault in those gates is "failed".
+`forge design release` runs all 14 gates on the finished site and writes `reports/release-checks.json`. Only a gate's own pass is "passed". "Blocked" means the fix needs the operator: a site URL for SEO, or a licence decision on a package. It still stops a release. Any other fault in those gates is "failed".
 
 ## Spending limit
 

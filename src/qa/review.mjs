@@ -7,6 +7,7 @@ import { runTask } from '../core/runner.mjs';
 import { GATE_ORDER, GATES, qualityFloor, runGate, runGates } from '../gates/index.mjs';
 import { visualReviewTask } from './visual.mjs';
 import { mergeReview, openDefects } from './defects.mjs';
+import { writeQaReport } from './report.mjs';
 
 export const REPORT = 'reports/defects.json';
 
@@ -48,6 +49,7 @@ export async function qaReview(project, opts = {}) {
   for (const r of results) ledger.append(project, { actor: 'qa-verifier', type: 'gate_result', data: { gate: r.gate, status: r.status, findings: r.findings.length, evidence: `${evidenceDir}/${r.gate}.json`, review: number } }, opts);
   ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'qa_review', review: number, floorMet: floor.met, open: open.map((d) => d.id), verified: verified.map((d) => d.id) } }, opts);
   appendLog(paths.dir, report, results, verified, now());
+  writeQaReport(paths.dir, project, report, results, now());
   return { report, results, floor, evidenceDir };
 }
 

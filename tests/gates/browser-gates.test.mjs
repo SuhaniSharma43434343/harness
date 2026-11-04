@@ -15,7 +15,7 @@ import { runGate, runGates } from '../../src/gates/index.mjs';
 import { resolvePath, serveSite } from '../../src/gates/serve.mjs';
 import { launchBrowser, loadTool } from '../../src/tools/load.mjs';
 
-const BROWSER_GATES = ['routes', 'accessibility', 'forms', 'responsive'];
+const BROWSER_GATES = ['routes', 'accessibility', 'forms', 'interactions', 'responsive'];
 
 let browser;
 let skip = false;
@@ -148,6 +148,47 @@ test('the static server maps clean URLs to the directory build and answers 404 w
   } finally {
     await server.close();
   }
+});
+
+test('interactions: working widgets pass, so the gate only flags controls that do nothing', { skip }, async () => {
+  const { mkdirSync, mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const siteDir = join(mkdtempSync(join(tmpdir(), 'forge-widgets-')), 'site');
+  mkdirSync(join(siteDir, 'dist'), { recursive: true });
+  writeFileSync(join(siteDir, 'dist', 'index.html'), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Every widget here works</h1>
+    <button id="t" type="button" aria-expanded="false" aria-controls="panel" style="min-width:48px;min-height:48px">Toggle</button>
+    <div id="panel" hidden><p>Revealed.</p></div>
+    <details><summary>More detail</summary><p>Opened.</p></details>
+    <div role="tablist">
+      <button id="tabA" role="tab" aria-selected="true" aria-controls="pA" style="min-width:48px;min-height:48px">A</button>
+      <button id="tabB" role="tab" aria-selected="false" aria-controls="pB" style="min-width:48px;min-height:48px">B</button>
+    </div>
+    <div id="pA"><p>Panel A</p></div><div id="pB" hidden><p>Panel B</p></div>
+    <button id="openBtn" type="button" aria-haspopup="dialog" style="min-width:48px;min-height:48px">Open dialog</button>
+    <dialog id="dlg"><p>Hello.</p></dialog>
+    <div class="carousel" style="width:200px">
+      <div id="track" style="display:flex;overflow-x:auto;width:200px"><div style="min-width:200px">One</div><div style="min-width:200px">Two</div></div>
+      <button class="next" id="nextB" type="button" style="min-width:48px;min-height:48px">Next</button>
+    </div>
+  </main>
+  <script>
+    const el = (id) => document.getElementById(id);
+    el('t').addEventListener('click', () => { const open = el('t').getAttribute('aria-expanded') === 'true'; el('t').setAttribute('aria-expanded', String(!open)); el('panel').hidden = open; });
+    for (const tab of [el('tabA'), el('tabB')]) tab.addEventListener('click', () => {
+      for (const x of [el('tabA'), el('tabB')]) x.setAttribute('aria-selected', String(x === tab));
+      el('pA').hidden = tab !== el('tabA'); el('pB').hidden = tab !== el('tabB');
+    });
+    el('openBtn').addEventListener('click', () => el('dlg').showModal());
+    el('nextB').addEventListener('click', () => { el('track').scrollBy(200, 0); });
+  </script>
+</body></html>`);
+  const r = await runGate('interactions', siteDir, { browser });
+  assert.equal(r.status, 'pass', JSON.stringify(r.findings, null, 2));
+  assert.deepEqual({ ...r.metrics, navChecks: 0 }, { toggles: 1, details: 1, tabs: 1, dialogs: 1, carousels: 1, navChecks: 0 });
 });
 
 test('every browser plugin has a valid manifest', async () => {

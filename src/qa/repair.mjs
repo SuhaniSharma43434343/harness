@@ -3,10 +3,10 @@ import { join } from 'node:path';
 import { PermissionDenied } from '../core/errors.mjs';
 import { addTask } from '../core/board.mjs';
 import * as ledger from '../core/ledger.mjs';
-import { advancePhase, loadProject, MAX_REPAIR_LOOPS } from '../core/project.mjs';
+import { advancePhase, loadProject, repairCap } from '../core/project.mjs';
 import { runTask, shellVerifier } from '../core/runner.mjs';
 import { ROOT, assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
-import { runGate } from '../gates/index.mjs';
+import { GATE_ORDER, runGate } from '../gates/index.mjs';
 import { openDefects } from './defects.mjs';
 import { qaReview, readDefects, REPORT } from './review.mjs';
 
@@ -102,9 +102,13 @@ export function gateVerifier(project, opts = {}) {
 // runRepairLoop(project, opts) => Promise<{ outcome: 'passed' | 'escalated', loops, report }>
 // P11 and P12: review, and while the quality floor is not met, hand the open defects to the
 // builder as repair tasks, run them, and review again with fresh evidence. After
-// MAX_REPAIR_LOOPS (3) repairs with defects still open, the defects are escalated to the
-// operator (reports/escalation.md and a ledger note); the project stays in QUALITY_REVIEW.
-// opts: { worker (the builder), verifier?, workspace, now?, gates?, browser?, adapters?, thresholds? }
+// opts.maxRepairLoops (default 3) repairs with defects still open, the defects are escalated
+// to the operator (reports/escalation.md and a ledger note); the project stays in QUALITY_REVIEW.
+// After a repair, the review retests only the gates with open defects and the ones failing the
+// floor; when that comes back clean, one full review checks every gate for regressions before
+// the loop reports passed, so a pass always rests on a complete current review.
+// opts.retest: 'full' re-runs every gate after every repair instead (the old behaviour).
+// opts: { worker (the builder), verifier?, workspace, now?, gates?, maxRepairLoops?, retest?, browser?, adapters?, thresholds? }
 export async function runRepairLoop(project, opts = {}) {
   const { worker, verifier, ...rest } = opts;
   if (existsSync(join(assertProjectExists(project, rest).dir, 'design', 'section-plan.json'))) rest.visualWorker ??= worker;
@@ -125,7 +129,7 @@ export async function runRepairLoop(project, opts = {}) {
       ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_skipped_budget', remainingUsd: rest.budgetRemaining(), neededUsd: MIN_VERIFIABLE_REPAIR_USD } }, rest);
       return { outcome: 'insufficient-budget', loops, report };
     }
-    if (loadProject(project, rest).repairLoops >= MAX_REPAIR_LOOPS) return escalate(project, report, rest);
+    if (loadProject(project, rest).repairLoops >= repairCap(rest)) return escalate(project, report, rest);
     advancePhase(project, 'REPAIR', { actor: 'qa-verifier', ...rest });
     loops = loadProject(project, rest).repairLoops;
     for (const task of repairTasks(project, report, loops, rest)) {
@@ -136,29 +140,43 @@ export async function runRepairLoop(project, opts = {}) {
     }
     writeJsonAtomic(join(assertProjectExists(project, rest).dir, REPORT), report);
     advancePhase(project, 'QUALITY_REVIEW', { actor: 'qa-verifier', ...rest });
-    ({ report, floor } = await qaReview(project, rest));
+    if (rest.retest === 'full') {
+      ({ report, floor } = await qaReview(project, rest));
+    } else {
+      // Retest what the repair was about; unrelated gates are not re-run until the final pass.
+      const required = rest.gates ?? GATE_ORDER;
+      const targeted = [...new Set([...openDefects(report).map((d) => d.gate), ...floor.failing])].filter((g) => required.includes(g));
+      if (targeted.length === required.length) {
+        ({ report, floor } = await qaReview(project, rest));
+      } else {
+        ({ report, floor } = await qaReview(project, { ...rest, gates: targeted }));
+        // Clean on the targeted gates: one full review, so no regression elsewhere slips through.
+        if (floor.met && !openDefects(report).length) ({ report, floor } = await qaReview(project, rest));
+      }
+    }
   }
   return { outcome: 'passed', loops, report };
 }
 
 function escalate(project, report, opts) {
+  const cap = repairCap(opts);
   const dir = assertProjectExists(project, opts).dir;
   const open = openDefects(report);
   for (const d of open) {
     d.status = 'escalated';
-    d.history.push({ review: report.review, status: 'escalated', note: `Still open after ${MAX_REPAIR_LOOPS} repair loops` });
+    d.history.push({ review: report.review, status: 'escalated', note: `Still open after ${cap} repair loops` });
   }
   report.escalated = true;
   writeJsonAtomic(join(dir, REPORT), report);
   const lines = [
     '# Escalation',
     '',
-    `The quality floor is not met after ${MAX_REPAIR_LOOPS} repair loops. These defects need the operator's decision: fix them by hand, change the plan, or accept them in writing before B6.`,
+    `The quality floor is not met after ${cap} repair loops. These defects need the operator's decision: fix them by hand, change the plan, or accept them in writing before B6.`,
     '',
     ...open.map((d) => `- ${d.id} ${d.gate} ${d.finding}${d.location ? ` at ${d.location}` : ''}: ${d.message}. Evidence: ${d.evidence.join(', ')}. Repair tasks: ${(d.fixTasks ?? []).join(', ') || 'none'}.`),
     '',
   ];
   writeFileSync(join(dir, 'reports', 'escalation.md'), lines.join('\n'));
-  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_escalated', defects: open.map((d) => d.id), loops: MAX_REPAIR_LOOPS } }, opts);
-  return { outcome: 'escalated', loops: MAX_REPAIR_LOOPS, report };
+  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_escalated', defects: open.map((d) => d.id), loops: cap } }, opts);
+  return { outcome: 'escalated', loops: cap, report };
 }
