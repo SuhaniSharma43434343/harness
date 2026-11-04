@@ -40,7 +40,7 @@ export async function cmdQa(root, args) {
     const replay = flag(args, '--replay');
     const worker = replay ? createReplayWorker({ recordDir: replay }) : createClaudeCodeWorker({ model: flag(args, '--model') });
     const maxLoops = flag(args, '--max-loops');
-    if (maxLoops !== undefined && !(Number.isInteger(Number(maxLoops)) && Number(maxLoops) >= 1)) {
+    if (args.includes('--max-loops') && !(Number.isInteger(Number(maxLoops)) && Number(maxLoops) >= 1)) {
       console.error(`--max-loops takes a whole number of at least 1, not "${maxLoops}"
 ${USAGE}`);
       return 2;

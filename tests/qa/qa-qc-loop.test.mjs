@@ -3,7 +3,7 @@
 // no browser.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, readdirSync, readFileSync, mkdtempSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync, readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createProject, loadProject, repairCap, MAX_REPAIR_LOOPS } from '../../src/core/project.mjs';
@@ -13,6 +13,7 @@ import { FIXTURES_DIR, materializeFixture } from '../../src/gates/fixtures.mjs';
 import { runRepairLoop } from '../../src/qa/repair.mjs';
 import { qaReview } from '../../src/qa/review.mjs';
 import { writeQaReport } from '../../src/qa/report.mjs';
+import { cmdQa } from '../../src/cli/qa.mjs';
 
 let n = 0;
 function project(fixture) {
@@ -81,13 +82,51 @@ test('every review rewrites reports/qa-report.md: defects, reproduction, verific
   await qaReview(p.name, { workspace: p.workspace, gates: ['seo', 'claims'] });
   const first = readFileSync(join(p.dir, 'reports/qa-report.md'), 'utf8');
   assert.match(first, /# QA\/QC report: /);
-  assert.match(first, /Quality floor: \*\*not met\*\* \(seo\)/);
+  assert.match(first, /Quality floor over the gates in scope \(claims, seo\): \*\*not met\*\* \(seo\)/);
   assert.match(first, /### D-001 - h1-count \(serious, seo\)/);
   assert.match(first, /- Status: Open/);
   assert.match(first, new RegExp(`- Reproduce: \`forge gates ${p.name} --gate seo\``));
   assert.match(first, /- Found in review 1; evidence: evidence\/qa\/review-1\/seo\.json/);
   assert.match(first, /\| claims \| pass \| 0 \|/);
-  assert.match(first, /Every gate in this review ran to completion\./);
+  assert.match(first, /This review ran 2 of the \d+ default gates\. Not in scope, so not covered here: .*interactions/);
+});
+
+test('a raised cap reopens escalated defects and the loop repairs them to a verified pass', async () => {
+  const p = project('seo-two-h1');
+  const first = await runRepairLoop(p.name, { workspace: p.workspace, gates: ['seo'], worker: claimingBuilder, verifier: async () => ({ ok: true, code: 0, output: 'ok' }), maxRepairLoops: 1 });
+  assert.equal(first.outcome, 'escalated');
+  assert.match(readFileSync(join(p.dir, 'reports/qa-report.md'), 'utf8'), /- Status: Escalated to the operator/);
+  const second = await runRepairLoop(p.name, { workspace: p.workspace, gates: ['seo'], worker: restoringBuilder, maxRepairLoops: 3 });
+  assert.equal(second.outcome, 'passed');
+  const d = second.report.defects.find((x) => x.finding === 'h1-count');
+  assert.equal(d.status, 'verified');
+  assert.ok(d.history.some((h) => h.status === 'reopened' && /repair cap/.test(h.note ?? '')), JSON.stringify(d.history));
+  assert.ok(readLedger(p.name, { workspace: p.workspace }).some((e) => e.data.event === 'repair_reopened'));
+  assert.match(readFileSync(join(p.dir, 'reports/qa-report.md'), 'utf8'), /- Status: Verified fixed in review/);
+});
+
+test('escalation lists the defects in escalation.md even when nothing is newly open, and records the real loop count', async () => {
+  const p = project('seo-two-h1');
+  await runRepairLoop(p.name, { workspace: p.workspace, gates: ['seo'], worker: claimingBuilder, verifier: async () => ({ ok: true, code: 0, output: 'ok' }), maxRepairLoops: 1 });
+  const esc = readFileSync(join(p.dir, 'reports/escalation.md'), 'utf8');
+  assert.match(esc, /after 1 repair loops/);
+  assert.match(esc, /D-001 seo h1-count/);
+});
+
+test('--max-loops with no value is refused, not silently ignored', async () => {
+  const p = project('seo-two-h1');
+  writeFileSync(join(p.root, 'forge.config.json'), JSON.stringify({ concurrency: 1, plugins: {}, workspaceDir: 'ws' }));
+  const { error } = console;
+  const errs = [];
+  console.error = (...a) => errs.push(a.join(' '));
+  let code;
+  try {
+    code = await cmdQa(p.root, [p.name, '--repair', '--max-loops']);
+  } finally {
+    console.error = error;
+  }
+  assert.equal(code, 2);
+  assert.match(errs.join('\n'), /--max-loops takes a whole number/);
 });
 
 test('the report never claims a check that did not run: an errored gate is a limitation', () => {

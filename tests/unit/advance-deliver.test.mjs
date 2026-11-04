@@ -30,7 +30,7 @@ function writeGates(dir, statuses) {
   mkdirSync(join(dir, 'evidence', 'gates'), { recursive: true });
   for (const [gate, status] of Object.entries(statuses)) writeFileSync(join(dir, 'evidence', 'gates', `${gate}.json`), JSON.stringify(gateResult(gate, status)));
 }
-const ALL_GATES = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies', 'routes', 'accessibility', 'forms', 'responsive', 'design-fidelity', 'visual-review', 'performance'];
+const ALL_GATES = ['content-parity', 'claims', 'licences', 'secrets', 'seo', 'dependencies', 'routes', 'accessibility', 'forms', 'interactions', 'responsive', 'design-fidelity', 'visual-review', 'performance'];
 
 test('a phase with no exit gate moves on; intake needs its brief and B1', () => {
   const { project, opts } = newProject();

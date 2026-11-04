@@ -100,11 +100,16 @@ Limitations with the reason, never as a pass.
    defects and the ones failing the floor, and when those come back clean, one full review of
    every gate checks for regressions before the loop reports `passed` - so a pass always rests
    on a complete current review, and unrelated gates are not re-run after every repair.
-   `--full-retest` (opts.retest: 'full') restores the old re-run-everything behaviour.
+   `--full-retest` (opts.retest: 'full') restores the old re-run-everything behaviour. A
+   targeted review's `qualityFloor` in `reports/defects.json` covers the gates in its scope,
+   which the `qa_review` ledger note, `qa-log.md` and `qa-report.md` all name; the loop's final
+   `passed` always rests on a full review.
 5. After 3 repair loops with defects still open (`--max-loops` raises or lowers the cap per
    run), escalate: the defects become `escalated`, `reports/escalation.md` lists them with their
    evidence and repair tasks, and the ledger gets a `repair_escalated` note. The operator
-   decides before B6.
+   decides before B6. Re-running the loop with room under the cap (for example `--max-loops 5`
+   after an escalation at 3) reopens the escalated defects and hands them back to the builder;
+   an escalated defect that a later review no longer finds is verified like any other.
 
 ## Tests
 

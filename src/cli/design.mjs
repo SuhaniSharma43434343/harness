@@ -19,7 +19,7 @@ const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>]
 
 // The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
 // something only the operator has, and are reported by forge design release.
-export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibility', 'responsive', 'performance', 'design-fidelity', 'visual-review'];
+export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibility', 'interactions', 'responsive', 'performance', 'design-fidelity', 'visual-review'];
 
 // forge design: the Design Manager's workflow.
 //   status  what the specification has and lacks

@@ -191,6 +191,68 @@ test('interactions: working widgets pass, so the gate only flags controls that d
   assert.deepEqual({ ...r.metrics, navChecks: 0 }, { toggles: 1, details: 1, tabs: 1, dialogs: 1, carousels: 1, navChecks: 0 });
 });
 
+test('interactions: real-world patterns produce no false verdicts', { skip, timeout: 120_000 }, async () => {
+  // Three confirmed review findings, pinned: (1) a navbar link carrying aria-expanded navigates
+  // - a working link, never 'toggle-dead', never a gate error; (2) a sticky modal with no
+  // Escape handler must not vouch for a DEAD second opener, nor block the working carousel
+  // below it; (3) at phone width, a search button sitting before the hamburger must not turn a
+  // working menu into a critical 'nav-unreachable'.
+  const { mkdirSync, mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const siteDir = join(mkdtempSync(join(tmpdir(), 'forge-realworld-')), 'site');
+  mkdirSync(join(siteDir, 'dist', 'two'), { recursive: true });
+  writeFileSync(join(siteDir, 'dist', 'two', 'index.html'), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Two</title></head>
+<body><main><h1>Second page</h1><p><a href="/">Back</a></p></main></body></html>`);
+  writeFileSync(join(siteDir, 'dist', 'index.html'), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Patterns</title>
+<style>
+  @media (max-width: 480px) { nav a { display: none } nav.open a { display: block } }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 9 }
+  .overlay.show { display: block }
+  button { min-width: 48px; min-height: 48px }
+</style></head>
+<body>
+  <header>
+    <a href="/">Patterns</a>
+    <button id="searchBtn" type="button" aria-label="Search">S</button>
+    <button id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false">M</button>
+    <nav id="mainNav">
+      <a href="/two" aria-expanded="false">Products</a>
+      <a href="/">Home</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Real-world patterns</h1>
+    <button id="open1" type="button" data-modal-open>Open sticky dialog</button>
+    <div id="sticky" class="overlay" role="dialog" aria-label="Sticky"><div><p>No escape handler here.</p><button id="x1" type="button">X</button></div></div>
+    <button id="open2" type="button" data-modal-open>Dead opener</button>
+    <div class="carousel" style="width:200px">
+      <div id="track" style="display:flex;overflow-x:auto;width:200px"><div style="min-width:200px">One</div><div style="min-width:200px">Two</div></div>
+      <button class="next" id="nextB" type="button">Next</button>
+    </div>
+  </main>
+  <script>
+    const el = (id) => document.getElementById(id);
+    el('menuBtn').addEventListener('click', () => {
+      const open = el('menuBtn').getAttribute('aria-expanded') === 'true';
+      el('menuBtn').setAttribute('aria-expanded', String(!open));
+      el('mainNav').classList.toggle('open', !open);
+    });
+    el('open1').addEventListener('click', () => el('sticky').classList.add('show'));
+    el('x1').addEventListener('click', () => el('sticky').classList.remove('show'));
+    el('nextB').addEventListener('click', () => { el('track').scrollBy(200, 0); });
+  </script>
+</body></html>`);
+  const r = await runGate('interactions', siteDir, { browser });
+  const ids = r.findings.map((f) => f.id).sort();
+  // Exactly one true finding: the dead opener. No false toggle-dead for the navigating link,
+  // no carousel-dead from the sticky overlay, no nav-unreachable, and never a gate error.
+  assert.equal(r.status, 'fail');
+  assert.deepEqual(ids, ['modal-dead'], JSON.stringify(r.findings, null, 2));
+  assert.ok(r.findings[0].message.includes('Dead opener'), r.findings[0].message);
+});
+
 test('every browser plugin has a valid manifest', async () => {
   const { assertValid } = await import('../../src/core/schemas.mjs');
   const { readFileSync } = await import('node:fs');

@@ -9,6 +9,7 @@ import { ROOT, assertProjectExists, readJson, writeJsonAtomic } from '../core/wo
 import { GATE_ORDER, runGate } from '../gates/index.mjs';
 import { openDefects } from './defects.mjs';
 import { qaReview, readDefects, REPORT } from './review.mjs';
+import { writeQaReport } from './report.mjs';
 
 // The files a builder may change to fix a gate's defects. Locked content, the brief, the
 // evidence and the reports are never the builder's.
@@ -119,8 +120,20 @@ export async function runRepairLoop(project, opts = {}) {
   }
   const gateOptions = { gates: rest.gates, browser: rest.browser, adapters: rest.adapters, thresholds: rest.thresholds, now: rest.now };
 
-  let { report, floor } = await qaReview(project, rest);
+  let { report, floor, results } = await qaReview(project, rest);
   let loops = 0;
+  // Escalated defects that still reproduce go back to the builder when the operator re-runs the
+  // loop with room left under the cap: a raised --max-loops is that decision, in writing.
+  const escalated = (report.defects ?? []).filter((d) => d.status === 'escalated');
+  if (escalated.length && loadProject(project, rest).repairLoops < repairCap(rest)) {
+    for (const d of escalated) {
+      d.status = 'open';
+      d.history.push({ review: report.review, status: 'reopened', note: `Reopened: the repair cap (${repairCap(rest)}) leaves room for another loop` });
+    }
+    report.escalated = false;
+    writeJsonAtomic(join(assertProjectExists(project, rest).dir, REPORT), report);
+    ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_reopened', defects: escalated.map((d) => d.id), cap: repairCap(rest) } }, rest);
+  }
   while (!floor.met || openDefects(report).length) {
     if (rest.budgetExhausted?.()) return { outcome: 'budget', loops, report };
     // A repair the budget cannot re-verify would end as a permanently stale review, worse than
@@ -129,7 +142,7 @@ export async function runRepairLoop(project, opts = {}) {
       ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_skipped_budget', remainingUsd: rest.budgetRemaining(), neededUsd: MIN_VERIFIABLE_REPAIR_USD } }, rest);
       return { outcome: 'insufficient-budget', loops, report };
     }
-    if (loadProject(project, rest).repairLoops >= repairCap(rest)) return escalate(project, report, rest);
+    if (loadProject(project, rest).repairLoops >= repairCap(rest)) return escalate(project, report, rest, results);
     advancePhase(project, 'REPAIR', { actor: 'qa-verifier', ...rest });
     loops = loadProject(project, rest).repairLoops;
     for (const task of repairTasks(project, report, loops, rest)) {
@@ -141,42 +154,47 @@ export async function runRepairLoop(project, opts = {}) {
     writeJsonAtomic(join(assertProjectExists(project, rest).dir, REPORT), report);
     advancePhase(project, 'QUALITY_REVIEW', { actor: 'qa-verifier', ...rest });
     if (rest.retest === 'full') {
-      ({ report, floor } = await qaReview(project, rest));
+      ({ report, floor, results } = await qaReview(project, rest));
     } else {
       // Retest what the repair was about; unrelated gates are not re-run until the final pass.
       const required = rest.gates ?? GATE_ORDER;
       const targeted = [...new Set([...openDefects(report).map((d) => d.gate), ...floor.failing])].filter((g) => required.includes(g));
       if (targeted.length === required.length) {
-        ({ report, floor } = await qaReview(project, rest));
+        ({ report, floor, results } = await qaReview(project, rest));
       } else {
-        ({ report, floor } = await qaReview(project, { ...rest, gates: targeted }));
+        ({ report, floor, results } = await qaReview(project, { ...rest, gates: targeted }));
         // Clean on the targeted gates: one full review, so no regression elsewhere slips through.
-        if (floor.met && !openDefects(report).length) ({ report, floor } = await qaReview(project, rest));
+        if (floor.met && !openDefects(report).length) ({ report, floor, results } = await qaReview(project, rest));
       }
     }
   }
   return { outcome: 'passed', loops, report };
 }
 
-function escalate(project, report, opts) {
-  const cap = repairCap(opts);
+function escalate(project, report, opts, results = []) {
   const dir = assertProjectExists(project, opts).dir;
+  const loops = loadProject(project, opts).repairLoops;
   const open = openDefects(report);
   for (const d of open) {
     d.status = 'escalated';
-    d.history.push({ review: report.review, status: 'escalated', note: `Still open after ${cap} repair loops` });
+    d.history.push({ review: report.review, status: 'escalated', note: `Still open after ${loops} repair loops` });
   }
   report.escalated = true;
   writeJsonAtomic(join(dir, REPORT), report);
+  // List everything the operator owns, not only this round's: a re-escalation with nothing
+  // newly open must never overwrite the file with an empty list.
+  const listed = report.defects.filter((d) => d.status === 'escalated');
   const lines = [
     '# Escalation',
     '',
-    `The quality floor is not met after ${cap} repair loops. These defects need the operator's decision: fix them by hand, change the plan, or accept them in writing before B6.`,
+    `The quality floor is not met after ${loops} repair loops. These defects need the operator's decision: fix them by hand, change the plan, or accept them in writing before B6.`,
     '',
-    ...open.map((d) => `- ${d.id} ${d.gate} ${d.finding}${d.location ? ` at ${d.location}` : ''}: ${d.message}. Evidence: ${d.evidence.join(', ')}. Repair tasks: ${(d.fixTasks ?? []).join(', ') || 'none'}.`),
+    ...listed.map((d) => `- ${d.id} ${d.gate} ${d.finding}${d.location ? ` at ${d.location}` : ''}: ${String(d.message).replace(/\s+/g, ' ')}. Evidence: ${d.evidence.join(', ')}. Repair tasks: ${(d.fixTasks ?? []).join(', ') || 'none'}.`),
     '',
   ];
   writeFileSync(join(dir, 'reports', 'escalation.md'), lines.join('\n'));
-  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_escalated', defects: open.map((d) => d.id), loops: cap } }, opts);
-  return { outcome: 'escalated', loops: cap, report };
+  // The hand-over report must agree with defects.json at exactly this moment.
+  writeQaReport(dir, project, report, results);
+  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'repair_escalated', defects: open.map((d) => d.id), loops } }, opts);
+  return { outcome: 'escalated', loops, report };
 }

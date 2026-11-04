@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { GATE_ORDER } from '../gates/index.mjs';
 
 // The QA/QC report: reports/qa-report.md, rewritten after every review so it always describes
 // the current state. reports/defects.json stays the machine-readable truth and qa-log.md the
@@ -8,12 +9,17 @@ import { join } from 'node:path';
 // that errored or was skipped is listed as a limitation, not a pass.
 
 const FINAL = { verified: 'Verified fixed', open: 'Open', escalated: 'Escalated to the operator' };
+// Page text reaches defect messages (console errors, headings); one line each, no table breaks.
+const clean = (t) => String(t).replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim();
 
 export function writeQaReport(dir, project, report, results, at = new Date()) {
   const lines = [];
   const floor = report.qualityFloor;
+  const scope = results.map((r) => r.gate);
+  const outOfScope = GATE_ORDER.filter((g) => !scope.includes(g));
+  const floorLabel = outOfScope.length ? `Quality floor over the gates in scope (${scope.join(', ')})` : 'Quality floor';
   lines.push(`# QA/QC report: ${project}`, '');
-  lines.push(`Review ${report.review}, ${at.toISOString()}. Quality floor: ${floor.met ? 'met' : `**not met** (${floor.failing.join(', ')})`}.`, '');
+  lines.push(`Review ${report.review}, ${at.toISOString()}. ${floorLabel}: ${floor.met ? 'met' : `**not met** (${floor.failing.join(', ')})`}.`, '');
   lines.push('Written by the QA Verifier from gate evidence. A defect is closed only when a later review, with fresh evidence, no longer finds it; nothing here rests on a builder\'s own report.', '');
 
   lines.push('## What was tested', '');
@@ -28,7 +34,7 @@ export function writeQaReport(dir, project, report, results, at = new Date()) {
     lines.push(`### ${d.id} - ${d.finding} (${d.severity}, ${d.gate})`, '');
     lines.push(`- Status: ${FINAL[d.status] ?? d.status}${d.verifiedIn ? ` in review ${d.verifiedIn}` : ''}`);
     if (d.location) lines.push(`- Where: ${d.location}`);
-    lines.push(`- What is wrong: ${d.message}`);
+    lines.push(`- What is wrong: ${clean(d.message)}`);
     lines.push(`- Reproduce: \`forge gates ${project} --gate ${d.gate}\` (finding \`${d.finding}\`)`);
     lines.push(`- Found in review ${d.foundIn}; evidence: ${d.evidence.join(', ')}`);
     if (d.fixTasks?.length) lines.push(`- Repair tasks: ${d.fixTasks.join(', ')}`);
@@ -43,7 +49,8 @@ export function writeQaReport(dir, project, report, results, at = new Date()) {
 
   const unchecked = results.filter((r) => r.status === 'error' || r.status === 'skipped');
   const limitations = [
-    ...unchecked.map((r) => `The ${r.gate} gate did not run (${r.status}): ${r.error?.message ?? 'no reason recorded'}. Nothing it checks is covered by this review.`),
+    ...(outOfScope.length ? [`This review ran ${scope.length} of the ${GATE_ORDER.length} default gates. Not in scope, so not covered here: ${outOfScope.join(', ')}.`] : []),
+    ...unchecked.map((r) => `The ${r.gate} gate did not run (${r.status}): ${clean(r.error?.message ?? 'no reason recorded')}. Nothing it checks is covered by this review.`),
     ...(report.escalated ? ['Open defects were escalated to the operator after the repair-loop cap: see reports/escalation.md.'] : []),
     ...(report.discarded ? [`${report.discarded} finding(s) were discarded because their evidence could not be written.`] : []),
   ];
