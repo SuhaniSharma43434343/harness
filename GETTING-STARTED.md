@@ -20,7 +20,7 @@ The site deploys to a Vercel preview, and to production only after your final ap
 1. **Set up once.** `./scripts/setup.sh --with-test-tools` (PowerShell: `.\scripts\setup.ps1`),
    then `./forge doctor` to confirm Node, Git, Claude Code and the workspace are ready.
 2. **Start a project.** `./forge new <project>`, then `./forge intake <project>`. Intake asks the
-   client's questions one at a time — press Enter to accept a recommendation (it is recorded as
+   client's questions in rounds — press Enter to accept a recommendation (it is recorded as
    an assumption, never passed off as a fact). It ends with a brief, a plan and an estimate for
    you to read.
 3. **Approve and let it build.** `./forge approve <project> B1` approves the brief. Then
@@ -47,7 +47,7 @@ project to a local preview.
 | B1 | The brief, plan and estimate — the project as understood |
 | B2 | The design direction |
 | B3 | The written copy, locked word for word |
-| B4 | Any paid spend (model calls above the free path, paid plugins) |
+| B4 | Paid assets and plugins that spend money. Model calls are not covered by B4 |
 | B5 | Integrations (forms endpoint, deploy tokens) |
 | B6 | The preview — you have seen the site and accept it |
 | B7 | Production deploy |
@@ -57,12 +57,10 @@ tells you an approval was already given, the ledger decides.
 
 ## Rules that protect you
 
-- **No invented facts.** A price, opening time, year or claim appears on the site only if it is
-  in `content/claims.json` with a source. The claims gate blocks the rest.
+- **Facts need a source.** The claims gate looks for specifics such as prices, times and years that have no source in `content/claims.json`. By default one unsourced claim fails it. It cannot catch every invented sentence, so read the copy at B3.
 - **Evidence over reports.** A builder saying "fixed" closes nothing; only the QA Verifier's next
   review with fresh evidence does.
-- **Budgets are hard.** Paid runs take `--max-usd` style caps and stop when they are reached,
-  leaving the last verified state authoritative.
+- **Know which budget you are using.** `scripts/design-e2e.mjs` enforces a hard limit, kept in a file. `forge design run --max-usd` is checked only between tasks, so a run can go over it, and `forge design qa` and `forge qa --repair` take no limit.
 - **Secrets stay out.** `.env` is never read by agents, a pre-commit scan guards every project
   repository, and the secrets gate scans the built site.
 
