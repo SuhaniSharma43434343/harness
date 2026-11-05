@@ -337,6 +337,7 @@ export const stageById = (id) => STAGES.find((s) => s.id === id);
 // A blocked stage task no longer counts once a later fix task for that stage has finished: the
 // fix task did its work, and the stage's own check decides whether the result is good.
 export function isSuperseded(task, tasks) {
+  if (task.status === 'blocked' && task.blocked_reason?.startsWith('Superseded: ')) return true;
   const m = task.id.match(/^(.*?)(?:-fix-(\d+))?$/);
   const n = Number(m[2] ?? 0);
   return tasks.some((t) => {

@@ -1,16 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
-import { listTasks } from '../../src/core/board.mjs';
+import { listTasks, transitionTask } from '../../src/core/board.mjs';
+import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
 import { planPhase } from '../../src/core/planner.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
-import { MAX_STAGE_RETURNS, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
-import { CHECKS, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
+import { MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
+import { CHECKS, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
@@ -290,6 +291,46 @@ test('a stage sent back too many times escalates instead of looping', () => {
   const out = sendBack(project, 'section-plan', ['still vague'], opts);
   assert.equal(out.escalated, true);
   assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_escalated'));
+});
+
+test('a refused call never uses up a stage\'s returns: the workflow stops for the budget', async () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'UX_DESIGN_SYSTEM');
+  const worker = async () => ({ evidence: ['x'], costUsd: 1 });
+  const r = await runDesignWorkflow(project, { ...opts, worker, verifier: async () => ({ ok: true, code: 0, output: 'ok' }), maxUsd: 1, concurrency: 1, stopBefore: 'ASSETS_LICENSING' });
+  assert.equal(r.reason, 'budget');
+  assert.ok(listTasks(project, opts).some((t) => t.status === 'blocked' && /spend limit/.test(t.blocked_reason)), 'the next call really was refused');
+  assert.ok(!ledger.read(project, opts).some((e) => e.data?.event === 'design_returned'), 'nothing was sent back');
+  assert.ok(!ledger.read(project, opts).some((e) => e.data?.event === 'design_escalated'));
+});
+
+test('the operator\'s retry reissues an escalated stage, and only the operator\'s decision resets the limit', () => {
+  const { project, opts, dir } = fullProject();
+  rmSync(join(dir, 'content/copy.json'));
+  setPhase(dir, 'CONTENT');
+  for (let i = 0; i < MAX_STAGE_RETURNS; i++) sendBack(project, 'copy', ['content/copy.json is missing'], opts);
+  assert.equal(sendBack(project, 'copy', ['still missing'], opts).escalated, true);
+  for (const id of ['copy-fix-1', 'copy-fix-2']) transitionTask(project, id, 'blocked', { reason: 'Attempt 1 failed: refused', ...opts });
+
+  const out = retryStage(project, 'copy', { note: 'The operator added money', ...opts });
+  assert.deepEqual([out.returned, out.attempt], [true, 3]);
+  const tasks = listTasks(project, opts);
+  const fix = tasks.find((t) => t.id === 'copy-fix-3');
+  assert.equal(fix.status, 'pending');
+  assert.ok(fix.acceptance[0].includes('The operator added money'));
+  for (const id of ['copy-fix-1', 'copy-fix-2']) assert.ok(isSuperseded(tasks.find((t) => t.id === id), tasks), `${id} no longer counts`);
+  assert.ok(!tasks.some((t) => t.id === 'section-plan-sync-3'), 'copy that never existed made no plan stale');
+  assert.ok(!exitBlockers(project, opts).some((b) => /copy-fix-[12]/.test(b)));
+  const note = ledger.read(project, opts).find((e) => e.data?.event === 'design_retry_authorized');
+  assert.deepEqual([note.actor, note.data.stage], ['operator', 'copy']);
+
+  setPhase(dir, 'TECHNICAL_PLAN');
+  assert.ok(!exitBlockers(project, opts).some((b) => /copy-fix-[12] and/.test(b)), 'superseded tasks hold no claim on their files');
+  setPhase(dir, 'CONTENT');
+  assert.equal(sendBack(project, 'copy', ['again'], opts).attempt, 4);
+  assert.equal(sendBack(project, 'copy', ['and again'], opts).escalated, true, 'the fresh limit is still a limit');
+  assert.throws(() => retryStage(project, 'asset-files', { note: 'x', ...opts }), /not a stage an agent works on/);
+  assert.throws(() => retryStage(project, 'copy', { ...opts }), /needs the operator/);
 });
 
 test('work cannot be returned once it is in quality review, or forward', () => {
