@@ -13,7 +13,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge qa <project> [--gate <name>]... [--repair [--replay <dir>] [--model <model>]] [--json]';
+const USAGE = 'Usage: forge qa <project> [--gate <name>]... [--repair [--replay <dir>] [--model <model>] [--max-loops <n>] [--full-retest]] [--json]';
 
 // forge qa: the QA Verifier. Without --repair, one review (P11): gates, fresh evidence,
 // reports/defects.json. With --repair, the P11/P12 loop: the builder gets repair tasks and
@@ -39,7 +39,18 @@ export async function cmdQa(root, args) {
   if (args.includes('--repair')) {
     const replay = flag(args, '--replay');
     const worker = replay ? createReplayWorker({ recordDir: replay }) : createClaudeCodeWorker({ model: flag(args, '--model') });
-    const r = await runRepairLoop(project, { ...opts, worker });
+    const maxLoops = flag(args, '--max-loops');
+    if (args.includes('--max-loops') && !(Number.isInteger(Number(maxLoops)) && Number(maxLoops) >= 1)) {
+      console.error(`--max-loops takes a whole number of at least 1, not "${maxLoops}"
+${USAGE}`);
+      return 2;
+    }
+    const r = await runRepairLoop(project, {
+      ...opts,
+      worker,
+      ...(maxLoops !== undefined ? { maxRepairLoops: Number(maxLoops) } : {}),
+      ...(args.includes('--full-retest') ? { retest: 'full' } : {}),
+    });
     report = r.report;
     met = r.outcome === 'passed';
     if (!args.includes('--json')) console.log(r.outcome === 'passed' ? `Quality floor met after ${r.loops} repair loop(s).` : `Escalated after ${r.loops} repair loops: see reports/escalation.md.`);

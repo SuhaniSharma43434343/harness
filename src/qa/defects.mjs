@@ -71,6 +71,11 @@ export function mergeReview(previous, review) {
       known.evidence = evidence;
       known.message = f.message;
       known.history.push({ review: review.number, status: 'still-open' });
+    } else if (known.status === 'escalated') {
+      // Still reproducing after escalation: stays the operator's, but the record says so.
+      known.evidence = evidence;
+      known.message = f.message;
+      known.history.push({ review: review.number, status: 'still-open', note: 'Still reproduces after escalation' });
     }
   }
 

@@ -68,7 +68,7 @@ const COMMANDS = {
     run: (args) => cmdGates(ROOT, args),
   },
   qa: {
-    summary: 'QA Verifier review, or the repair loop with --repair: forge qa <project> [--gate <name>] [--repair [--replay <dir>]]',
+    summary: 'QA Verifier review, or the repair loop with --repair: forge qa <project> [--gate <name>] [--repair [--replay <dir>] [--max-loops <n>] [--full-retest]]',
     run: (args) => cmdQa(ROOT, args),
   },
   select: { summary: 'Show which approaches a brief selects, and why: forge select <brief.json> [--json]', run: (args) => cmdSelect(args) },
