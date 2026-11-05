@@ -32,6 +32,10 @@ export const PHASES = [
 
 export const MAX_REPAIR_LOOPS = 3;
 
+// The cap is configurable per run (forge qa --repair --max-loops N), never per project file,
+// so raising it is a deliberate operator choice recorded in the command, not hidden state.
+export const repairCap = (opts = {}) => (Number.isInteger(opts.maxRepairLoops) && opts.maxRepairLoops >= 1 ? opts.maxRepairLoops : MAX_REPAIR_LOOPS);
+
 const byName = new Map(PHASES.map((p, i) => [p.name, { ...p, index: i }]));
 
 // Each phase moves to the next one. Quality review can go to repair, and repair goes back
@@ -144,8 +148,9 @@ export function advancePhase(project, to, { actor = 'cli', ...opts } = {}) {
   if (gate && !hasApproval(project, gate, opts)) {
     throw refuse(project, actor, action, `${gate} not recorded`, opts, `The operator must run forge approve ${project} ${gate} first.`);
   }
-  if (to === 'REPAIR' && state.repairLoops >= MAX_REPAIR_LOOPS) {
-    throw refuse(project, actor, action, `Repair ran ${MAX_REPAIR_LOOPS} times; escalate to the operator`, opts);
+  const cap = repairCap(opts);
+  if (to === 'REPAIR' && state.repairLoops >= cap) {
+    throw refuse(project, actor, action, `Repair ran ${cap} times; escalate to the operator`, opts);
   }
 
   if (to === 'REPAIR') state.repairLoops += 1;

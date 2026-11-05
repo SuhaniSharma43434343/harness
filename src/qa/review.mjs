@@ -7,6 +7,7 @@ import { runTask } from '../core/runner.mjs';
 import { GATE_ORDER, GATES, qualityFloor, runGate, runGates } from '../gates/index.mjs';
 import { visualReviewTask } from './visual.mjs';
 import { mergeReview, openDefects } from './defects.mjs';
+import { writeQaReport } from './report.mjs';
 
 export const REPORT = 'reports/defects.json';
 
@@ -46,8 +47,9 @@ export async function qaReview(project, opts = {}) {
   const open = openDefects(report);
   const verified = report.defects.filter((d) => d.verifiedIn === number);
   for (const r of results) ledger.append(project, { actor: 'qa-verifier', type: 'gate_result', data: { gate: r.gate, status: r.status, findings: r.findings.length, evidence: `${evidenceDir}/${r.gate}.json`, review: number } }, opts);
-  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'qa_review', review: number, floorMet: floor.met, open: open.map((d) => d.id), verified: verified.map((d) => d.id) } }, opts);
-  appendLog(paths.dir, report, results, verified, now());
+  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'qa_review', review: number, floorMet: floor.met, gates: required, open: open.map((d) => d.id), verified: verified.map((d) => d.id) } }, opts);
+  appendLog(paths.dir, report, results, verified, now(), required);
+  writeQaReport(paths.dir, project, report, results, now());
   return { report, results, floor, evidenceDir };
 }
 
@@ -60,18 +62,19 @@ async function lookAtTheSite(project, dir, number, opts) {
   ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'visual_review', task: task.id, status: result.status } }, rest);
 }
 
-function appendLog(dir, report, results, verified, at) {
+function appendLog(dir, report, results, verified, at, required = GATE_ORDER) {
   const file = join(dir, 'reports', 'qa-log.md');
   mkdirSync(join(dir, 'reports'), { recursive: true });
   const lines = [];
   if (!existsSync(file)) lines.push('# QA log', '', 'Written by the QA Verifier after every review. Evidence is in evidence/qa/review-N/.', '');
   lines.push(`## Review ${report.review} (${at.toISOString()})`, '');
-  lines.push(`Quality floor: ${report.qualityFloor.met ? 'met' : `not met (${report.qualityFloor.failing.join(', ')})`}.`, '');
+  const partial = GATE_ORDER.some((g) => !required.includes(g));
+  lines.push(`Quality floor${partial ? ` (scope: ${required.join(', ')})` : ''}: ${report.qualityFloor.met ? 'met' : `not met (${report.qualityFloor.failing.join(', ')})`}.`, '');
   lines.push('| Gate | Status | Findings |', '| --- | --- | --- |');
   for (const r of results) lines.push(`| ${r.gate} | ${r.status} | ${r.findings.length} |`);
   lines.push('');
   for (const d of verified) lines.push(`- Verified ${d.id} (${d.gate} ${d.finding}) with ${d.verification[0]}`);
-  for (const d of openDefects(report)) lines.push(`- Open ${d.id} (${d.gate} ${d.finding}): ${d.message}`);
+  for (const d of openDefects(report)) lines.push(`- Open ${d.id} (${d.gate} ${d.finding}): ${String(d.message).replace(/\s+/g, ' ')}`);
   if (report.escalated) lines.push('- Escalated to the operator.');
   lines.push('');
   writeFileSync(file, lines.join('\n') + '\n', { flag: 'a' });

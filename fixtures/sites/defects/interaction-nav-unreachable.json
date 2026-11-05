@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "interactions",
+  "finding": "nav-unreachable",
+  "description": "The navigation links are hidden at phone width and there is no menu button to reveal them.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": "<link rel=\"stylesheet\" href=\"/_astro/site.css\">",
+      "replace": "<link rel=\"stylesheet\" href=\"/_astro/site.css\">\n    <style>@media (max-width: 480px) { nav[aria-label=\"Main\"] a { display: none } }</style>"
+    }
+  ]
+}

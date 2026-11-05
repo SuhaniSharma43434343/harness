@@ -9,6 +9,7 @@ forge design qa <project> [--model m]              # render, review, repair, up 
 forge design choose <project> <direction id>       # the operator's B2
 forge design release <project>                     # every gate: passed, failed, blocked, not applicable
 forge design accept-licence <project> <package> --note <decision>   # the operator's licence decision, recorded in the ledger
+forge design retry <project> <stage> --note <decision>   # the operator's answer to an escalation, recorded in the ledger
 ```
 
 `forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
@@ -46,6 +47,8 @@ When a stage fails after its task ran, or the review asks for changes, the Desig
 
 Each stage may be sent back twice. The third time it escalates to the operator.
 
+An escalation is the operator's to answer. `forge design retry <project> <stage> --note <decision>` records the decision, stops the stage's blocked tasks counting, and gives the stage a fresh fix task and a fresh limit of returns. Reaching the spending limit stops the workflow without using up any returns.
+
 ## One approach
 
 `design/direction.json` names one `primaryApproach`. The rule table in `registry/` only says which approaches a brief allows; it no longer puts several on a site. A combination needs a reason, must be listed in the methodology's `compatibleWith`, and is shown at B2. `forge site` applies only the direction's approaches. The render check fails an approach's forbidden signal (for example pinning in APP-01), a missing required one, or a section from an approach the direction does not include.
@@ -72,8 +75,10 @@ Findings become defects in `reports/defects.json`, then one builder repair task 
 
 ## Release checks
 
-`forge design release` runs all 13 gates on the finished site and writes `reports/release-checks.json`. Only a gate's own pass is "passed". "Blocked" means the fix needs the operator: a site URL for SEO, or a licence decision on a package. It still stops a release. Any other fault in those gates is "failed".
+`forge design release` runs all 14 gates on the finished site and writes `reports/release-checks.json`. Only a gate's own pass is "passed". "Blocked" means the fix needs the operator: a site URL for SEO, or a licence decision on a package. It still stops a release. Any other fault in those gates is "failed".
 
 ## Spending limit
+
+`scripts/design-e2e.mjs` uses the hard limit described here. `forge design run --max-usd` does not: it is checked only between tasks, so a run can go over it, and `forge design qa` takes no limit.
 
 `createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped at what remains with `claude --max-budget-usd`. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.

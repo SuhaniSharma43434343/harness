@@ -75,8 +75,8 @@ const EVIDENCE = {
     const review = readJson(join(dir, FILES.review));
     if (!mockRun() && !review) problems.push('design/review.json (the Design Manager has not reviewed the specification)');
     else if (!mockRun() && review.verdict !== 'ready') problems.push(`design/review.json says ${review.verdict}`);
-    // A finished task holds no claim on its files: a fix task may own them next.
-    const active = tasks.filter((t) => t.status !== 'done');
+    // A finished or superseded task holds no claim on its files: a fix task may own them next.
+    const active = tasks.filter((t) => t.status !== 'done' && !isSuperseded(t, tasks));
     for (let i = 0; i < active.length; i++) {
       for (let j = i + 1; j < active.length; j++) {
         const clash = active[i].owns_files.find((a) => active[j].owns_files.some((b) => patternsOverlap(a, b)));

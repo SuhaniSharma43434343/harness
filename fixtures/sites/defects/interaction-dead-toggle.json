@@ -1,0 +1,13 @@
+{
+  "base": "known-good",
+  "gate": "interactions",
+  "finding": "toggle-dead",
+  "description": "A disclosure button with aria-expanded and no script behind it: clicking changes nothing.",
+  "replace": [
+    {
+      "file": "site/dist/index.html",
+      "find": "<p><a class=\"button\" href=\"/contact#quote\">Request a quote</a></p>",
+      "replace": "<p><a class=\"button\" href=\"/contact#quote\">Request a quote</a></p>\n        <button type=\"button\" aria-expanded=\"false\" aria-controls=\"pricing-more\" style=\"min-width:48px;min-height:48px\">More about pricing</button>\n        <div id=\"pricing-more\" hidden><p>Our quotes are itemised by room and trade.</p></div>"
+    }
+  ]
+}

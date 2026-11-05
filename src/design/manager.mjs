@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { addTask, listTasks, saveTask } from '../core/board.mjs';
+import { addTask, listTasks, saveTask, transitionTask } from '../core/board.mjs';
 import { agentsForPhase } from '../core/agents.mjs';
 import { advanceProject, exitBlockers } from '../core/advance.mjs';
 import { PermissionDenied } from '../core/errors.mjs';
@@ -25,14 +25,21 @@ export const MAX_STAGE_RETURNS = 2;
 // What the operator approved that a stage's fix changes: B2 covers the direction, B3 the copy.
 const VOIDS = { direction: ['B2'], copy: ['B3'] };
 
-const returnsOf = (project, stage, opts) => ledger.read(project, opts).filter((e) => e.type === 'note' && e.data?.event === 'design_returned' && e.data.stage === stage).length;
+// total numbers the fix tasks, so ids never repeat; sinceRetry counts against the limit, which an
+// operator's retry starts afresh.
+function returnsOf(project, stage, opts) {
+  const notes = ledger.read(project, opts).filter((e) => e.type === 'note' && e.data?.stage === stage);
+  const returned = (list) => list.filter((e) => e.data.event === 'design_returned').length;
+  return { total: returned(notes), sinceRetry: returned(notes.slice(notes.findLastIndex((e) => e.data.event === 'design_retry_authorized') + 1)) };
+}
 
 // sendBack(project, stageId, problems) moves the project back to the stage's phase and adds a
 // fix task carrying the findings. Returns { returned: true } or, over the limit, { escalated: true }.
 export function sendBack(project, stageId, problems, { actor = 'design-manager', ...opts } = {}) {
   const stage = stageById(stageId);
-  const n = returnsOf(project, stageId, opts) + 1;
-  if (n > MAX_STAGE_RETURNS) {
+  const { total, sinceRetry } = returnsOf(project, stageId, opts);
+  const n = total + 1;
+  if (sinceRetry >= MAX_STAGE_RETURNS) {
     ledger.append(project, { actor, type: 'note', data: { event: 'design_escalated', stage: stageId, problems } }, opts);
     return { escalated: true, stage: stageId, problems };
   }
@@ -48,6 +55,15 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
     if (t.status === 'pending' && t.id !== fix.id && t.depends_on.some((d) => d === stage.task || d.startsWith(`${stage.task}-fix-`))) {
       saveTask(project, { ...t, depends_on: t.depends_on.map((d) => (d === stage.task || d.startsWith(`${stage.task}-fix-`) ? fix.id : d)) }, opts);
     }
+  }
+  // A copy rewrite makes the section plan's quoted beats stale, and a stale plan sets later
+  // reviewers against earlier ones. The plan syncs in the same pass, after the copy fix. Copy
+  // that never existed has made nothing stale.
+  const hadCopy = existsSync(join(assertProjectExists(project, opts).dir, FILES.copy));
+  if (stageId === 'copy' && hadCopy && !listTasks(project, opts).some((t) => t.id === `section-plan-sync-${n}` )) {
+    const sync = specTask(project, 'section-plan', brief, { fix: n, problems: ['Update the section plan to match the corrected copy: every beat, staged line or operational fact the plan quotes must exist in content/copy.json as it now stands. Change only what the copy correction touched.'] });
+    addTask(project, { ...sync, id: `section-plan-sync-${n}`, idempotency_key: `${project}:section-plan-sync-${n}:v1`, depends_on: [fix.id] }, opts);
+    ledger.append(project, { actor, type: 'note', data: { event: 'design_plan_synced', stage: 'section-plan', after: fix.id } }, opts);
   }
   return { returned: true, stage: stageId, attempt: n };
 }
@@ -126,6 +142,22 @@ async function commandStep(project, phase, opts) {
   if (phase === 'INTEGRATION_TESTS') await runGates(join(dir, 'site'), { project, projectDir: dir, gates: ['routes', 'forms', 'content-parity'], browser: opts.browser, adapters: opts.adapters });
 }
 
+// retryStage(project, stageId, { note }): the operator's answer to an escalation. Their decision
+// goes in the ledger, the stage's blocked tasks stop counting, and the stage gets a fresh fix task
+// with the note as its first finding and a fresh limit of returns.
+export function retryStage(project, stageId, { note, ...opts }) {
+  const stage = stageById(stageId);
+  if (!stage?.task) throw new PermissionDenied(`"${stageId}" is not a stage an agent works on`, { hint: `Stages: ${STAGES.filter((s) => s.task).map((s) => s.id).join(', ')}` });
+  if (!note) throw new PermissionDenied('A retry needs the operator\'s reason as its note');
+  ledger.append(project, { actor: 'operator', type: 'note', data: { event: 'design_retry_authorized', stage: stageId, message: note } }, opts);
+  const reason = `Superseded: the operator authorized a retry of ${stageId}`;
+  for (const t of listTasks(project, opts)) {
+    if (t.status === 'blocked' && (t.id === stage.task || t.id.startsWith(`${stage.task}-fix-`))) saveTask(project, { ...t, blocked_reason: reason }, opts);
+    if (stageId === 'copy' && t.status === 'pending' && t.id.startsWith('section-plan-sync-')) transitionTask(project, t.id, 'blocked', { actor: 'design-manager', reason, ...opts });
+  }
+  return sendBack(project, stageId, [note, ...CHECKS[stageId](assertProjectExists(project, opts).dir)], opts);
+}
+
 // runDesignWorkflow(project, opts) => { stoppedAt, reason, spentUsd, log }
 // opts: { worker, verifier?, workspace, stopBefore?, maxUsd?, onStep? (called after each phase) }
 // Runs from the current phase until an approval is needed, a stage escalates, or the project
@@ -140,11 +172,13 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     return out;
   };
   const stop = (reason, data = {}) => ({ stoppedAt: loadProject(project, opts).phase, reason, spentUsd: spent, log, ...data });
+  // A refused call says nothing about the work, so it must never use up a stage's returns.
+  const outOfMoney = () => budgetExhausted() || spent >= maxUsd;
 
   for (let guard = 0; guard < 80; guard++) {
     const { phase } = loadProject(project, opts);
     if (phase === stopBefore) return stop('reached');
-    if (budgetExhausted()) return stop('budget');
+    if (outOfMoney()) return stop('budget');
     await commandStep(project, phase, opts);
     planPhase(project, opts);
     const summary = await runProject(project, { ...opts, worker: counted, agents: agentsForPhase(phase), verifier: opts.verifier });
@@ -153,7 +187,7 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
 
     // A task that ran out of attempts is a stage that failed: send it back once with its findings
     // rather than handing a half-made specification to the next agent.
-    if (budgetExhausted()) return stop('budget');
+    if (outOfMoney()) return stop('budget');
     if (summary.errors.length) return stop('error', { errors: summary.errors });
     const tasks = listTasks(project, opts);
     const blocked = summary.blocked.filter((b) => !isSuperseded(tasks.find((t) => t.id === b.task), tasks));

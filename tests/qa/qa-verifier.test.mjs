@@ -20,7 +20,7 @@ import { qaReview } from '../../src/qa/review.mjs';
 import { cmdQa } from '../../src/cli/qa.mjs';
 import { launchBrowser, loadTool } from '../../src/tools/load.mjs';
 
-const BROWSER_GATES = new Set(['routes', 'accessibility', 'forms', 'responsive']);
+const BROWSER_GATES = new Set(['routes', 'accessibility', 'forms', 'interactions', 'responsive']);
 let browser;
 let noBrowser = false;
 try {
@@ -157,7 +157,7 @@ test('the known-good site passes the full quality floor with no repair', { skip:
   assert.equal(result.outcome, 'passed');
   assert.equal(result.loops, 0);
   assert.deepEqual(result.report.qualityFloor, { met: true, failing: [] });
-  assert.equal(readdirSync(join(p.dir, 'evidence/qa/review-1')).length, 11);
+  assert.equal(readdirSync(join(p.dir, 'evidence/qa/review-1')).length, 12);
 });
 
 test('the repair loop runs only in quality review', async () => {

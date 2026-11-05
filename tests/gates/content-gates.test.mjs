@@ -142,7 +142,7 @@ test('runGates writes evidence for each gate and qualityFloor needs every requir
   assert.deepEqual(results.map((r) => r.gate), CONTENT_GATES);
   for (const g of CONTENT_GATES) assert.ok(existsSync(join(dir, 'evidence/gates', `${g}.json`)), g);
   assert.equal(qualityFloor(results, CONTENT_GATES).met, true);
-  assert.deepEqual(qualityFloor(results).failing, ['routes', 'accessibility', 'forms', 'responsive', 'performance', 'design-fidelity', 'visual-review']);
+  assert.deepEqual(qualityFloor(results).failing, ['routes', 'accessibility', 'forms', 'interactions', 'responsive', 'performance', 'design-fidelity', 'visual-review']);
 });
 
 test('gateContext lists routes without the 404 page', () => {

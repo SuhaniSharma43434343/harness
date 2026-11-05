@@ -9,6 +9,8 @@ forge qa <project>                       # one review (P11): all gates, fresh ev
 forge qa <project> --gate seo            # review with chosen gates only
 forge qa <project> --repair              # the P11/P12 loop with the Claude Code builder
 forge qa <project> --repair --replay dir # the same loop from recorded builder sessions
+forge qa <project> --repair --max-loops 5   # raise the escalation cap for this run (default 3)
+forge qa <project> --repair --full-retest   # re-run every gate after every repair
 ```
 
 ## A review
@@ -21,7 +23,10 @@ forge qa <project> --repair --replay dir # the same loop from recorded builder s
   (`schemas/defect-report.schema.json`), where each defect has a stable id (`D-001`), the review
   that found it, its evidence and a history;
 - appends a readable entry to `reports/qa-log.md`, and `gate_result` and `qa_review` entries to the
-  ledger, all as `qa-verifier`.
+  ledger, all as `qa-verifier`;
+- rewrites `reports/qa-report.md`, the hand-over QA/QC report: what was tested, every defect with
+  its evidence and the command that reproduces it, the advisories, and what could not be checked
+  (a gate that errored or was skipped is a limitation, never a pass).
 
 How findings become defects:
 
@@ -38,6 +43,46 @@ How findings become defects:
 
 A defect is matched across reviews by `gate|finding|location`.
 
+## The QA/QC report
+
+`reports/qa-report.md` after review 1 of a project seeded with the `seo-two-h1` fixture:
+
+```md
+# QA/QC report: example
+
+Review 1, 2026-11-04T08:09:21Z. Quality floor: **not met** (seo).
+
+Written by the QA Verifier from gate evidence. A defect is closed only when a later review,
+with fresh evidence, no longer finds it; nothing here rests on a builder's own report.
+
+## What was tested
+
+| Gate | Status | Findings | Evidence |
+| --- | --- | --- | --- |
+| content-parity | pass | 0 | evidence/qa/review-1/content-parity.json |
+| claims | pass | 0 | evidence/qa/review-1/claims.json |
+| secrets | pass | 0 | evidence/qa/review-1/secrets.json |
+| seo | fail | 1 | evidence/qa/review-1/seo.json |
+
+## Defects
+
+### D-001 - h1-count (serious, seo)
+
+- Status: Open
+- Where: site/dist/contact/index.html
+- What is wrong: /contact has 2 h1 headings (expected 1)
+- Reproduce: `forge gates example --gate seo` (finding `h1-count`)
+- Found in review 1; evidence: evidence/qa/review-1/seo.json
+
+## Limitations
+
+Every gate in this review ran to completion.
+```
+
+Once the defect is verified, its entry gains `Status: Verified fixed in review N`, the repair
+tasks and the verification evidence. A gate that errored or was skipped appears under
+Limitations with the reason, never as a pass.
+
 ## The repair loop
 
 `runRepairLoop(project, { worker, ... })` runs in `QUALITY_REVIEW`:
@@ -51,10 +96,20 @@ A defect is matched across reviews by `gate|finding|location`.
    command is `forge gates <project> --gate <gate>`, run in-process by `gateVerifier`.
 3. Run each task through the runner (`runTask`), with its retries, locks and verify log.
 4. Move back to `QUALITY_REVIEW` and review again. A finished repair task does not close
-   anything; only this review does.
-5. After 3 repair loops with defects still open, escalate: the defects become `escalated`,
-   `reports/escalation.md` lists them with their evidence and repair tasks, and the ledger gets a
-   `repair_escalated` note. The operator decides before B6.
+   anything; only this review does. The re-review is targeted: it runs the gates with open
+   defects and the ones failing the floor, and when those come back clean, one full review of
+   every gate checks for regressions before the loop reports `passed` - so a pass always rests
+   on a complete current review, and unrelated gates are not re-run after every repair.
+   `--full-retest` (opts.retest: 'full') restores the old re-run-everything behaviour. A
+   targeted review's `qualityFloor` in `reports/defects.json` covers the gates in its scope,
+   which the `qa_review` ledger note, `qa-log.md` and `qa-report.md` all name; the loop's final
+   `passed` always rests on a full review.
+5. After 3 repair loops with defects still open (`--max-loops` raises or lowers the cap per
+   run), escalate: the defects become `escalated`, `reports/escalation.md` lists them with their
+   evidence and repair tasks, and the ledger gets a `repair_escalated` note. The operator
+   decides before B6. Re-running the loop with room under the cap (for example `--max-loops 5`
+   after an escalation at 3) reopens the escalated defects and hands them back to the builder;
+   an escalated defect that a later review no longer finds is verified like any other.
 
 ## Tests
 

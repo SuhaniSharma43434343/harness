@@ -103,7 +103,7 @@ See `docs/approaches.md`.
 ## 6. Check it (P11)
 
 ```bash
-./forge gates harbor                 # all 11 gates; evidence/gates/<gate>.json; exits 1 below the quality floor
+./forge gates harbor                 # all 14 gates; evidence/gates/<gate>.json; exits 1 below the quality floor
 ./forge gates harbor --gate seo      # one gate
 ./forge qa harbor                    # a QA Verifier review: reports/defects.json and reports/qa-log.md
 ```
