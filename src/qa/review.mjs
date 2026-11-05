@@ -2,7 +2,10 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as ledger from '../core/ledger.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
-import { GATE_ORDER, GATES, qualityFloor, runGates } from '../gates/index.mjs';
+import { addTask } from '../core/board.mjs';
+import { runTask } from '../core/runner.mjs';
+import { GATE_ORDER, GATES, qualityFloor, runGate, runGates } from '../gates/index.mjs';
+import { visualReviewTask } from './visual.mjs';
 import { mergeReview, openDefects } from './defects.mjs';
 
 export const REPORT = 'reports/defects.json';
@@ -25,6 +28,7 @@ export async function qaReview(project, opts = {}) {
   const number = (previous?.review ?? 0) + 1;
   const evidenceDir = `evidence/qa/review-${number}`;
   const required = opts.gates ?? GATE_ORDER;
+  if (opts.visualWorker && required.includes('visual-review') && !opts.budgetExhausted?.()) await lookAtTheSite(project, paths.dir, number, opts);
   const results = await runGates(join(paths.dir, 'site'), { ...rest, project, projectDir: paths.dir, gates: required.filter((g) => GATES.has(g)), write: false, now });
 
   mkdirSync(join(paths.dir, evidenceDir), { recursive: true });
@@ -45,6 +49,15 @@ export async function qaReview(project, opts = {}) {
   ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'qa_review', review: number, floorMet: floor.met, open: open.map((d) => d.id), verified: verified.map((d) => d.id) } }, opts);
   appendLog(paths.dir, report, results, verified, now());
   return { report, results, floor, evidenceDir };
+}
+
+// Renders the current build, then has the QA Verifier open the screenshots and write its review.
+async function lookAtTheSite(project, dir, number, opts) {
+  const { visualWorker, verifier, ...rest } = opts;
+  await runGate('design-fidelity', join(dir, 'site'), { project, projectDir: dir, browser: rest.browser, adapters: rest.adapters });
+  const task = addTask(project, visualReviewTask(project, dir, number), rest);
+  const result = await runTask(project, task.id, { ...rest, worker: visualWorker, ...(verifier ? { verifier } : {}), actor: 'qa-verifier' });
+  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'visual_review', task: task.id, status: result.status } }, rest);
 }
 
 function appendLog(dir, report, results, verified, at) {

@@ -12,6 +12,13 @@ const sections = page.data.sections.map(({ use, ...props }, index) => {
   return { Component: mod.default, props, index };
 });
 ---
-{sections.map(({ Component, props, index }) => (
-  <Component {...props} page={page} Content={Content} index={index} />
-))}
+{sections.map(({ Component, props, index }) =>
+  // A section with an id is one the design plan names; visual QA finds it by this wrapper.
+  props.id ? (
+    <div data-section={props.id}>
+      <Component {...props} page={page} Content={Content} index={index} />
+    </div>
+  ) : (
+    <Component {...props} page={page} Content={Content} index={index} />
+  ),
+)}

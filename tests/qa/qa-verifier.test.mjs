@@ -2,6 +2,7 @@
 // Each defect must be found by the QA Verifier, fixed by the builder (a fake builder that can
 // only restore its contract's files), and verified by a later QA review with fresh evidence.
 // A builder that only claims a fix never gets a defect closed.
+import { GATE_ORDER } from '../../src/gates/index.mjs';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -150,7 +151,9 @@ test('with the default gate verifier, a claimed fix fails its task, and the defe
 
 test('the known-good site passes the full quality floor with no repair', { skip: noBrowser }, async () => {
   const p = project('known-good');
-  const result = await runRepairLoop(p.name, { workspace: p.workspace, browser, adapters, screenshots: false, worker: claimingBuilder });
+  // The fixture is a prebuilt site with no design specification, so the two design gates are left out.
+  const gates = GATE_ORDER.filter((g) => !['design-fidelity', 'visual-review'].includes(g));
+  const result = await runRepairLoop(p.name, { workspace: p.workspace, browser, adapters, screenshots: false, worker: claimingBuilder, gates });
   assert.equal(result.outcome, 'passed');
   assert.equal(result.loops, 0);
   assert.deepEqual(result.report.qualityFloor, { met: true, failing: [] });

@@ -1,0 +1,57 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-04",
+  "name": "Spline + Website",
+  "philosophy": "A designer-made micro 3D moment adds delight to a clear product page. The scene decorates and demonstrates; the page does the explaining.",
+  "principles": [
+    "One small scene with one purpose",
+    "Page and scene talk to each other through events",
+    "The scene is edited visually, by a designer",
+    "The page works fully without it"
+  ],
+  "visualIdentity": "Friendly, tactile SaaS: soft shapes, gentle materials, a playful object matched to a crisp interface.",
+  "artDirection": "Match the scene's colours and material to the design system. Keep the object toy-like and simple.",
+  "layout": {
+    "patterns": [
+      "editorial-split",
+      "statement",
+      "feature-demo",
+      "bento",
+      "full-bleed"
+    ],
+    "composition": "A product page with a hero or feature visual slot holding the scene. Feature blocks may vary in size; a bento grid is on-style here when items differ."
+  },
+  "typography": "Friendly modern sans at clear sizes, with tight headlines and short sentences.",
+  "colour": "Bright, friendly accents from the scene carried into interface details.",
+  "contentPresentation": "Clear product marketing: what it does, how it works, proof, pricing or next step.",
+  "assets": "The operator's own Spline scene and a poster of it. The team has never shipped real Spline, so this stays experimental.",
+  "animation": "Scene reacts to hover and clicks; interface buttons trigger scene events. Micro-interactions throughout.",
+  "scrolling": "Native scroll. The scene may react to scroll position through events.",
+  "responsive": "Poster on mobile unless the scene is verified light enough.",
+  "useCases": [
+    "SaaS features",
+    "Micro-3D hero"
+  ],
+  "avoidFor": [
+    "Low-end device floors",
+    "Projects without a Spline account or scene"
+  ],
+  "signals": {
+    "required": [
+      "webgl"
+    ],
+    "forbidden": [
+      "pinned"
+    ]
+  },
+  "compatibleWith": [],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: Spline never used; Sketchfab GLB and procedural Three.js substituted",
+      "Skill: SplineScene behind a poster with events"
+    ],
+    "interpreted": [
+      "Almost all design guidance: no team evidence yet"
+    ]
+  }
+}

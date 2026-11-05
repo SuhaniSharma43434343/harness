@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { parse } from 'node-html-parser';
 import { FIXTURES_DIR, listDefects, materializeFixture } from '../../src/gates/fixtures.mjs';
 
-const GATES = JSON.parse(readFileSync(new URL('../../schemas/gate-result.schema.json', import.meta.url), 'utf8')).properties.gate.enum;
+const GATES = JSON.parse(readFileSync(new URL('../../schemas/gate-result.schema.json', import.meta.url), 'utf8')).properties.gate.enum.filter((g) => !['design-fidelity', 'visual-review'].includes(g)); // tested in design-fidelity.test.mjs
 const routes = (dist) =>
   readdirSync(dist, { recursive: true })
     .map((f) => String(f).replace(/\\/g, '/')) // readdirSync gives backslashes on Windows

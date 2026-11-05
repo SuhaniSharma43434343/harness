@@ -20,7 +20,9 @@
         "seo",
         "licences",
         "secrets",
-        "dependencies"
+        "dependencies",
+        "design-fidelity",
+        "visual-review"
       ]
     },
     "gateVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },

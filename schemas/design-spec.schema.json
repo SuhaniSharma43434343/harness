@@ -1,0 +1,1168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/design-spec.schema.json",
+  "title": "Design specification files",
+  "description": "The files the design workflow writes before development: positioning, direction, design system, section plan, motion plan, asset plan and site copy, plus an approach methodology. One definition per file; src/design/spec.mjs adds the checks a schema cannot express.",
+  "definitions": {
+    "text": {
+      "type": "string",
+      "minLength": 3
+    },
+    "textList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "kebab": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "hex": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "approach": {
+      "type": "string",
+      "pattern": "^APP-0[1-8]$"
+    },
+    "breakpoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "desktop",
+        "tablet",
+        "mobile"
+      ],
+      "properties": {
+        "desktop": {
+          "$ref": "#/definitions/text"
+        },
+        "tablet": {
+          "$ref": "#/definitions/text"
+        },
+        "mobile": {
+          "$ref": "#/definitions/text"
+        }
+      }
+    },
+    "cta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "href"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/definitions/text"
+        },
+        "href": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "methodology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registryVersion",
+        "id",
+        "name",
+        "philosophy",
+        "principles",
+        "visualIdentity",
+        "artDirection",
+        "layout",
+        "typography",
+        "colour",
+        "contentPresentation",
+        "assets",
+        "animation",
+        "scrolling",
+        "responsive",
+        "useCases",
+        "avoidFor",
+        "signals",
+        "compatibleWith",
+        "provenance"
+      ],
+      "properties": {
+        "registryVersion": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/approach"
+        },
+        "name": {
+          "$ref": "#/definitions/text"
+        },
+        "philosophy": {
+          "$ref": "#/definitions/text"
+        },
+        "principles": {
+          "$ref": "#/definitions/textList"
+        },
+        "visualIdentity": {
+          "$ref": "#/definitions/text"
+        },
+        "artDirection": {
+          "$ref": "#/definitions/text"
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "patterns",
+            "composition"
+          ],
+          "properties": {
+            "patterns": {
+              "type": "array",
+              "minItems": 3,
+              "items": {
+                "$ref": "#/definitions/kebab"
+              }
+            },
+            "composition": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "typography": {
+          "$ref": "#/definitions/text"
+        },
+        "colour": {
+          "$ref": "#/definitions/text"
+        },
+        "contentPresentation": {
+          "$ref": "#/definitions/text"
+        },
+        "assets": {
+          "$ref": "#/definitions/text"
+        },
+        "animation": {
+          "$ref": "#/definitions/text"
+        },
+        "scrolling": {
+          "$ref": "#/definitions/text"
+        },
+        "responsive": {
+          "$ref": "#/definitions/text"
+        },
+        "useCases": {
+          "$ref": "#/definitions/textList"
+        },
+        "avoidFor": {
+          "$ref": "#/definitions/textList"
+        },
+        "signals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required",
+            "forbidden"
+          ],
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "pinned",
+                  "webgl",
+                  "canvas",
+                  "game"
+                ]
+              }
+            },
+            "forbidden": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "pinned",
+                  "webgl",
+                  "canvas",
+                  "game"
+                ]
+              }
+            }
+          }
+        },
+        "compatibleWith": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "approach",
+              "when"
+            ],
+            "properties": {
+              "approach": {
+                "$ref": "#/definitions/approach"
+              },
+              "when": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fromTeam",
+            "interpreted"
+          ],
+          "properties": {
+            "fromTeam": {
+              "$ref": "#/definitions/textList"
+            },
+            "interpreted": {
+              "$ref": "#/definitions/textList"
+            }
+          }
+        }
+      }
+    },
+    "positioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "business",
+        "audienceInsights",
+        "objectives",
+        "positioning",
+        "differentiators",
+        "competitors",
+        "references"
+      ],
+      "properties": {
+        "business": {
+          "$ref": "#/definitions/text"
+        },
+        "audienceInsights": {
+          "$ref": "#/definitions/textList"
+        },
+        "objectives": {
+          "$ref": "#/definitions/textList"
+        },
+        "positioning": {
+          "$ref": "#/definitions/text"
+        },
+        "differentiators": {
+          "$ref": "#/definitions/textList"
+        },
+        "competitors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "observation"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/text"
+              },
+              "url": {
+                "type": "string"
+              },
+              "observation": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "url",
+              "whatToLearn"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/text"
+              },
+              "url": {
+                "type": "string"
+              },
+              "whatToLearn": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        },
+        "researchLimits": {
+          "type": "string"
+        }
+      }
+    },
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "primaryApproach",
+        "concept",
+        "whyThisApproach",
+        "interpretation",
+        "rejected",
+        "combination"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/text"
+        },
+        "primaryApproach": {
+          "$ref": "#/definitions/approach"
+        },
+        "concept": {
+          "$ref": "#/definitions/text"
+        },
+        "whyThisApproach": {
+          "$ref": "#/definitions/text"
+        },
+        "interpretation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "philosophy",
+            "principles",
+            "visualIdentity",
+            "personality",
+            "composition",
+            "contentStyle",
+            "assetTreatment",
+            "motionConcept",
+            "scrollConcept",
+            "responsive"
+          ],
+          "properties": {
+            "philosophy": {
+              "$ref": "#/definitions/text"
+            },
+            "principles": {
+              "$ref": "#/definitions/textList"
+            },
+            "visualIdentity": {
+              "$ref": "#/definitions/text"
+            },
+            "personality": {
+              "$ref": "#/definitions/textList"
+            },
+            "composition": {
+              "$ref": "#/definitions/text"
+            },
+            "contentStyle": {
+              "$ref": "#/definitions/text"
+            },
+            "assetTreatment": {
+              "$ref": "#/definitions/text"
+            },
+            "motionConcept": {
+              "$ref": "#/definitions/text"
+            },
+            "scrollConcept": {
+              "$ref": "#/definitions/text"
+            },
+            "responsive": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "rejected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "approach",
+              "reason"
+            ],
+            "properties": {
+              "approach": {
+                "$ref": "#/definitions/approach"
+              },
+              "reason": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        },
+        "combination": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "approach",
+              "reason"
+            ],
+            "properties": {
+              "approach": {
+                "$ref": "#/definitions/approach"
+              },
+              "reason": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "designSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "personality",
+        "visualLanguage",
+        "color",
+        "typography",
+        "spacing",
+        "grid",
+        "surfaces",
+        "responsive"
+      ],
+      "properties": {
+        "personality": {
+          "$ref": "#/definitions/text"
+        },
+        "visualLanguage": {
+          "$ref": "#/definitions/textList"
+        },
+        "color": {
+          "type": "object",
+          "required": [
+            "primary",
+            "secondary",
+            "accent",
+            "background",
+            "surface",
+            "text",
+            "muted",
+            "usage"
+          ],
+          "properties": {
+            "primary": {
+              "$ref": "#/definitions/hex"
+            },
+            "secondary": {
+              "$ref": "#/definitions/hex"
+            },
+            "accent": {
+              "$ref": "#/definitions/hex"
+            },
+            "background": {
+              "$ref": "#/definitions/hex"
+            },
+            "surface": {
+              "$ref": "#/definitions/hex"
+            },
+            "text": {
+              "$ref": "#/definitions/hex"
+            },
+            "muted": {
+              "$ref": "#/definitions/hex"
+            },
+            "usage": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "display",
+            "body",
+            "pairingReason",
+            "hierarchy"
+          ],
+          "properties": {
+            "display": {
+              "$ref": "#/definitions/text"
+            },
+            "body": {
+              "$ref": "#/definitions/text"
+            },
+            "pairingReason": {
+              "$ref": "#/definitions/text"
+            },
+            "hierarchy": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "role",
+                  "size",
+                  "weight",
+                  "lineHeight"
+                ],
+                "properties": {
+                  "role": {
+                    "$ref": "#/definitions/text"
+                  },
+                  "size": {
+                    "type": "string",
+                    "minLength": 2
+                  },
+                  "weight": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "lineHeight": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "tracking": {
+                    "type": "string"
+                  },
+                  "use": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "spacing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scale",
+            "sectionRhythm"
+          ],
+          "properties": {
+            "scale": {
+              "type": "array",
+              "minItems": 4,
+              "items": {
+                "type": "string"
+              }
+            },
+            "sectionRhythm": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "grid": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "columns",
+            "gutter",
+            "maxWidth",
+            "rules"
+          ],
+          "properties": {
+            "columns": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "gutter": {
+              "type": "string"
+            },
+            "maxWidth": {
+              "type": "string"
+            },
+            "rules": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "surfaces": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "borders",
+            "shadows",
+            "radius",
+            "treatments"
+          ],
+          "properties": {
+            "borders": {
+              "$ref": "#/definitions/text"
+            },
+            "shadows": {
+              "$ref": "#/definitions/text"
+            },
+            "radius": {
+              "$ref": "#/definitions/text"
+            },
+            "treatments": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "responsive": {
+          "$ref": "#/definitions/breakpoints"
+        }
+      }
+    },
+    "sectionPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pages"
+      ],
+      "properties": {
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slug",
+              "sections"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string",
+                "pattern": "^/"
+              },
+              "sections": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "purpose",
+                    "pattern",
+                    "composition",
+                    "hierarchy",
+                    "background",
+                    "typography",
+                    "assets",
+                    "motion",
+                    "responsive"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/definitions/kebab"
+                    },
+                    "purpose": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "pattern": {
+                      "$ref": "#/definitions/kebab"
+                    },
+                    "composition": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "hierarchy": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "background": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "typography": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/kebab"
+                      }
+                    },
+                    "motion": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/kebab"
+                      }
+                    },
+                    "responsive": {
+                      "$ref": "#/definitions/breakpoints"
+                    },
+                    "patternReason": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "motionPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "concept",
+        "loading",
+        "navigation",
+        "pageTransitions",
+        "reducedMotion",
+        "motions"
+      ],
+      "properties": {
+        "concept": {
+          "$ref": "#/definitions/text"
+        },
+        "loading": {
+          "$ref": "#/definitions/text"
+        },
+        "navigation": {
+          "$ref": "#/definitions/text"
+        },
+        "pageTransitions": {
+          "$ref": "#/definitions/text"
+        },
+        "reducedMotion": {
+          "$ref": "#/definitions/text"
+        },
+        "motions": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "trigger",
+              "behaviour",
+              "purpose"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/kebab"
+              },
+              "kind": {
+                "enum": [
+                  "scroll",
+                  "pin",
+                  "hover",
+                  "micro",
+                  "transition",
+                  "ambient"
+                ]
+              },
+              "trigger": {
+                "$ref": "#/definitions/text"
+              },
+              "behaviour": {
+                "$ref": "#/definitions/text"
+              },
+              "purpose": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "assetPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "treatment",
+        "assets"
+      ],
+      "properties": {
+        "treatment": {
+          "$ref": "#/definitions/text"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "description",
+              "source",
+              "alt"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/kebab"
+              },
+              "kind": {
+                "enum": [
+                  "photo",
+                  "illustration",
+                  "svg",
+                  "3d",
+                  "video",
+                  "frames",
+                  "shader",
+                  "css-art"
+                ]
+              },
+              "description": {
+                "$ref": "#/definitions/text"
+              },
+              "source": {
+                "enum": [
+                  "client",
+                  "licensed",
+                  "authored"
+                ]
+              },
+              "file": {
+                "type": "string"
+              },
+              "licence": {
+                "type": "string"
+              },
+              "alt": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "siteCopy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "brandStory",
+        "voice",
+        "nav",
+        "footer",
+        "pages"
+      ],
+      "properties": {
+        "brandStory": {
+          "type": "string",
+          "minLength": 120
+        },
+        "voice": {
+          "$ref": "#/definitions/text"
+        },
+        "nav": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "href"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "href": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "navCta": {
+          "$ref": "#/definitions/cta"
+        },
+        "footer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tagline",
+            "contact",
+            "columns",
+            "legal"
+          ],
+          "properties": {
+            "tagline": {
+              "$ref": "#/definitions/text"
+            },
+            "contact": {
+              "$ref": "#/definitions/textList"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "heading",
+                  "links"
+                ],
+                "properties": {
+                  "heading": {
+                    "type": "string"
+                  },
+                  "links": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/cta"
+                    }
+                  }
+                }
+              }
+            },
+            "legal": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slug",
+              "title",
+              "description",
+              "cta",
+              "sections"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string",
+                "pattern": "^/"
+              },
+              "title": {
+                "$ref": "#/definitions/text"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 30
+              },
+              "cta": {
+                "$ref": "#/definitions/cta"
+              },
+              "sections": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "headline"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/definitions/kebab"
+                    },
+                    "eyebrow": {
+                      "type": "string"
+                    },
+                    "headline": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "subheadline": {
+                      "type": "string"
+                    },
+                    "body": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "title"
+                        ],
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "meta": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "cta": {
+                      "$ref": "#/definitions/cta"
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "designReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "summary",
+        "findings"
+      ],
+      "properties": {
+        "verdict": {
+          "enum": [
+            "ready",
+            "changes"
+          ]
+        },
+        "summary": {
+          "$ref": "#/definitions/text"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stage",
+              "severity",
+              "message"
+            ],
+            "properties": {
+              "stage": {
+                "enum": [
+                  "research",
+                  "direction",
+                  "design-system",
+                  "section-plan",
+                  "motion-plan",
+                  "asset-plan",
+                  "copy"
+                ]
+              },
+              "severity": {
+                "enum": [
+                  "blocking",
+                  "note"
+                ]
+              },
+              "message": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "visualReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "buildHash",
+        "verdict",
+        "approachPreserved",
+        "scores",
+        "findings"
+      ],
+      "properties": {
+        "buildHash": {
+          "type": "string",
+          "minLength": 8
+        },
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "approachPreserved": {
+          "type": "boolean"
+        },
+        "scores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "distinctiveness",
+            "composition",
+            "typography",
+            "contentFit",
+            "specFidelity"
+          ],
+          "properties": {
+            "distinctiveness": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "composition": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "typography": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "contentFit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "specFidelity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "severity",
+              "section",
+              "message",
+              "evidence"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/kebab"
+              },
+              "severity": {
+                "enum": [
+                  "critical",
+                  "serious",
+                  "moderate",
+                  "minor"
+                ]
+              },
+              "section": {
+                "type": "string"
+              },
+              "message": {
+                "$ref": "#/definitions/text"
+              },
+              "evidence": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

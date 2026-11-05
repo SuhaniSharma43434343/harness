@@ -1,0 +1,62 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-08",
+  "name": "AI Image to Frame Animation to 3D",
+  "philosophy": "A still image comes to life under the scroll. One crafted visual sequence is the site's centrepiece, with a sense of depth impossible in flat layouts.",
+  "principles": [
+    "One sequence with a clear beginning and end",
+    "Provenance of every frame is on record",
+    "Depth and parallax come from the image itself",
+    "The key frame must be beautiful alone"
+  ],
+  "visualIdentity": "A visual narrative: dreamlike or hyper-real imagery with a consistent generated or filmed look.",
+  "artDirection": "Decide the sequence first: subject, transformation, camera path, then compose the page around it.",
+  "layout": {
+    "patterns": [
+      "frame-stage",
+      "full-bleed",
+      "statement",
+      "overlap",
+      "chapter-opener"
+    ],
+    "composition": "A pinned full-viewport frame stage with captions that arrive at set frames, then quiet supporting sections."
+  },
+  "typography": "Editorial captions timed to frames, with large type only at the key moments.",
+  "colour": "Taken from the imagery, so the interface feels cut from the same film.",
+  "contentPresentation": "Captions tied to moments in the sequence, then a short conventional section for details and the call to action.",
+  "assets": "24 to 60 frames at most 720 px high and 3 MB in total, with dense keyframes when cut from video. No watermarks: the team found AI and stock marks in supplied assets.",
+  "animation": "Canvas-drawn scrubbed frames, depth-map parallax on pointer.",
+  "scrolling": "Pinned while the sequence plays; scroll position maps directly to the frame.",
+  "responsive": "A smaller frame set or the static key frame on mobile and low-end devices.",
+  "useCases": [
+    "Visual narratives",
+    "Parallax heroes"
+  ],
+  "avoidFor": [
+    "Motion intensity 0",
+    "Low-end device floors",
+    "Assets without clear rights"
+  ],
+  "signals": {
+    "required": [
+      "pinned",
+      "canvas"
+    ],
+    "forbidden": []
+  },
+  "compatibleWith": [
+    {
+      "approach": "APP-02",
+      "when": "The sequence is the central scene of a longer scroll story"
+    }
+  ],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: frame scrub proven, depth-map untried, lag from sparse keyframes, watermarks in assets",
+      "Skill: FrameSequence and DepthParallax with provenance"
+    ],
+    "interpreted": [
+      "Sequence-first direction"
+    ]
+  }
+}

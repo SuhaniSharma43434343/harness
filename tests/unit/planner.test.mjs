@@ -33,18 +33,20 @@ test('research and asset phases get valid task contracts, once', () => {
   }
 });
 
-test('the content task names every brief page, and its drafts are seeded from the site', () => {
+test('the copy task names every brief page and call to action', () => {
   const p = project('CONTENT');
-  assert.throws(() => planPhase(p.project, p.opts), /no draft pages/);
-  mkdirSync(join(p.dir, 'site', 'src', 'content', 'pages'), { recursive: true });
-  writeFileSync(join(p.dir, 'site', 'src', 'content', 'pages', 'index.md'), '---\ntitle: "Home"\n---\n');
   const [t] = planPhase(p.project, p.opts);
-  for (const page of BRIEF.pages) assert.ok(t.acceptance[0].includes(page.cta), page.cta);
-  assert.equal(readFileSync(join(p.dir, 'content', 'pages', 'index.md'), 'utf8'), '---\ntitle: "Home"\n---\n');
+  assert.equal(t.id, 'copy');
+  for (const page of BRIEF.pages) assert.ok(t.acceptance.join(' ').includes(page.cta), page.cta);
 });
 
 test('phases whose work is a forge command get no tasks', () => {
-  for (const phase of ['INTAKE', 'BUILD', 'QUALITY_REVIEW']) assert.deepEqual(planPhase(project(phase).project, project(phase).opts), []);
+  for (const phase of ['INTAKE', 'CREATIVE_DIRECTIONS', 'QUALITY_REVIEW']) assert.deepEqual(planPhase(project(phase).project, project(phase).opts), []);
+});
+
+test('the build cannot be planned from an incomplete specification', () => {
+  const p = project('BUILD');
+  assert.throws(() => planPhase(p.project, p.opts), /specification is not complete/);
 });
 
 test('the content check wants every page locked, with sections and no placeholders', () => {
@@ -66,7 +68,7 @@ test('the research and assets checks catch missing and malformed files', () => {
   mkdirSync(join(p.dir, 'research'), { recursive: true });
   writeFileSync(join(p.dir, 'research', 'summary.md'), 'x'.repeat(300));
   writeFileSync(join(p.dir, 'research', 'sources.json'), JSON.stringify({ sources: [{ id: 'brief', title: 'Brief', kind: 'client', ref: 'intake/brief.json' }] }));
-  assert.deepEqual(runCheck('research', p.dir), []);
+  assert.deepEqual(runCheck('research', p.dir), ['research/positioning.json is missing']);
   assert.deepEqual(runCheck('assets', p.dir), ['assets/register.json is missing']);
   mkdirSync(join(p.dir, 'assets'), { recursive: true });
   writeFileSync(join(p.dir, 'assets', 'register.json'), JSON.stringify({ assets: [{ file: 'a.svg', licence: 'own work', source: 'drawn', status: 'cleared' }, { file: 'b.png' }] }));

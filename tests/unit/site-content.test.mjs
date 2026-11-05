@@ -130,26 +130,21 @@ test('a page that shows work gets a gallery, and sections asked for start empty'
   for (const use of ['APP-01/Testimonials', 'APP-01/Faq']) assert.deepEqual(page.find((s) => s.use === use).items, [], 'no invented quotes or answers');
 });
 
-test('scaffoldSite applies selected APP-02 and APP-05, and a forced rebuild keeps applied approaches', () => {
+test('scaffoldSite applies only the direction\'s approaches, and a forced rebuild keeps them', () => {
   const brief = sample('business');
   const { project, opts, workspace } = newProject(brief.project);
   const dir = join(workspace, project);
   mkdirSync(join(dir, 'design'), { recursive: true });
-  const decisions = [
-    { approach: 'APP-02', selected: true },
-    { approach: 'APP-05', selected: true },
-    { approach: 'APP-04', selected: true, needsApproval: 'B2' },
-  ];
-  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify({ decisions }));
+  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify({ decisions: [{ approach: 'APP-05', selected: true }] }));
+  writeFileSync(join(dir, 'design/direction.json'), JSON.stringify({ primaryApproach: 'APP-02', combination: [] }));
   const r = scaffoldSite(project, { brief, ...opts });
-  assert.deepEqual(r.approaches, ['APP-02', 'APP-05'], 'one that needs an approval waits for forge approach');
+  assert.deepEqual(r.approaches, ['APP-02'], 'selected by rule is not enough: the direction decides');
   const siteJson = () => JSON.parse(readFileSync(join(r.siteDir, 'src/site.json'), 'utf8'));
-  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02', 'APP-05']);
-  assert.ok(existsSync(join(r.siteDir, 'src/sections/APP-05/ShaderBackground.astro')));
+  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02']);
 
-  writeFileSync(join(dir, 'design/approach-decision.json'), JSON.stringify({ decisions: [] }));
+  writeFileSync(join(dir, 'design/direction.json'), JSON.stringify({ primaryApproach: 'APP-01', combination: [] }));
   scaffoldSite(project, { brief, force: true, ...opts });
-  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02', 'APP-05'], 'the rebuild re-applied what the old site had');
+  assert.deepEqual(siteJson().approaches, ['APP-01', 'APP-02'], 'the rebuild re-applied what the old site had');
   assert.ok(existsSync(join(r.siteDir, 'src/sections/APP-02/ScrollStory.astro')));
 });
 

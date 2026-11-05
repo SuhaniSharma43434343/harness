@@ -1,0 +1,64 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-05",
+  "name": "Shader / WebGL Website",
+  "philosophy": "The surface of the site is alive. A custom GPU-drawn material is the brand's visual signature, and everything else is restrained so it can breathe.",
+  "principles": [
+    "One authored shader idea that belongs to this brand",
+    "The effect expresses a concept: water for a port, heat for a foundry",
+    "Type stays in the DOM and always readable",
+    "The quality ladder is part of the design"
+  ],
+  "visualIdentity": "Experiential and atmospheric: a living field of colour or texture with sparse, precise type over it. Studio-portfolio energy.",
+  "artDirection": "Derive the shader from the brand concept and palette. Decide its scale, speed and grain on purpose, and repeat it in small doses across pages.",
+  "layout": {
+    "patterns": [
+      "full-bleed",
+      "statement",
+      "layered-field",
+      "list-editorial",
+      "overlap"
+    ],
+    "composition": "Large immersive fields alternating with very quiet text sections. Sparse grids, big margins."
+  },
+  "typography": "Sharp display type with wide spacing or strong contrast over the field, plus a readability scrim where the field moves behind text.",
+  "colour": "Palette comes alive inside the shader; the interface stays nearly monochrome.",
+  "contentPresentation": "Short and confident. Few words, strong statements, portfolio-like lists.",
+  "assets": "The shader is the main asset. Very few photos, treated to match the field.",
+  "animation": "Continuous slow motion in the field, reacting to pointer and scroll. Interface motion stays minimal.",
+  "scrolling": "Native scroll. Scroll may shift the shader's parameters. Only one canvas runs at a time.",
+  "responsive": "Quality ladder: full, reduced, then a CSS gradient or still frame. Text contrast is checked over the fallback too.",
+  "useCases": [
+    "Creative studios",
+    "Experiential brands",
+    "Accent backgrounds for a brand with a strong concept"
+  ],
+  "avoidFor": [
+    "Content-heavy sites",
+    "Motion intensity 0"
+  ],
+  "signals": {
+    "required": [
+      "webgl"
+    ],
+    "forbidden": [
+      "pinned"
+    ]
+  },
+  "compatibleWith": [
+    {
+      "approach": "APP-02",
+      "when": "The story has one shader scene as a chapter"
+    }
+  ],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: custom GLSL for globe, ocean, landscape; ocean static, morphing incomplete",
+      "Skill: ShaderBackground with a quality ladder",
+      "Taste docs: headline must not be painted by the shader; scrim over moving fields"
+    ],
+    "interpreted": [
+      "Concept-derived shader, restraint rules"
+    ]
+  }
+}

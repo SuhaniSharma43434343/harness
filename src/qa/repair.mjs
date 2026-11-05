@@ -4,8 +4,8 @@ import { PermissionDenied } from '../core/errors.mjs';
 import { addTask } from '../core/board.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { advancePhase, loadProject, MAX_REPAIR_LOOPS } from '../core/project.mjs';
-import { runTask } from '../core/runner.mjs';
-import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
+import { runTask, shellVerifier } from '../core/runner.mjs';
+import { ROOT, assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
 import { runGate } from '../gates/index.mjs';
 import { openDefects } from './defects.mjs';
 import { qaReview, readDefects, REPORT } from './review.mjs';
@@ -31,6 +31,7 @@ function approaches(dir) {
 // QA Verifier's next review does.
 export function repairTasks(project, report, loop, opts = {}) {
   const dir = assertProjectExists(project, opts).dir;
+  if (existsSync(join(dir, 'design', 'section-plan.json'))) return designRepairTask(project, dir, report, loop);
   const byGate = new Map();
   for (const d of openDefects(report)) byGate.set(d.gate, [...(byGate.get(d.gate) ?? []), d]);
   return [...byGate].map(([gate, defects]) => ({
@@ -51,11 +52,39 @@ export function repairTasks(project, report, loop, opts = {}) {
   }));
 }
 
+// A designed site is one piece of work: every open defect goes to one builder task with the
+// specification and the screenshots, and its verify command rebuilds and re-renders the site.
+function designRepairTask(project, dir, report, loop) {
+  const defects = openDefects(report);
+  if (!defects.length) return [];
+  return [
+    {
+      id: `repair-${loop}-design`,
+      agent: 'builder',
+      approach_modules: approaches(dir),
+      inputs: [REPORT, 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/motion-plan.json', 'design/asset-plan.json', 'content/copy.json', ...new Set(defects.flatMap((d) => d.evidence))],
+      owns_files: ['site/src/sections/**', 'site/src/styles/**', 'site/src/components/**', 'site/src/layouts/**', 'site/src/lib/**', 'site/public/**', 'site/package.json', 'assets/register.json'],
+      must_not_touch: [...NEVER, 'design/**', 'content/**', 'site/src/content/**'],
+      depends_on: [],
+      acceptance: [
+        ...defects.map((d) => `${d.id} fixed: ${d.message}${d.location ? ` (${d.location})` : ''}`),
+        'Fix what the specification says should be there, and do not change the specification or the copy. Look at the evidence screenshots first',
+      ],
+      verify: `"${process.execPath}" "${join(ROOT, 'src', 'cli', 'index.mjs')}" check site-build`,
+      budget: { minutes: 45, retries: 1 },
+      idempotency_key: `${project}:repair:${loop}:design`,
+      status: 'pending',
+      evidence: [],
+    },
+  ];
+}
+
 // A verifier for repair tasks that runs the gate in the task's verify command in-process
 // (the same check as the forge gates command, without needing a shell or the CLI config).
 export function gateVerifier(project, opts = {}) {
-  return async (command) => {
+  return async (command, ctx) => {
     const gates = [...command.matchAll(/--gate\s+([a-z-]+)/g)].map((m) => m[1]);
+    if (!gates.length && / check /.test(command)) return shellVerifier(command, ctx);
     const dir = assertProjectExists(project, opts).dir;
     const lines = [];
     let ok = gates.length > 0;
@@ -76,6 +105,7 @@ export function gateVerifier(project, opts = {}) {
 // opts: { worker (the builder), verifier?, workspace, now?, gates?, browser?, adapters?, thresholds? }
 export async function runRepairLoop(project, opts = {}) {
   const { worker, verifier, ...rest } = opts;
+  if (existsSync(join(assertProjectExists(project, rest).dir, 'design', 'section-plan.json'))) rest.visualWorker ??= worker;
   const state = loadProject(project, rest);
   if (state.phase === 'REPAIR') advancePhase(project, 'QUALITY_REVIEW', { actor: 'qa-verifier', ...rest });
   else if (state.phase !== 'QUALITY_REVIEW') {
@@ -86,6 +116,7 @@ export async function runRepairLoop(project, opts = {}) {
   let { report, floor } = await qaReview(project, rest);
   let loops = 0;
   while (!floor.met || openDefects(report).length) {
+    if (rest.budgetExhausted?.()) return { outcome: 'budget', loops, report };
     if (loadProject(project, rest).repairLoops >= MAX_REPAIR_LOOPS) return escalate(project, report, rest);
     advancePhase(project, 'REPAIR', { actor: 'qa-verifier', ...rest });
     loops = loadProject(project, rest).repairLoops;

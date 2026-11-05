@@ -79,11 +79,17 @@ function refuse(project, actor, action, reason, opts, hint) {
   return new PermissionDenied(`Refused: ${action}. ${reason}`, { hint, details: { action, reason } });
 }
 
+// Approvals in force. Sending work back before an approval voids it (see returnToPhase), because
+// what was approved has changed.
 export function approvals(project, opts = {}) {
-  return ledger
-    .read(project, opts)
-    .filter((e) => e.type === 'approval')
-    .map((e) => ({ approval: e.data.approval, seq: e.seq, ts: e.ts, note: e.data.note }));
+  const out = [];
+  for (const e of ledger.read(project, opts)) {
+    if (e.type === 'approval') out.push({ approval: e.data.approval, seq: e.seq, ts: e.ts, note: e.data.note });
+    else if (e.type === 'note' && e.data?.event === 'approval_voided') {
+      for (let i = out.length - 1; i >= 0; i--) if (out[i].approval === e.data.approval) out.splice(i, 1);
+    }
+  }
+  return out;
 }
 
 export function hasApproval(project, code, opts = {}) {
@@ -106,6 +112,23 @@ export function requireApproval(project, code, action, { actor = 'cli', ...opts 
   loadProject(project, opts);
   if (hasApproval(project, code, opts)) return true;
   throw refuse(project, actor, action, `${code} not recorded`, opts, `The operator must run forge approve ${project} ${code} first.`);
+}
+
+// returnToPhase: the Design Manager sends work back to an earlier phase, before quality review. `voids` lists the approvals whose subject is about to change; the operator
+// gives those again on the way back through.
+export function returnToPhase(project, to, { actor = 'design-manager', reason = '', voids = [], ...opts } = {}) {
+  const state = loadProject(project, opts);
+  const from = state.phase;
+  const target = byName.get(to);
+  if (!target || target.index >= byName.get(from).index || byName.get(from).index > byName.get('INTEGRATION_TESTS').index) {
+    throw refuse(project, actor, `return ${from} -> ${to}`, 'Work can only go back to an earlier phase, before quality review', opts);
+  }
+  for (const approval of voids) {
+    if (hasApproval(project, approval, opts)) ledger.append(project, { actor, type: 'note', data: { event: 'approval_voided', approval, reason } }, opts);
+  }
+  state.phase = to;
+  ledger.append(project, { actor, type: 'phase_transition', data: { from, to, returned: true, reason } }, opts);
+  return saveProject(state, opts);
 }
 
 export function advancePhase(project, to, { actor = 'cli', ...opts } = {}) {

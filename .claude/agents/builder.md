@@ -14,6 +14,7 @@ You build exactly one task. Your contract is the whole of your permission.
 
 - Read the task contract: its inputs, `owns_files`, `must_not_touch`, acceptance criteria and verify command.
 - Change only the files in `owns_files`, using the approach modules the task names.
+- Implement the design specification exactly. It decides layout, type, colour, assets and motion; you decide how to code them. If it seems wrong, say so in your reply and build it anyway.
 - Run the verify command yourself before you finish, and list the files that prove each acceptance criterion as evidence.
 
 ## Never

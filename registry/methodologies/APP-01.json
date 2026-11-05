@@ -1,0 +1,62 @@
+{
+  "registryVersion": "0.1.0",
+  "id": "APP-01",
+  "name": "AI to Full Website",
+  "philosophy": "Words and structure carry the site. A complete multi-page website whose distinction comes from typography, editorial composition and real content, not from effects.",
+  "principles": [
+    "The client's real words are the design material",
+    "Type and white space create hierarchy before any decoration",
+    "Every page has one job and one call to action",
+    "Fast and accessible is part of the look"
+  ],
+  "visualIdentity": "Editorial and confident, like a well-made printed brochure. A strong type voice, a restrained palette, one signature graphic device repeated across pages.",
+  "artDirection": "Choose one graphic device (a rule system, numbered margins, an oversized initial, a photo crop) and use it everywhere. Photography is art-directed and cropped with intent, never decorative stock filler.",
+  "layout": {
+    "patterns": [
+      "editorial-split",
+      "asymmetric",
+      "full-bleed",
+      "overlap",
+      "list-editorial",
+      "quote-feature",
+      "stats-band",
+      "statement"
+    ],
+    "composition": "An asymmetric grid with real tension: wide margins, offset columns, images that break the column, sections of different heights and densities. Cards only where items are truly equal."
+  },
+  "typography": "A distinctive display face at large sizes against a readable body face. At least five clear levels. Headline size and measure do the work other approaches give to motion.",
+  "colour": "Light by default. One primary, one accent used at most twice per screen, large neutral surfaces. Colour blocks mark changes of topic.",
+  "contentPresentation": "Long enough to persuade. Real headlines with a point of view, specific service detail, proof with sources, plain calls to action. Prose is laid out, not dumped.",
+  "assets": "Client or licensed photography, cropped to a consistent treatment. Authored SVG diagrams or marks where photos do not exist. No placeholder art in a finished site.",
+  "animation": "Quiet: CSS reveals on entry, hover states that confirm a link, one small signature micro-interaction. Nothing that delays reading.",
+  "scrolling": "Native scrolling. No pinning, no smooth-scroll library, no scroll hijack. Page transitions may use the browser View Transitions API.",
+  "responsive": "Rebuild the composition for mobile instead of stacking it: reorder so the point comes first, keep display type large, keep the graphic device. Tablet keeps two columns where the measure allows.",
+  "useCases": [
+    "Service businesses",
+    "Marketing sites",
+    "Nonprofits",
+    "Any project where content and speed matter most",
+    "The fallback for every other approach"
+  ],
+  "avoidFor": [
+    "A launch whose point is a staged story",
+    "A product that must be turned over in 3D"
+  ],
+  "signals": {
+    "required": [],
+    "forbidden": [
+      "pinned",
+      "webgl"
+    ]
+  },
+  "compatibleWith": [],
+  "provenance": {
+    "fromTeam": [
+      "Workbook: end-to-end AI build, first version looked plain, client-approved 7-page site with a content lock (Nidhi)",
+      "Skill: base build method on the starter"
+    ],
+    "interpreted": [
+      "Philosophy, editorial composition rules, signature device"
+    ]
+  }
+}

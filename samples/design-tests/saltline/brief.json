@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "0.1.0",
+  "status": "ready",
+  "project": "design-saltline",
+  "projectType": "launch",
+  "tier": "M",
+  "client": {
+    "name": "Saltline Chocolate",
+    "industry": "craft food",
+    "languages": [
+      "en"
+    ]
+  },
+  "goals": [
+    {
+      "id": "launch",
+      "statement": "Sell out the first batch of the Tideline bar through pre-orders by email",
+      "metric": "pre-order emails"
+    }
+  ],
+  "audience": [
+    {
+      "segment": "People who buy single-origin coffee and care how food is made",
+      "need": "A reason to believe this bar is worth $14"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Tideline",
+      "purpose": "Tell the story of the bar from cacao pod to sea salt harvest as one scroll journey",
+      "cta": "Reserve a bar"
+    },
+    {
+      "slug": "/the-batch",
+      "title": "The batch",
+      "purpose": "Give the details of Batch 001: what is in it, how many, when it ships and how to reserve one",
+      "cta": "Reserve a bar"
+    }
+  ],
+  "features": {
+    "forms": [],
+    "interactive": [
+      "scroll-story"
+    ]
+  },
+  "brand": {
+    "tone": [
+      "premium",
+      "confident",
+      "quiet"
+    ],
+    "motionIntensity": 3
+  },
+  "constraints": {
+    "deviceFloor": "mid",
+    "accessibility": "WCAG 2.2 AA",
+    "hosting": "vercel"
+  },
+  "integrations": [],
+  "assumptions": []
+}

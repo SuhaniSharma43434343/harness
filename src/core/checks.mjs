@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { CHECKS as SPEC, writeLockedPages } from '../design/spec.mjs';
 
 // Verify checks for the planned tasks (forge check <name>, run in the project folder). Each one
 // returns the list of problems; an empty list means the task's acceptance criteria hold.
@@ -74,6 +75,45 @@ export const CHECKS = {
     if (!Array.isArray(r.assets)) return ['assets/register.json needs an "assets" list'];
     return r.assets.filter((a) => !a.licence || !a.source || !a.status).map((a) => `register row ${a.file ?? a.path ?? a.package ?? '?'} needs licence, source and status`);
   },
+};
+
+// Design specification stages, plus the two build checks. A passing copy check also writes the
+// locked page files, so the site and the content gates always read exactly what was checked.
+for (const [name, fn] of Object.entries(SPEC)) {
+  if (name === 'research') {
+    const summary = CHECKS.research;
+    CHECKS.research = (dir) => [...summary(dir), ...fn(dir)];
+  } else {
+    CHECKS[name] = fn;
+  }
+}
+const specCopy = CHECKS.copy;
+CHECKS.copy = (dir) => {
+  const problems = specCopy(dir);
+  if (!problems.length) writeLockedPages(dir);
+  return problems;
+};
+
+// The foundation is checked by reading it; the next task's build proves it compiles.
+CHECKS.foundation = (dir) => {
+  const problems = [];
+  if (!existsSync(join(dir, 'site', 'src', 'lib', 'motion.js'))) problems.push('site/src/lib/motion.js is missing');
+  for (const f of ['Header.astro', 'Footer.astro']) {
+    const file = join(dir, 'site', 'src', 'components', f);
+    if (!existsSync(file) || !/copy\.json/.test(readFileSync(file, 'utf8'))) problems.push(`site/src/components/${f} must read its text from src/copy.json`);
+  }
+  return problems;
+};
+
+// Builds the site from the locked pages and renders it against the specification.
+CHECKS['site-build'] = async (dir) => {
+  const { buildFromSpec } = await import('../qa/visual.mjs');
+  return buildFromSpec(dir);
+};
+
+CHECKS['visual-review'] = async (dir) => {
+  const { checkVisualReview } = await import('../qa/visual.mjs');
+  return checkVisualReview(dir);
 };
 
 export function runCheck(name, dir) {
