@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { DESIGN_QA_GATES } from '../src/cli/design.mjs';
 import * as ledger from '../src/core/ledger.mjs';
 import { loadProject } from '../src/core/project.mjs';
+import { loadConfig } from '../src/core/config.mjs';
 import { budgetsExhausted, createBudget, limitedWorker } from '../src/core/spend.mjs';
 import { designStatus, runDesignWorkflow } from '../src/design/manager.mjs';
 import { releaseChecks } from '../src/design/release.mjs';
@@ -54,7 +55,7 @@ if (!existsSync(dir)) {
 
 const budgets = [createBudget({ file: join(dir, 'reports', 'spend.json'), limitUsd: siteUsd }), createBudget({ file: resolve(spendFile), limitUsd: totalUsd })];
 const exhausted = () => budgetsExhausted(budgets);
-const worker = limitedWorker(createClaudeCodeWorker({ model }), budgets);
+const worker = limitedWorker(createClaudeCodeWorker({ model }), budgets, { parallel: loadConfig(root).config.concurrency });
 
 const result = await runDesignWorkflow(project, { workspace, worker, budgetExhausted: exhausted, onStep: (s) => log(s.phase, 'tasks done:', s.done.length, s.blocked.length ? `blocked: ${s.blocked}` : '', s.errors.length ? `errors: ${s.errors}` : '') });
 log('workflow stopped in', result.stoppedAt, '-', result.reason, ...(result.blockers ?? []), ...(result.problems ?? []).slice(0, 5));

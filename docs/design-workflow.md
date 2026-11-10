@@ -59,10 +59,14 @@ An escalation is the operator's to answer. `forge design retry <project> <stage>
 
 ## The build
 
-The Builder gets two tasks:
+The Builder gets a shared foundation first, then one task per page. The page tasks run in parallel, up to `concurrency` in `forge.config.json` at a time:
 
-- **`build-foundation`:** the design system as CSS, the header and footer from the site copy, and the motion runtime.
-- **`build-sections`:** one bespoke component per planned section, at `site/src/sections/<approach>/<PascalCaseId>.astro`.
+- **`build-foundation`:** the design system as CSS, the header and footer from the site copy, the motion runtime, and `site/public/` and `site/package.json` for every page.
+- **`build-page-<page>`** (`build-page-home` for `/`): one bespoke component per section planned for that page, at `site/src/sections/<approach>/<PascalCaseId>.astro`. Each task owns only its own page's section files and may not touch the shared folders, so no two tasks change the same file.
+
+Before the page tasks start, the harness writes a placeholder (marked `data-forge-stub`) for every planned section that has no component yet. That way the whole site builds while other pages are still being built. Each page task checks its work with `forge check site-build --page <slug>`. That builds the whole site but renders and judges only that page. The builds hold a lock (`locks/site-build`), because every page shares `site/` and `site/dist/`. A lock older than 15 minutes was left by a crash and is taken over. The full check (without `--page`) and the BUILD exit both refuse any placeholder that is left.
+
+When an integration gate fails, each finding goes back only to the task that can fix it, at its latest attempt, with only its own findings. A finding that names a page goes to that page's task. A finding that names no page is about what the pages share, so it goes to `build-foundation`. A gate that could not run, with no findings, sends nothing back: a builder cannot fix that, so the workflow stops for the operator. Projects planned before this change keep their single `build-sections` task.
 
 Sections mark their planned assets with `data-asset` and motion with `data-motion`. The page wraps each one in `data-section`. Workers have no shell, so the verify command builds and renders the site, and a failed attempt's output goes into the next attempt's prompt.
 
@@ -85,4 +89,4 @@ Findings become defects in `reports/defects.json`, then one builder repair task 
 
 `scripts/design-e2e.mjs` uses the hard limit described here. `forge design run --max-usd` does not: it is checked only between tasks, so a run can go over it, and `forge design qa` takes no limit.
 
-`createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped at what remains with `claude --max-budget-usd`. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.
+`createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped with `claude --max-budget-usd`. When tasks run in parallel, each running call holds its share: the money no other running call holds, split across the free task slots, and at least the smallest useful call ($0.25) when that much is free. So calls running together can never spend past the limit. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.

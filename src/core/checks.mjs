@@ -106,9 +106,9 @@ CHECKS.foundation = (dir) => {
 };
 
 // Builds the site from the locked pages and renders it against the specification.
-CHECKS['site-build'] = async (dir) => {
+CHECKS['site-build'] = async (dir, { page } = {}) => {
   const { buildFromSpec } = await import('../qa/visual.mjs');
-  return buildFromSpec(dir);
+  return buildFromSpec(dir, page ? { page } : {});
 };
 
 CHECKS['visual-review'] = async (dir) => {
@@ -116,8 +116,8 @@ CHECKS['visual-review'] = async (dir) => {
   return checkVisualReview(dir);
 };
 
-export function runCheck(name, dir) {
+export function runCheck(name, dir, opts = {}) {
   const check = CHECKS[name];
   if (!check) throw new Error(`Unknown check "${name}". Checks: ${Object.keys(CHECKS).join(', ')}`);
-  return check(dir);
+  return check(dir, opts);
 }

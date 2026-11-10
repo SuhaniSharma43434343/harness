@@ -85,7 +85,13 @@ const EVIDENCE = {
     }
     return problems;
   },
-  BUILD: (dir) => (existsSync(join(dir, 'site', 'dist', 'index.html')) ? [] : ['a built site in site/dist (forge site --build)']),
+  BUILD: (dir) => {
+    const problems = existsSync(join(dir, 'site', 'dist', 'index.html')) ? [] : ['a built site in site/dist (forge site --build)'];
+    const root = join(dir, 'site', 'src', 'sections');
+    const stubs = existsSync(root) ? readdirSync(root, { recursive: true }).map(String).filter((f) => f.endsWith('.astro') && readFileSync(join(root, f), 'utf8').includes('data-forge-stub')) : [];
+    if (stubs.length) problems.push(`every section built: ${stubs.length} still a placeholder (${stubs.slice(0, 3).join(', ')})`);
+    return problems;
+  },
   INTEGRATION_TESTS: (dir) => {
     const results = latestGateResults(dir);
     const { failing } = qualityFloor(results, ['routes', 'forms', 'content-parity']);

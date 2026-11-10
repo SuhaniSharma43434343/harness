@@ -15,7 +15,12 @@ forge qa <project> --repair --full-retest   # re-run every gate after every repa
 
 ## A review
 
-`qaReview(project, opts)` runs the gates (`docs/gates.md`) on `site/` and:
+`qaReview(project, opts)` runs the gates (`docs/gates.md`) on `site/`. The order is part
+sequential, part parallel: the design-fidelity render runs first, because the visual review needs
+its screenshots. The model's visual review then runs while the other gates run, and the render is
+not repeated. Then the `visual-review` gate runs, and `performance` runs last and alone, because
+Lighthouse numbers are wrong on a busy machine. Results are reported in the usual gate order.
+The review then:
 
 - writes every gate result to `evidence/qa/review-N/<gate>.json`, a new folder per review, so a
   verification never reuses old evidence;

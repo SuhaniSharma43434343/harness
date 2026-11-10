@@ -23,24 +23,37 @@ export function createBudget({ file, limitUsd }) {
 
 export const budgetsExhausted = (budgets) => budgets.some((b) => b.remaining() < MIN_CALL_USD);
 
-// limitedWorker(worker, budgets): refuses a call with no money left, tells the worker the most it
-// may spend (claude --max-budget-usd), and counts what it spent, including on a failed attempt.
-export function limitedWorker(worker, budgets) {
+// limitedWorker(worker, budgets, { parallel }): refuses a call with no money left, tells the worker
+// the most it may spend (claude --max-budget-usd), and counts what it spent, including on a failed
+// attempt. Calls in flight at the same time each get a share: a call may spend at most the money no
+// other running call has reserved, split across the task slots still free (`parallel` minus the
+// calls running), so together they can never pass the limit. When the split is below the smallest
+// useful call but the money is there, the call gets that smallest amount.
+export function limitedWorker(worker, budgets, { parallel = 1 } = {}) {
+  const reserved = new Map();
+  let next = 0;
   return async (job) => {
-    if (budgetsExhausted(budgets)) {
-      throw new PermissionDenied(`The spending limit is reached ($${Math.min(...budgets.map((b) => b.remaining())).toFixed(2)} left)`);
+    const held = [...reserved.values()].reduce((a, b) => a + b, 0);
+    const free = Math.round((Math.min(...budgets.map((b) => b.remaining())) - held) * 100) / 100;
+    const slots = Math.max(1, parallel - reserved.size);
+    const share = Math.min(free, Math.max(MIN_CALL_USD, Math.floor((free / slots) * 100) / 100));
+    if (budgetsExhausted(budgets) || share < MIN_CALL_USD) {
+      throw new PermissionDenied(`The spending limit is reached ($${Math.max(0, free).toFixed(2)} left that no running task holds)`);
     }
-    const maxBudgetUsd = Math.round(Math.min(...budgets.map((b) => b.remaining())) * 100) / 100;
+    const key = next++;
+    reserved.set(key, share);
     const count = (usd) => {
       for (const b of budgets) b.add(usd ?? 0);
     };
     try {
-      const out = await worker({ ...job, maxBudgetUsd });
+      const out = await worker({ ...job, maxBudgetUsd: share });
       count(out?.costUsd);
       return out;
     } catch (err) {
       count(err?.costUsd);
       throw err;
+    } finally {
+      reserved.delete(key);
     }
   };
 }

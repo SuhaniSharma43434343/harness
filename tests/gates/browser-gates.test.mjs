@@ -82,6 +82,31 @@ test('forms: a form whose endpoint fails must show the error state', { skip }, a
   assert.ok(r.findings.some((f) => f.id === 'no-error-state'));
 });
 
+test('forms: a submit button the browser cannot click is a finding on its page, not a gate error', { skip }, async () => {
+  const { siteDir } = materializeFixture('known-good');
+  const { writeFileSync, readFileSync } = await import('node:fs');
+  const dist = join(siteDir, 'dist');
+  const pages = readdirSync(dist, { recursive: true }).map(String).filter((f) => f.endsWith('.html') && readFileSync(join(dist, f), 'utf8').includes('<form'));
+  assert.ok(pages.length, 'the known-good site has a form');
+  for (const f of pages) writeFileSync(join(dist, f), readFileSync(join(dist, f), 'utf8').replace('</head>', '<style>form [type=submit]{display:none}</style></head>'));
+  const r = await runGate('forms', siteDir, { browser });
+  assert.notEqual(r.status, 'error');
+  const found = r.findings.filter((f) => f.id === 'form-unusable');
+  assert.ok(found.length, 'the hidden button is reported');
+  assert.ok(found.every((f) => /^\/\S* \(/.test(f.location)), 'with the page route, so the right page goes back to its builder');
+});
+
+test('forms: a form that posts to its own page is tested, not mistaken for an unusable one', { skip }, async () => {
+  const { writeFileSync, readFileSync } = await import('node:fs');
+  for (const action of ['/contact', '/contact/']) {
+    const { siteDir } = materializeFixture('known-good');
+    const file = join(siteDir, 'dist', 'contact', 'index.html');
+    writeFileSync(file, readFileSync(file, 'utf8').replace('action="/api/quote"', `action="${action}"`));
+    const r = await runGate('forms', siteDir, { browser });
+    assert.equal(r.status, 'pass', `action="${action}": ${r.findings.map((f) => f.id).join(', ') || r.error?.message}`);
+  }
+});
+
 test('runGates shares one browser across the browser gates', { skip: skip || skipAxe }, async () => {
   const { siteDir } = materializeFixture('known-good');
   const results = await runGates(siteDir, { gates: BROWSER_GATES, screenshots: false });
