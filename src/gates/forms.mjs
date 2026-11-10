@@ -58,7 +58,10 @@ export default {
           page.setDefaultTimeout(10_000); // a local static page: a control not usable in 10 s is not usable
           let sent = 0;
           let answer = 200;
+          // A form may post to its own page (action="/contact" on /contact): loading the page is
+          // not a submission, so a GET navigation goes through to the site.
           await page.route((url) => url.pathname === new URL(action, base + route).pathname, (r) => {
+            if (r.request().method() === 'GET' && r.request().isNavigationRequest()) return r.continue();
             sent++;
             return r.fulfill({ status: answer, contentType: 'application/json', body: answer < 400 ? '{"ok":true}' : '{"ok":false}' });
           });
