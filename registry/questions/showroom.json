@@ -36,7 +36,7 @@
       "fills": [
         "audience"
       ],
-      "prompt": "Who are the main visitors, and what do they need? One per line. If known, add what brings them, the proof they need and the one thing to do, e.g. \"Homeowners: a builder they trust | wants: a fixed quote | proof: finished jobs nearby | action: book a visit\".",
+      "prompt": "Who visits, and what do they need? One per line. If known, add what brings them, proof they need, the one action, where they arrive from and their mood, e.g. \"Homeowners: a builder they trust | wants: a fixed quote | proof: finished jobs nearby | action: book a visit | from: Instagram | mood: wary\".",
       "kind": "text",
       "appliesTo": {
         "projectTypes": [

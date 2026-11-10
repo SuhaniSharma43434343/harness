@@ -43,7 +43,8 @@ function setPath(obj, path, value) {
 export function intakeView(brief, facts) {
   const view = structuredClone(brief ?? {});
   if (facts?.project && view.project === undefined) view.project = facts.project;
-  for (const f of facts?.facts ?? []) if (settled(f)) setPath(view, f.field, f.value);
+  // A null value is a settled "none" (no deadline, no current site): the field stays unset.
+  for (const f of facts?.facts ?? []) if (settled(f) && f.value !== null) setPath(view, f.field, f.value);
   return view;
 }
 
@@ -125,11 +126,12 @@ export function checkAnswer(q, value) {
     case 'number':
       if (typeof value !== 'number' || Number.isNaN(value)) fail('expected a number');
       break;
+    // A date or an address may be answered with null: there is none (no deadline, no current site).
     case 'date':
-      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) fail('expected a date as YYYY-MM-DD');
+      if (value !== null && (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value))) fail('expected a date as YYYY-MM-DD, or null for none');
       break;
     case 'url':
-      if (typeof value !== 'string' || !URL.canParse(value)) fail('expected a URL');
+      if (value !== null && (typeof value !== 'string' || !URL.canParse(value))) fail('expected a URL, or null for none');
       break;
     default:
       // text: the raw words, or the value already in its brief shape. The Project Manager

@@ -6,13 +6,13 @@ import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
 import { listTasks, saveTask, transitionTask } from '../../src/core/board.mjs';
 import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { formAction, pageTaskId, planPhase, writeStubs } from '../../src/core/planner.mjs';
+import { formAction, pageTaskId, planPhase, specTask, writeStubs } from '../../src/core/planner.mjs';
 import { actionFor } from '../../plugins/form-function/index.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
 import { buildTargets, MAX_STAGE_RETURNS, retryBuildTask, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
-import { CHECKS, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
+import { CHECKS, contentRuleProblems, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
@@ -625,6 +625,42 @@ test('one build of the site at a time: a second waits, and a lock left by a cras
   assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'the lock is released');
   await assert.rejects(withSiteLock(dir, async () => { throw new Error('boom'); }), /boom/);
   assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'and released when the build fails');
+});
+
+test('the copy check refuses copy that breaks the brief content rules', () => {
+  const { dir } = fullProject();
+  const rules = (contentRules) => write(dir, 'intake/brief.json', { ...BRIEF, contentRules });
+  rules([{ rule: 'never', text: 'ITEMISED  quote', pages: ['/'] }]);
+  const copyText = JSON.stringify(spec()['content/copy.json']).toLowerCase();
+  assert.ok(copyText.includes('itemised'), 'the fixture copy says "itemised quote"');
+  assert.ok(CHECKS.copy(dir).some((p) => /"ITEMISED {2}quote" must never appear on this page/.test(p)), 'case and spacing do not hide it');
+  rules([{ rule: 'always', text: 'Licence 12345', pages: ['*'] }]);
+  assert.ok(CHECKS.copy(dir).some((p) => /\/: "Licence 12345" must appear on this page/.test(p)));
+  rules([{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }]);
+  assert.ok(!CHECKS.copy(dir).some((p) => /content rule/.test(p)), 'a line in the footer is on every page');
+  rules([{ rule: 'never', text: 'Smith', pages: ['/gone'] }]);
+  assert.ok(CHECKS.copy(dir).some((p) => /names \/gone, which has no copy/.test(p)));
+  rules([]);
+  assert.deepEqual(contentRuleProblems(spec()['content/copy.json'], []), []);
+});
+
+test('the contracts use the pre-build answers: truths, jobs, arrival and mood, content rules', () => {
+  const brief = {
+    ...BRIEF,
+    audience: [{ ...BRIEF.audience[0], arrivesFrom: ['Instagram'], mood: 'wary' }],
+    truths: [{ text: 'Fitted three hundred crooked Portland kitchens' }],
+    jobs: ['Book a visit', 'Call'],
+    contentRules: [{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }],
+  };
+  const lines = (stage, b = brief) => specTask('demo', stage, b).acceptance;
+  assert.ok(lines('research').some((a) => /"Fitted three hundred crooked Portland kitchens"/.test(a) && /only 1 of the three to six/.test(a) && /questions for the client/.test(a)));
+  assert.ok(lines('direction').some((a) => /The concept rests on one of the facts only this business can claim/.test(a)));
+  assert.ok(lines('section-plan').some((a) => /these jobs in one tap: "Book a visit", "Call"/.test(a)));
+  assert.ok(lines('section-plan').some((a) => /arrives from or its mood/.test(a)));
+  assert.ok(lines('copy').some((a) => /content rules\. Always on every page: "Licensed and insured in Maine"/.test(a)));
+  // Without the new fields, only the research line about missing truths is added.
+  assert.ok(lines('research', BRIEF).some((a) => /gives none of the three to six/.test(a)));
+  for (const stage of ['direction', 'section-plan', 'copy']) assert.ok(!lines(stage, BRIEF).some((a) => /one tap|arrives from|content rules|rests on one of the facts/.test(a)), stage);
 });
 
 test('the operator can give a build task out of retries one more attempt, with its own findings', () => {

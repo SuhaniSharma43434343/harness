@@ -103,6 +103,31 @@ export function operationalClaims(section) {
   return [...new Set(hits)];
 }
 
+// contentRuleProblems(copy, rules) => problems. The brief's content rules on the copy: "never"
+// text must not appear on the pages named, "always" text must. A page's text is its own copy plus
+// what every page shows (the nav and footer). "*" means every page. Case and spacing are ignored.
+const flat = (x) => (typeof x === 'string' ? [x] : Array.isArray(x) ? x.flatMap(flat) : x && typeof x === 'object' ? Object.values(x).flatMap(flat) : []);
+const squash = (t) => String(t).toLowerCase().replace(/\s+/g, ' ').trim();
+export function contentRuleProblems(copy, rules) {
+  const problems = [];
+  const shared = squash([...flat(copy.nav ?? []), ...flat(copy.footer ?? {})].join(' \n '));
+  const pageText = new Map(copy.pages.map((p) => [p.slug, squash([p.title, p.description, p.cta?.label, ...p.sections.flatMap(copyStrings)].filter(Boolean).join(' \n '))]));
+  for (const r of rules) {
+    const want = squash(r.text);
+    const slugs = r.pages.includes('*') ? [...pageText.keys()] : r.pages;
+    for (const slug of slugs) {
+      if (!pageText.has(slug)) {
+        problems.push(`intake/brief.json: a content rule names ${slug}, which has no copy`);
+        continue;
+      }
+      const here = pageText.get(slug).includes(want) || shared.includes(want);
+      if (r.rule === 'never' && here) problems.push(`${slug}: "${r.text}" must never appear on this page (a content rule in the brief), but the copy has it`);
+      if (r.rule === 'always' && !here) problems.push(`${slug}: "${r.text}" must appear on this page (a content rule in the brief)`);
+    }
+  }
+  return problems;
+}
+
 export function copyStrings(section) {
   const out = [];
   for (const key of ['eyebrow', 'headline', 'subheadline', 'note']) if (section[key]) out.push(section[key]);
@@ -351,6 +376,7 @@ export const CHECKS = {
     const name = brief?.client?.name;
     if (name && !JSON.stringify(c).includes(name)) problems.push(`content/copy.json: never names ${name}`);
     for (const p of brief?.pages ?? []) if (!c.pages.some((x) => x.slug === p.slug)) problems.push(`content/copy.json: page ${p.slug} is missing`);
+    problems.push(...contentRuleProblems(c, brief?.contentRules ?? []));
     return problems;
   },
 

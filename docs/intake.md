@@ -57,6 +57,19 @@ The required fields are `projectType`, `tier`, `client.name`, `client.industry`,
 
 **Audience views.** The audience question asks, for each visitor type, what they need, and if known what brings them, what proof they need to trust the business, and the one thing they should do. Typed on one line per visitor: `Homeowners: a builder they can trust | wants: a fixed quote | proof: finished jobs nearby | action: book a home visit`. The parts after the need are optional, and each type's recommendation names a default action. The section-plan and copy contracts plan each page for these audiences and use their actions as the calls to action.
 
+**The pre-build questions** (in every project type, rounds 2 and 3):
+
+| Question | Fills | Used by |
+| --- | --- | --- |
+| `q-truths`: what is true here that nobody else can claim | `truths` | The B1 plan warns with fewer than three; research puts them first and names the one the site rests on; the direction's concept rests on one |
+| Audience question: where visitors arrive from and their mood (`\| from: ... \| mood: ...`) | `audience[].arrivesFrom`, `audience[].mood` | The section plan plans the first screen for them |
+| `q-jobs`: what a visitor must do in one tap from any page | `jobs` | The section plan places each job on every page |
+| `q-access`: domain, DNS and existing material, with how good each is | `access` | The B1 plan lists what to ask the client for on day one |
+| `q-content-rules`: text that must never or must always appear | `contentRules` | The copy contract, and the copy check, which refuses copy that breaks a rule |
+| `q-languages`, `q-deadline`, `q-existing-site` | `client.languages`, `constraints.deadline`, `client.existingSite` | The brief's existing fields |
+
+A date or an address can be answered with `null`, meaning there is none. The deadline and current-site recommendations are `null`, so they leave the field unset.
+
 `forge intake <project>` asks in the terminal (Enter takes the recommendation). `--answers <file.json>` takes answers keyed by question id, and `--use-recommendations` takes the recommendation for everything else. Typed text for goals, audience, pages, forms and things to avoid becomes the brief shape, one item per line or semicolon (`src/intake/shape.mjs`). For a question with options, type the option's number, its value or its label in any case, or just the start of the label (`up to 12 pages`, `AAA`); several options take commas (`1,4`). An answer that fits no option, or more than one, is explained and asked again at once, so a typo never fails the round (`src/intake/typed.mjs`).
 
 ## The estimate

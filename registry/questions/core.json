@@ -565,6 +565,166 @@
         "value": [],
         "reason": "Nothing to avoid unless the client names it."
       }
+    },
+    {
+      "id": "q-truths",
+      "fills": [
+        "truths"
+      ],
+      "prompt": "What is true here that nobody else can claim? Three to six facts about the place, people, material, history, method or a number, one per line, e.g. \"history: fitting boats in this harbour since 1962\".",
+      "why": "The design rests on one of these. With fewer than three, the first deliverable is questions for the client, not a design.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "round": 2,
+      "recommendation": {
+        "value": [],
+        "reason": "None given: research looks for them, and any gap becomes a question for the client."
+      }
+    },
+    {
+      "id": "q-jobs",
+      "fills": [
+        "jobs"
+      ],
+      "prompt": "What must a visitor be able to do in one tap from anywhere on the site? Up to four, one per line, e.g. \"Call\" or \"Book a visit\".",
+      "why": "Each job gets a control on every page, so the site never hides its main purpose.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 4,
+      "round": 2,
+      "recommendation": {
+        "value": [],
+        "reason": "Each page's call to action stands in until the client names the jobs."
+      }
+    },
+    {
+      "id": "q-access",
+      "fills": [
+        "access"
+      ],
+      "prompt": "Day one: the domain and who controls it, DNS access, and what material exists (logo, photos, video, copy, menus, current site, social feeds) and how good each is. One per line, e.g. \"domain: example.com, client will give\" or \"photos: usable, in Drive\".",
+      "why": "Asked on day one so the domain, DNS and material do not hold up the launch, and so the plan knows which material is good enough to use.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "round": 2,
+      "recommendation": {
+        "value": {},
+        "reason": "Nothing given yet: the B1 plan lists each item to ask for on day one."
+      }
+    },
+    {
+      "id": "q-content-rules",
+      "fills": [
+        "contentRules"
+      ],
+      "prompt": "Must any name, date, number or venue never appear on a page, or a line (licence number, consent text) always appear? One per line, e.g. \"never on /: Smith\" or \"always on *: Licence 12345\". * means every page.",
+      "why": "The copy check refuses copy that breaks these rules, before anything is built.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 3,
+      "round": 3,
+      "recommendation": {
+        "value": [],
+        "reason": "No rules unless the client names them."
+      }
+    },
+    {
+      "id": "q-languages",
+      "fills": [
+        "client.languages"
+      ],
+      "prompt": "Which language should the site be in? Release 1.0 builds one language per site.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 2,
+      "round": 3,
+      "recommendation": {
+        "value": [
+          "en"
+        ],
+        "reason": "English, unless the client says otherwise."
+      }
+    },
+    {
+      "id": "q-deadline",
+      "fills": [
+        "constraints.deadline"
+      ],
+      "prompt": "Is there a date the site must be live by? Give it as YYYY-MM-DD.",
+      "kind": "date",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 2,
+      "round": 3,
+      "recommendation": {
+        "value": null,
+        "reason": "No deadline unless the client gives one."
+      }
+    },
+    {
+      "id": "q-existing-site",
+      "fills": [
+        "client.existingSite"
+      ],
+      "prompt": "Is there a current website? Give its address.",
+      "kind": "url",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 2,
+      "round": 3,
+      "recommendation": {
+        "value": null,
+        "reason": "No current site unless the client names one."
+      }
     }
   ]
 }
