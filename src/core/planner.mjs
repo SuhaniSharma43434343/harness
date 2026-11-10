@@ -45,10 +45,11 @@ const STAGE_TASKS = {
       shape('crux'),
       'Use WebSearch and WebFetch to study at least two real competitors and three real, well-designed sites worth learning from. For each, say what specifically to learn: a layout, a type treatment, a way of telling the story. If the web is unavailable, say so in researchLimits and do not invent URLs',
       'Do not state a fact about the business that is not in the brief or client material',
+      truthsLine(brief),
     ],
   }),
 
-  direction: () => ({
+  direction: (brief) => ({
     budget: { minutes: 20, retries: 1 },
     inputs: [...SPEC_INPUTS, 'design/approach-decision.json', 'design/reference/methodologies/**'],
     owns_files: ['design/direction.json', 'design/direction.md'],
@@ -57,6 +58,7 @@ const STAGE_TASKS = {
       'Read all eight methodologies. Pick exactly one primaryApproach from those design/approach-decision.json selects, and in "rejected" say why each of the others does not fit this brief',
       'Treat the approach as a complete method: interpret every one of its dimensions for this business, without importing techniques from another approach. "combination" stays empty unless the methodology\'s compatibleWith allows it and you can argue the story needs it',
       'Write a "concept": one sentence, specific to this business, that could not describe a competitor. Everything else must serve it',
+      ...(brief?.truths?.length ? [`The concept rests on one of the facts only this business can claim (intake/brief.json truths): ${brief.truths.map((t) => `"${t.text}"`).join(', ')}. Say in whyThisApproach which one, and why`] : []),
       'design/direction.md is the same direction as prose for the other agents: the concept, the personality, what the site must feel like, and what it must never do',
       shape('direction'),
     ],
@@ -92,6 +94,8 @@ const STAGE_TASKS = {
       'Give every section a funnel stage, so each page takes its visitor from awareness (the hook) through interest (how it works, the benefits) and desire (proof) to action (a low-friction call to action). The home page opens with awareness; every page with a journey ends on an action; a stage steps back only after a call to action. Use "none" for utility sections such as legal text',
       'Build each page from research/crux.json: a section draws on a bucket that has real facts. Where a bucket is empty, plan around its gap instead of a section that would need invented content',
       'Plan for each audience in intake/brief.json, not a generic visitor. Where an audience gives wants, proof and action, the pages it lands on answer what it wants, show the proof it needs, and end on its action. When audiences want different things, give each its own view: a dedicated page or path from the home page, or a section that switches between them',
+      ...(brief.jobs?.length ? [`Every page gives a visitor these jobs in one tap: ${brief.jobs.map((j) => `"${j}"`).join(', ')}. Say on each page where each one sits: the header, a call to action that stays in view, or the footer`] : []),
+      ...(brief.audience.some((a) => a.arrivesFrom?.length || a.mood) ? ['Where an audience says where it arrives from or its mood, plan the first screen it lands on for that: arriving from a social post or a QR code means a phone and a cold start; a worried visitor needs reassurance before a sales pitch'] : []),
       'Asset and motion ids you name here are defined next in design/asset-plan.json and design/motion-plan.json',
       shape('sectionPlan'),
     ],
@@ -136,11 +140,20 @@ const STAGE_TASKS = {
       "A stock or licensed photo is never described as this client's own work: captions and alt text say what it shows, not which job it came from",
       'Write each section for its funnel stage in design/section-plan.json, using the facts sorted in research/crux.json. A gap stays a gap: no invented proof, testimonials or figures',
       'Where an audience in intake/brief.json names its action, the call to action that serves it uses that action in plain words',
+      ...(brief.contentRules?.length ? [`Follow the brief's content rules. ${brief.contentRules.map((r) => `${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.includes('*') ? 'every page' : r.pages.join(', ')}: "${r.text}"`).join('. ')}. The copy check refuses copy that breaks them; an "always" line may sit in the footer when it is on every page`] : []),
       'State only facts found in the brief, client material or research. Every number, year, time, price, duration, process step, guarantee or award goes in content/claims.json as {"claims": [{"text", "source"}]}, with a source id from research/sources.json — quote the source line as you write, not afterwards. If a section needs a fact you do not have (an ingredient, a method, an opening day), write around it rather than inventing it',
       shape('siteCopy'),
     ],
   }),
 };
+
+// The facts only this business can claim. The design rests on one of them; with fewer than three,
+// research looks for more in the client material and lists the rest as questions for the client.
+function truthsLine(brief) {
+  const truths = brief.truths ?? [];
+  const given = truths.length ? `The brief names what only this business can claim: ${truths.map((t) => `"${t.text}"`).join(', ')}. Put them first in the about bucket, with source "brief", and say in research/positioning.json which one the site rests on. ` : '';
+  return truths.length >= 3 ? given.trim() : `${given}The brief gives ${truths.length ? `only ${truths.length}` : 'none'} of the three to six facts only this business can claim (about the place, people, material, history, method or a number). Find more in the client material; for what is still missing, add questions for the client to the about bucket's gaps`;
+}
 
 // specTask(project, stage, brief, { fix?, problems? }) => the contract for one specification stage,
 // or its fix task: the same contract with the Design Manager's findings to resolve.
