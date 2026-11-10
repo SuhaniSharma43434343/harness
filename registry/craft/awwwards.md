@@ -19,7 +19,7 @@ Read this before you make any design decision. The approach (APP-01 to APP-08) s
 
 1. **One idea.** The concept sentence in `design/direction.json` is the test of every choice. If a section would look the same on a competitor's site, redo it.
 2. **Scale contrast.** Make something huge and something small on the same screen. The display type is at least 6 times the body size on desktop (use `clamp`), and one word or number per page may be set at poster scale.
-3. **Break the grid on purpose.** In at least a third of sections, something overlaps, bleeds off the edge, is offset, is cropped by the viewport, or sits on a different axis from its neighbours. Show it in the composition: what overlaps what, by how much, which layer is on top.
+3. **Break the grid on purpose.** In at least a third of sections (legal text aside), something overlaps, bleeds off the edge, is offset, is cropped by the viewport, or sits on a different axis from its neighbours. Show it in the composition: what overlaps what, by how much, which layer is on top.
 4. **Type with character.** Use the display face the direction chose, at real weight and tight tracking at large sizes, with a body face that is calm. Set at least one moment of type as image: very large, cropped, outlined, or running along a path.
 5. **Colour with discipline.** One dominant colour, one sharp accent, neutrals with a slight tint. Use the accent for the primary action and one or two moments, nowhere else.
 6. **Real imagery.** Use the client's own photos, cropped with intent (tight crops, odd aspect ratios, one image taking a full screen). Never fill a gap with a stock photo. A missing photo is replaced by type, colour or a drawn shape, not a fake.
@@ -47,7 +47,7 @@ Read this before you make any design decision. The approach (APP-01 to APP-08) s
 
 1. Headlines say something only this business can say, using the owner's facts. Specific beats clever; clever beats generic.
 2. Short sentences. Active voice. Plain English. One idea per paragraph.
-3. Every page earns its length: a home page for a medium or large site has 7 or more sections, and each inner page has 4 or more, each with a different job.
+3. Every page earns its length: a home page for a medium or large site has 7 or more sections, and each inner page has 4 or more, each with a different job. A legal page (privacy, terms), whose sections are all funnel "none", is as long as its text needs.
 4. Never invent facts, times, prices, names or numbers. Write around anything the owner did not give.
 5. Every section ends by pointing at the next step.
 
