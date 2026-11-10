@@ -172,6 +172,28 @@ function copyReference(dir, approach) {
 
 const stageTask = (stage) => (project, brief) => [specTask(project, stage, brief)];
 
+// The licence register needs only the asset plan, which is finished before the copy, so it runs
+// alongside the copy task and while the operator reviews the copy at B3. The asset phase then
+// has nothing left to wait for.
+const assetRegister = (project) => (
+    {
+      ...base(project, 'asset-register'),
+      id: 'asset-register',
+      agent: 'asset-rights',
+      inputs: ['intake/brief.json', 'design/directions.json', 'design/asset-plan.json', 'assets/public/**', 'assets/unsplash-photos.json'],
+      owns_files: ['assets/register.json', 'assets/evidence/**'],
+      must_not_touch: ['site/**', 'content/**', 'design/**', 'assets/public/**'],
+      acceptance: [
+        'assets/register.json is {"assets": [...]} with one row per image, font or file the site uses: {"file", "licence", "source", "evidence", "status"}',
+        'Each client or licensed asset in design/asset-plan.json has a row. The site serves files under assets/public/ from its root, so "images/x.jpg" is the row\'s file. Authored inline SVG and CSS art needs no row',
+        'Fonts from the chosen design direction are listed with their licence (they come from Fontsource under OFL-1.1 or Apache-2.0); a site with no other assets still has the fonts. The build ships them as site/dist/_astro/<family>-<subset>-<weight>-normal.<hash>.woff and .woff2, so give each font one row whose file is a glob such as "_astro/work-sans-*.{woff,woff2}" (lowercase family, spaces as dashes)',
+        'favicon.svg is the harness starter\'s own mark: {"file": "favicon.svg", "licence": "harness (own work)", "source": "starters/astro-base", "evidence": "starters/astro-base/public/favicon.svg", "status": "cleared"}',
+        'status is "cleared" only when the licence allows the use; anything else is "uncertain". Package rows already in the register keep their status: only the operator clears a licence the harness cannot verify',
+      ],
+      verify: verify('assets'),
+    }
+);
+
 const PLANS = {
   RESEARCH: stageTask('research'),
   APPROACH_SELECTION: stageTask('direction'),
@@ -184,26 +206,9 @@ const PLANS = {
     return tasks;
   },
 
-  CONTENT: stageTask('copy'),
+  CONTENT: (project, brief) => [specTask(project, 'copy', brief), assetRegister(project)],
 
-  ASSETS_LICENSING: (project) => [
-    {
-      ...base(project, 'asset-register'),
-      id: 'asset-register',
-      agent: 'asset-rights',
-      inputs: ['intake/brief.json', 'content/copy.json', 'design/directions.json', 'design/asset-plan.json', 'assets/public/**', 'assets/unsplash-photos.json'],
-      owns_files: ['assets/register.json', 'assets/evidence/**'],
-      must_not_touch: ['site/**', 'content/**', 'design/**', 'assets/public/**'],
-      acceptance: [
-        'assets/register.json is {"assets": [...]} with one row per image, font or file the site uses: {"file", "licence", "source", "evidence", "status"}',
-        'Each client or licensed asset in design/asset-plan.json has a row. The site serves files under assets/public/ from its root, so "images/x.jpg" is the row\'s file. Authored inline SVG and CSS art needs no row',
-        'Fonts from the chosen design direction are listed with their licence (they come from Fontsource under OFL-1.1 or Apache-2.0); a site with no other assets still has the fonts. The build ships them as site/dist/_astro/<family>-<subset>-<weight>-normal.<hash>.woff and .woff2, so give each font one row whose file is a glob such as "_astro/work-sans-*.{woff,woff2}" (lowercase family, spaces as dashes)',
-        'favicon.svg is the harness starter\'s own mark: {"file": "favicon.svg", "licence": "harness (own work)", "source": "starters/astro-base", "evidence": "starters/astro-base/public/favicon.svg", "status": "cleared"}',
-        'status is "cleared" only when the licence allows the use; anything else is "uncertain". Package rows already in the register keep their status: only the operator clears a licence the harness cannot verify',
-      ],
-      verify: verify('assets'),
-    },
-  ],
+  ASSETS_LICENSING: (project) => [assetRegister(project)],
 
   // The specification review: a fresh task after each return, because the file it judges changed.
   TECHNICAL_PLAN: (project, brief, { dir, opts }) => {
@@ -247,6 +252,8 @@ const PLANS = {
     const specInputs = [...SPEC, FILES.review, 'design/reference/methodologies/**', 'design/reference/skill/**', 'content/copy.json'];
     const plan = readJson(join(dir, FILES.sectionPlan));
     writeStubs(dir, direction.primaryApproach, plan);
+    const siteFile = join(dir, 'site', 'src', 'site.json');
+    const siteForms = Object.entries((existsSync(siteFile) ? readJson(siteFile) : null)?.forms ?? {});
     const never = ['content/**', 'design/**', 'intake/**', 'research/**', 'site/src/content/**', 'site/dist/**', 'site/node_modules/**'];
     return [
       {
@@ -295,6 +302,7 @@ const PLANS = {
           'Hero images stay small: aim under 60 KB for the first-screen image; prefer a tighter crop or stronger compression over a heavier file',
           'The verify command builds the site and renders it. Its output lists exactly what failed; fix that on the next attempt',
             'If the shared foundation (styles, components, lib, site/public) lacks something this page needs, build what you can inside these files and say what is missing in your evidence; do not edit shared files',
+            ...formContract(siteForms),
           ],
           verify: `${verify('site-build')} --page ${q(pagePlan.slug)}`,
         };
@@ -302,6 +310,18 @@ const PLANS = {
     ];
   },
 };
+
+// How to build a form, for every page of a site that has forms. The page a form sits on is the
+// section plan's call (site.json's page is only the starter's first guess), so each page task
+// gets the contract and applies it to any section that collects input. The address is never
+// invented: it is site.json's action, or the form plugin's endpoint (installed at deploy; the
+// forms gate tests the form against a stand-in for it). A form never claims what it did not send.
+export const formAction = (id) => `/api/form?form=${encodeURIComponent(id)}`;
+function formContract(forms) {
+  if (!forms.length) return [];
+  const list = forms.map(([id, f]) => `"${id}" (${f.purpose}; action ${f.action ? `"${f.action}"` : `"${formAction(id)}", the form plugin's endpoint, because the brief has no destination yet`})`).join(', ');
+  return [`Forms: a section on this page that collects input is one of the site's forms in site/src/site.json: ${list}. Build it from its entry there, keeping data-forge-form="<its id>", its fields, required marks and a .form-status element (site/src/sections/APP-01/Form.astro shows the behaviour). Use exactly that action; never invent another address or post to the page's own URL. Submit with fetch POST: an empty required field is stopped before sending, a 2xx answer shows the success state, anything else shows the error state. Never show success without sending`];
+}
 
 // One build task per page, so pages are built in parallel.
 export const pageTaskId = (slug) => `build-page-${slug === '/' ? 'home' : slug.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase()}`;

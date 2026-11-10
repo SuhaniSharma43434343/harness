@@ -4,7 +4,7 @@ import { loadConfig } from '../core/config.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { approve, loadProject } from '../core/project.mjs';
 import { releaseChecks } from '../design/release.mjs';
-import { designStatus, retryStage, runDesignWorkflow } from '../design/manager.mjs';
+import { designStatus, retryBuildTask, retryStage, runDesignWorkflow } from '../design/manager.mjs';
 import { openDefects } from '../qa/defects.mjs';
 import { runRepairLoop } from '../qa/repair.mjs';
 import { createClaudeCodeWorker } from '../workers/claude-code.mjs';
@@ -15,7 +15,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage> --note <the decision>';
+const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage or build task> --note <the decision>';
 
 // The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
 // something only the operator has, and are reported by forge design release.
@@ -27,7 +27,8 @@ export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibi
 //   qa      the render, review and repair loop, up to the retry limit
 //   release every gate on the finished site: passed, failed, blocked or not applicable
 //   choose  the operator's B2: records the approval and the chosen direction
-//   retry   the operator's answer to an escalation: the stage gets a fresh fix task
+//   retry   the operator's answer to an escalation: the stage, or a build task (build-page-<page>,
+//           build-foundation) that used up its retries, gets a fresh fix task
 export async function cmdDesign(root, args) {
   const [action, project] = args;
   if (!project || !['status', 'run', 'qa', 'release', 'choose', 'accept-licence', 'retry'].includes(action)) {
@@ -86,6 +87,11 @@ export async function cmdDesign(root, args) {
     if (!stage || stage.startsWith('-') || !note) {
       console.error(USAGE);
       return 2;
+    }
+    if (stage.startsWith('build-')) {
+      const out = retryBuildTask(project, stage, { note, workspace });
+      console.log(`Recorded the retry of ${stage} for ${project}: ${out.task}. Run the workflow again to do the work.`);
+      return 0;
     }
     const out = retryStage(project, stage, { note, workspace });
     console.log(`Recorded the retry of ${stage} for ${project}: fix attempt ${out.attempt}. Run the workflow again to do the work.`);

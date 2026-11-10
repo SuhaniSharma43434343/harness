@@ -3,20 +3,22 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
-import { listTasks, transitionTask } from '../../src/core/board.mjs';
+import { listTasks, saveTask, transitionTask } from '../../src/core/board.mjs';
 import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { pageTaskId, planPhase, writeStubs } from '../../src/core/planner.mjs';
+import { formAction, pageTaskId, planPhase, writeStubs } from '../../src/core/planner.mjs';
+import { actionFor } from '../../plugins/form-function/index.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
-import { buildTargets, MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
+import { buildTargets, MAX_STAGE_RETURNS, retryBuildTask, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
 import { CHECKS, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
 import { STUB_MARK, stubsLeft, withSiteLock } from '../../src/qa/visual.mjs';
-import { newProject } from './helpers.mjs';
+import { addTasks, newProject, task } from './helpers.mjs';
+import { agentsForPhase } from '../../src/core/agents.mjs';
 
 const BRIEF = {
   schemaVersion: '0.1.0', status: 'ready', project: 'demo', projectType: 'business', tier: 'S',
@@ -523,6 +525,7 @@ test('the build is planned as a shared foundation, then one task per page with i
   const { project, opts, dir } = twoPages();
   assert.deepEqual(readiness(dir).stages.flatMap((s) => s.problems), [], 'the two-page fixture is a complete specification');
   write(dir, 'site/package.json', '{}');
+  write(dir, 'site/src/site.json', { forms: { visit: { purpose: 'Book a home visit', destination: 'none-yet', action: null, page: '/about', fields: [] } } });
   setPhase(dir, 'BUILD');
   const tasks = planPhase(project, opts);
   assert.deepEqual(tasks.map((t) => t.id), ['build-foundation', 'build-page-home', 'build-page-about']);
@@ -538,6 +541,13 @@ test('the build is planned as a shared foundation, then one task per page with i
   }
   assert.match(home.verify, /site-build --page ['"]?\/['"]?$/);
   assert.match(about.verify, /site-build --page ['"]?\/about['"]?$/);
+  // site.json's page for a form is only a guess; the section plan decides, so every page is told.
+  for (const t of [home, about]) {
+    const form = t.acceptance.find((a) => a.startsWith('Forms: '));
+    assert.ok(form, `${t.id} is told how to build a form`);
+    assert.ok(form.includes('"visit"') && form.includes(`"${formAction('visit')}"`) && /never invent another address/.test(form) && /Never show success without sending/.test(form));
+  }
+  assert.equal(formAction('visit'), actionFor('visit'), "the address is the form plugin's own endpoint");
   for (const id of ['promise', 'quote-rule', 'old-houses', 'proof', 'story', 'visit']) {
     assert.match(readFileSync(join(dir, file(id)), 'utf8'), new RegExp(`${STUB_MARK}="${id}"`), `${id} has a placeholder, so the site builds`);
   }
@@ -615,4 +625,43 @@ test('one build of the site at a time: a second waits, and a lock left by a cras
   assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'the lock is released');
   await assert.rejects(withSiteLock(dir, async () => { throw new Error('boom'); }), /boom/);
   assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'and released when the build fails');
+});
+
+test('the operator can give a build task out of retries one more attempt, with its own findings', () => {
+  const { project, opts, dir } = fullProject();
+  for (const id of ['build-foundation', 'build-page-home', 'build-page-contact', 'build-page-contact-fix-1', 'build-page-contact-fix-2']) {
+    addTasks(project, opts, task(id));
+    saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['evidence/x.log'] }, opts);
+  }
+  write(dir, 'evidence/gates/forms.json', { gate: 'forms', status: 'fail', findings: [
+    { id: 'not-sent', severity: 'critical', message: '/contact (contact) showed success without sending anything', location: '/contact (contact)' },
+    { id: 'x', severity: 'serious', message: 'on home', location: '/' },
+  ] });
+  setPhase(dir, 'INTEGRATION_TESTS');
+  assert.throws(() => retryBuildTask(project, 'build-page-contact', { ...opts }), /reason as its note/);
+  assert.throws(() => retryBuildTask(project, 'build-page-nowhere', { note: 'n', ...opts }), /no build task build-page-nowhere/);
+  const { task: id } = retryBuildTask(project, 'build-page-contact', { note: 'Post to the form endpoint and show the real result', ...opts });
+  assert.equal(id, 'build-page-contact-fix-3', 'past the usual limit of 2');
+  const fix = listTasks(project, opts).find((t) => t.id === id);
+  assert.equal(fix.status, 'pending');
+  assert.ok(fix.acceptance.includes('Fix: operator: Post to the form endpoint and show the real result'));
+  assert.ok(fix.acceptance.some((a) => /not-sent \[\/contact \(contact\)\]/.test(a)), 'the findings for this page');
+  assert.ok(!fix.acceptance.some((a) => /on home/.test(a)), 'and not another page\'s');
+  assert.equal(loadProject(project, opts).phase, 'BUILD', 'back to the build to do it');
+  assert.ok(ledger.read(project, opts).some((e) => e.actor === 'operator' && e.data?.event === 'build_retry_authorized' && e.data.task === 'build-page-contact'));
+  assert.throws(() => retryBuildTask(project, 'build-page-contact', { note: 'again', ...opts }), /is pending/, 'not while an attempt is waiting');
+});
+
+test('the licence register is written alongside the copy, so the asset phase has nothing to wait for', () => {
+  const { project, opts, dir } = fullProject();
+  assert.ok(agentsForPhase('CONTENT').includes('asset-rights'));
+  setPhase(dir, 'CONTENT');
+  const planned = planPhase(project, opts);
+  const register = planned.find((t) => t.id === 'asset-register');
+  assert.ok(register && planned.some((t) => t.agent === 'content-ux'), 'both tasks are planned in the copy phase');
+  assert.ok(!register.inputs.includes('content/copy.json'), 'the register does not wait for the copy');
+  assert.deepEqual(register.depends_on, []);
+  assert.ok(!register.owns_files.some((f) => planned.find((t) => t.agent === 'content-ux').owns_files.includes(f)), 'no shared files, so they run at the same time');
+  setPhase(dir, 'ASSETS_LICENSING');
+  assert.deepEqual(planPhase(project, opts), [], 'nothing new to do after B3');
 });

@@ -69,10 +69,11 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
 }
 
 // A build task out of attempts gets one more task, starting from what is there, with the last
-// verify output as its acceptance. Past that, the operator decides.
-function retryBuild(project, task, opts, findings) {
-  const m = task.id.match(/^(build-(?:foundation|sections|page-[a-z0-9-]+?))(?:-fix-(\d+))?$/);
-  if (!m || Number(m[2] ?? 0) >= MAX_STAGE_RETURNS) return false;
+// verify output as its acceptance. Past that, the operator decides (retryBuildTask, force).
+const BUILD_TASK = /^(build-(?:foundation|sections|page-[a-z0-9-]+?))(?:-fix-(\d+))?$/;
+function retryBuild(project, task, opts, findings, { force = false } = {}) {
+  const m = task.id.match(BUILD_TASK);
+  if (!m || (!force && Number(m[2] ?? 0) >= MAX_STAGE_RETURNS)) return false;
   const { dir } = assertProjectExists(project, opts);
   const logs = join(dir, 'evidence', 'tasks', task.id);
   const last = existsSync(logs) ? readdirSync(logs).sort().at(-1) : null;
@@ -81,7 +82,7 @@ function retryBuild(project, task, opts, findings) {
   const id = `${m[1]}-fix-${n}`;
   addTask(project, { ...task, id, status: 'pending', attempts: undefined, blocked_reason: undefined, heartbeat_at: undefined, evidence: [], depends_on: [], idempotency_key: `${project}:${id}:v1`, acceptance: [...output.map((o) => `Fix: ${o.slice(2)}`), ...task.acceptance.filter((a) => !a.startsWith('Fix: '))] }, opts);
   ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'build_retried', task: id } }, opts);
-  return true;
+  return id;
 }
 
 // buildTargets(taskIds, findings) => [{ id, findings }]: the latest build task to send back for
@@ -106,13 +107,18 @@ export function buildTargets(taskIds, findings) {
   return [...groups].map(([base, own]) => ({ id: latest(base), findings: own })).filter((t) => t.id);
 }
 
-// An integration gate failed on a site that had passed its build: back to the builder with what failed.
-function returnToBuild(project, opts) {
-  const { dir } = assertProjectExists(project, opts);
-  const findings = ['routes', 'forms', 'content-parity'].flatMap((g) => {
+// The integration gates' latest findings, one line each, as the builder's fix tasks quote them.
+function integrationFindings(dir) {
+  return ['routes', 'forms', 'content-parity'].flatMap((g) => {
     const file = join(dir, 'evidence', 'gates', `${g}.json`);
     return existsSync(file) ? readJson(file).findings.map((f) => `- ${f.id}${f.location ? ` [${f.location}]` : ''}: ${f.message}`) : [];
   });
+}
+
+// An integration gate failed on a site that had passed its build: back to the builder with what failed.
+function returnToBuild(project, opts) {
+  const { dir } = assertProjectExists(project, opts);
+  const findings = integrationFindings(dir);
   const tasks = listTasks(project, opts);
   let retried = false;
   for (const target of buildTargets(tasks.map((t) => t.id), findings)) {
@@ -169,6 +175,26 @@ async function commandStep(project, phase, opts) {
 // retryStage(project, stageId, { note }): the operator's answer to an escalation. Their decision
 // goes in the ledger, the stage's blocked tasks stop counting, and the stage gets a fresh fix task
 // with the note as its first finding and a fresh limit of returns.
+// retryBuildTask(project, base, { note }) => { task }: the operator's answer to a build task that
+// used up its retries. It gets one more fix task, past the limit, with the operator's note and the
+// integration findings that are its to fix. Only the operator's decision does this, and the ledger
+// records it. A blocked attempt is superseded, so it no longer holds up the phase.
+export function retryBuildTask(project, base, { note, ...opts }) {
+  if (!note) throw new PermissionDenied("A retry needs the operator's reason as its note");
+  const tasks = listTasks(project, opts);
+  const own = tasks.filter((t) => t.id.match(BUILD_TASK)?.[1] === base).sort((a, b) => a.id.length - b.id.length || a.id.localeCompare(b.id));
+  if (!own.length) throw new PermissionDenied(`${project} has no build task ${base}`, { hint: `Build tasks: ${[...new Set(tasks.map((t) => t.id.match(BUILD_TASK)?.[1]).filter(Boolean))].join(', ')}` });
+  const latest = own.at(-1);
+  if (!['done', 'blocked'].includes(latest.status)) throw new PermissionDenied(`${latest.id} is ${latest.status}; retry it once it has finished`);
+  const { dir } = assertProjectExists(project, opts);
+  ledger.append(project, { actor: 'operator', type: 'note', data: { event: 'build_retry_authorized', task: base, message: note } }, opts);
+  if (latest.status === 'blocked') saveTask(project, { ...latest, blocked_reason: `Superseded: the operator authorized a retry of ${base}` }, opts);
+  const mine = buildTargets(tasks.map((t) => t.id), integrationFindings(dir)).find((t) => t.id === latest.id)?.findings ?? [];
+  const id = retryBuild(project, latest, opts, [`- operator: ${note}`, ...mine], { force: true });
+  if (loadProject(project, opts).phase === 'INTEGRATION_TESTS') returnToPhase(project, 'BUILD', { reason: `The operator authorized a retry of ${base}`, ...opts });
+  return { task: id };
+}
+
 export function retryStage(project, stageId, { note, ...opts }) {
   const stage = stageById(stageId);
   if (!stage?.task) throw new PermissionDenied(`"${stageId}" is not a stage an agent works on`, { hint: `Stages: ${STAGES.filter((s) => s.task).map((s) => s.id).join(', ')}` });
