@@ -6,15 +6,16 @@ import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
 import { listTasks, transitionTask } from '../../src/core/board.mjs';
 import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { planPhase } from '../../src/core/planner.mjs';
+import { pageTaskId, planPhase, writeStubs } from '../../src/core/planner.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
-import { MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
+import { buildTargets, MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
 import { CHECKS, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
+import { STUB_MARK, stubsLeft, withSiteLock } from '../../src/qa/visual.mjs';
 import { newProject } from './helpers.mjs';
 
 const BRIEF = {
@@ -491,4 +492,122 @@ test('phases still advance in order once the design evidence is there', () => {
   setPhase(dir, 'UX_DESIGN_SYSTEM');
   assert.deepEqual(advanceProject(project, opts), { from: 'UX_DESIGN_SYSTEM', to: 'CONTENT' });
   assert.ok(PHASES.some((p) => p.name === 'CONTENT'));
+});
+
+// Two pages: the home page, and /about with two sections of its own.
+function twoPages() {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  const home = plan.pages[0];
+  plan.pages.push({ slug: '/about', sections: [
+    { ...structuredClone(home.sections[1]), id: 'story', pattern: 'editorial-split', funnel: 'awareness' },
+    { ...structuredClone(home.sections[3]), id: 'visit', funnel: 'action' },
+  ] });
+  const copy = structuredClone(s['content/copy.json']);
+  const homeCopy = copy.pages[0];
+  copy.pages.push({
+    ...structuredClone(homeCopy), slug: '/about', title: 'About', description: 'Who Harbor Home is, and the old Portland houses the firm has fitted.',
+    sections: [
+      { ...structuredClone(homeCopy.sections[1]), id: 'story', headline: 'A ship carpenter who came ashore in Portland' },
+      { ...structuredClone(homeCopy.sections[3]), id: 'visit', headline: 'Walk us round the house that worries you' },
+    ],
+  });
+  copy.nav.push({ label: 'About', href: '/about' });
+  const brief = { ...BRIEF, pages: [...BRIEF.pages, { slug: '/about', title: 'About', purpose: 'Earn trust', cta: 'Book a visit' }] };
+  const p = fullProject({ 'design/section-plan.json': plan, 'content/copy.json': copy });
+  write(p.dir, 'intake/brief.json', brief);
+  return p;
+}
+
+test('the build is planned as a shared foundation, then one task per page with its own files', () => {
+  const { project, opts, dir } = twoPages();
+  assert.deepEqual(readiness(dir).stages.flatMap((s) => s.problems), [], 'the two-page fixture is a complete specification');
+  write(dir, 'site/package.json', '{}');
+  setPhase(dir, 'BUILD');
+  const tasks = planPhase(project, opts);
+  assert.deepEqual(tasks.map((t) => t.id), ['build-foundation', 'build-page-home', 'build-page-about']);
+  const [foundation, home, about] = tasks;
+  for (const t of [home, about]) assert.deepEqual(t.depends_on, ['build-foundation']);
+  const file = (id) => `site/src/sections/${sectionUse('APP-01', id)}.astro`;
+  assert.deepEqual(home.owns_files, ['promise', 'quote-rule', 'old-houses', 'proof'].map(file));
+  assert.deepEqual(about.owns_files, ['story', 'visit'].map(file));
+  assert.ok(foundation.owns_files.includes('site/public/**') && foundation.owns_files.includes('site/package.json'));
+  for (const t of [home, about]) {
+    assert.ok(!t.owns_files.some((f) => foundation.owns_files.some((g) => f.startsWith(g.replace('**', '')))), 'no page owns a shared file');
+    assert.ok(t.must_not_touch.includes('site/src/styles/**') && t.must_not_touch.includes('site/public/**'));
+  }
+  assert.match(home.verify, /site-build --page ['"]?\/['"]?$/);
+  assert.match(about.verify, /site-build --page ['"]?\/about['"]?$/);
+  for (const id of ['promise', 'quote-rule', 'old-houses', 'proof', 'story', 'visit']) {
+    assert.match(readFileSync(join(dir, file(id)), 'utf8'), new RegExp(`${STUB_MARK}="${id}"`), `${id} has a placeholder, so the site builds`);
+  }
+  assert.equal(stubsLeft(dir).length, 6);
+});
+
+test('placeholders never overwrite a built section, and the build phase cannot end with one left', () => {
+  const { project, opts, dir } = fullProject();
+  const built = `site/src/sections/${sectionUse('APP-01', 'promise')}.astro`;
+  write(dir, built, '<section class="promise">Built</section>\n');
+  writeStubs(dir, 'APP-01', spec()['design/section-plan.json']);
+  assert.equal(readFileSync(join(dir, built), 'utf8'), '<section class="promise">Built</section>\n');
+  assert.equal(stubsLeft(dir).length, 3);
+  setPhase(dir, 'BUILD');
+  write(dir, 'site/dist/index.html', '<html></html>');
+  assert.ok(exitBlockers(project, opts).some((b) => /3 still a placeholder/.test(b)));
+  for (const f of stubsLeft(dir)) write(dir, f, '<section>Built</section>\n');
+  assert.ok(!exitBlockers(project, opts).some((b) => /placeholder/.test(b)));
+});
+
+test('an integration failure sends back only the pages it names, at their latest attempt', () => {
+  const ids = ['build-foundation', 'build-page-home', 'build-page-about', 'build-page-about-fix-1', 'build-page-services'];
+  assert.deepEqual(buildTargets(ids, ['- routes.missing [/about]: no page']), ['build-page-about-fix-1']);
+  assert.deepEqual(buildTargets(ids, ['- parity.text [/ @ 375px]: text differs', '- x [/services (form)]: y']), ['build-page-home', 'build-page-services']);
+  assert.deepEqual(buildTargets(ids, ['- forms.endpoint: no endpoint']), ['build-page-home', 'build-page-about-fix-1', 'build-page-services'], 'no page named: every page');
+  assert.deepEqual(buildTargets(['build-foundation', 'build-sections', 'build-sections-fix-1'], ['- x [/]: y']), ['build-sections-fix-1'], 'a project planned before per-page builds');
+  assert.deepEqual(buildTargets(['build-foundation'], ['- x [/]: y']), []);
+  assert.equal(pageTaskId('/'), 'build-page-home');
+  assert.equal(pageTaskId('/Our Work/'), 'build-page-our-work');
+});
+
+test('calls running at the same time share what is left, so together they never pass the limit', async () => {
+  const { dir } = fullProject();
+  const budgets = [createBudget({ file: join(dir, 'reports', 'spend.json'), limitUsd: 2 })];
+  const given = [];
+  const release = [];
+  const worker = limitedWorker((job) => new Promise((resolve) => {
+    given.push(job.maxBudgetUsd);
+    release.push(() => resolve({ evidence: ['x'], costUsd: 0.8 }));
+  }), budgets, { parallel: 2 });
+  const a = worker({});
+  const b = worker({});
+  assert.deepEqual(given, [1, 1], 'each running call holds its share');
+  await assert.rejects(worker({}), /spending limit/, 'nothing is left that no running call holds');
+  assert.equal(given.length, 2, 'the refused call never started');
+  release.splice(0).forEach((r) => r());
+  await Promise.all([a, b]);
+  assert.equal(budgets[0].spent(), 1.6);
+  const c = worker({});
+  assert.equal(given.at(-1), 0.25, 'half of $0.40 is too small to use, so one call gets the smallest useful amount');
+  await assert.rejects(worker({}), /spending limit/, 'and a second call at the same time is refused');
+  release.splice(0).forEach((r) => r());
+  await c;
+});
+
+test('one build of the site at a time: a second waits, and a lock left by a crash is taken over', async () => {
+  const { dir } = fullProject();
+  const events = [];
+  const job = (name) => withSiteLock(dir, async () => {
+    events.push(`${name} start`);
+    await new Promise((r) => setTimeout(r, 30));
+    events.push(`${name} end`);
+    return name;
+  }, { pollMs: 5 });
+  assert.deepEqual(await Promise.all([job('a'), job('b')]), ['a', 'b']);
+  assert.deepEqual(events, ['a start', 'a end', 'b start', 'b end']);
+  mkdirSync(join(dir, 'locks', 'site-build'), { recursive: true });
+  const later = Date.now() + 16 * 60 * 1000;
+  assert.equal(await withSiteLock(dir, async () => 'ran', { pollMs: 5, now: () => later }), 'ran');
+  assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'the lock is released');
+  await assert.rejects(withSiteLock(dir, async () => { throw new Error('boom'); }), /boom/);
+  assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'and released when the build fails');
 });

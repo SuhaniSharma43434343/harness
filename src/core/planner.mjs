@@ -1,11 +1,12 @@
-import { cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { addTask, listTasks } from './board.mjs';
 import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { loadProject } from './project.mjs';
 import { ROOT, assertProjectExists } from './workspace.mjs';
-import { FILES, readiness, stageById } from '../design/spec.mjs';
+import { FILES, readiness, sectionUse, stageById } from '../design/spec.mjs';
+import { STUB_MARK } from '../qa/visual.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
 
 // The planner: writes the task contracts a phase needs onto the board, from the brief and the
@@ -244,6 +245,8 @@ const PLANS = {
     const approaches = [direction.primaryApproach, ...direction.combination.map((c) => c.approach)];
     copyReference(dir, direction.primaryApproach);
     const specInputs = [...SPEC, FILES.review, 'design/reference/methodologies/**', 'design/reference/skill/**', 'content/copy.json'];
+    const plan = readJson(join(dir, FILES.sectionPlan));
+    writeStubs(dir, direction.primaryApproach, plan);
     const never = ['content/**', 'design/**', 'intake/**', 'research/**', 'site/src/content/**', 'site/dist/**', 'site/node_modules/**'];
     return [
       {
@@ -252,45 +255,70 @@ const PLANS = {
         agent: 'builder',
         approach_modules: approaches,
         budget: { minutes: 30, retries: 1 },
-        inputs: [...specInputs, 'site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**'],
-        owns_files: ['site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**'],
+        inputs: [...specInputs, 'site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**', 'assets/public/**', 'assets/unsplash-photos.json'],
+        owns_files: ['site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**', 'site/public/**', 'site/package.json'],
         must_not_touch: never,
         acceptance: [
           'Turn design/design-system.json into the site\'s foundation: site/src/styles/ holds the system as custom properties and base type (secondary colour, hierarchy, spacing, grid, surfaces). tokens.json stays as it is',
           'Rewrite the Header and Footer to the direction, reading their text from site/src/copy.json (a copy of content/copy.json): nav, navCta, footer. The header behaves as the motion plan\'s navigation says, and the footer is a designed part of the site, not a copyright line',
           'Add site/src/lib/motion.js: the motion plan\'s shared behaviour for this approach, wired from data-motion attributes. Reduced motion shows every word, fully visible. Use the approach\'s recipes in site/src/lib/ when they fit',
-          'Keep the starter\'s page routes and the skip link. Do not write page sections yet',
+          'Keep the starter\'s page routes and the skip link. Do not write page sections: each page is built next, in parallel, by its own task, and none of them may edit these shared files, so put everything the pages share here',
+          'Prepare site/public for every page: only the files design/asset-plan.json lists, and any image rendered under 300 px wide gets its own small file (a -thumb variant or sized copy). Add the packages the approaches need to site/package.json',
         ],
         verify: verify('foundation'),
       },
-      {
-        ...base(project, 'build-sections'),
-        id: 'build-sections',
-        agent: 'builder',
-        approach_modules: approaches,
-        depends_on: ['build-foundation'],
-        budget: { minutes: 60, retries: 2 },
-        inputs: [...specInputs, 'site/src/content/pages/**', 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/public/**'],
-        owns_files: ['site/src/sections/**', 'site/public/**', 'site/package.json'],
-        must_not_touch: never,
-        acceptance: [
-          `For each section in design/section-plan.json, write its own component at site/src/sections/${direction.primaryApproach}/<PascalCaseOfTheSectionId>.astro. Pages already list them under use. Each component receives its copy as props (eyebrow, headline, subheadline, body, items, cta, note), plus page`,
-          'design/review.json holds the Design Manager\'s notes on how to settle small gaps: follow them',
+      // A section component used on several pages belongs to the first page that uses it, so no two
+      // page tasks own the same file.
+      ...plan.pages.map((pagePlan, i) => {
+        const fileOf = (x) => `site/src/sections/${sectionUse(direction.primaryApproach, x.id)}.astro`;
+        const earlier = new Set(plan.pages.slice(0, i).flatMap((p) => p.sections.map(fileOf)));
+        const files = [...new Set(pagePlan.sections.map(fileOf))].filter((f) => !earlier.has(f));
+        return {
+          ...base(project, pageTaskId(pagePlan.slug)),
+          id: pageTaskId(pagePlan.slug),
+          agent: 'builder',
+          approach_modules: approaches,
+          depends_on: ['build-foundation'],
+          budget: { minutes: 45, retries: 2 },
+          inputs: [...specInputs, 'site/src/content/pages/**', 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/public/**'],
+          owns_files: files,
+          must_not_touch: [...never, 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/src/layouts/**', 'site/public/**', 'site/package.json'],
+          acceptance: [
+            `Build only the page ${pagePlan.slug}. Other pages are built at the same time by other tasks, so change no file outside these: ${files.join(', ')}`,
+            `Each of those files is a placeholder now. Replace it with the real component for its section in design/section-plan.json. Each component receives its copy as props (headline, subheadline, body, items, cta, eyebrow, note, as in site/src/copy.json)`,
           'Implement the composition exactly as specified: the placement, overlap, scale, background and typography it names, at desktop, tablet and mobile. Use bespoke layout for each section, and use the design system\'s properties, never hard-coded colours or fonts',
           'Render every string of copy exactly as given, unbroken in the HTML, so it can be verified. Line-splitting for animation happens at runtime, in JavaScript',
           'Assets: client or licensed images come from /<file> under site/public/. Authored assets are made here as detailed inline SVG or CSS, as the plan describes; they must look finished. Give each planned asset\'s outermost element data-asset="<asset id>"',
           'Motion: for each motion id a section uses, put data-motion="<motion id>" on the element that moves or responds, and implement the behaviour through site/src/lib/motion.js. Hover motions need a real visible change on hover',
           'Keep to the primary approach. Do not import libraries from any other approach',
           'Keep it fast: the largest image in the first screen loads eagerly with fetchpriority="high" and the others lazily, every image has width and height, and JavaScript for motion loads after the first paint. The performance gate fails over 2.5 s LCP',
-          'Ship only what the pages reference: never copy the whole asset folder into site/public. Any image rendered under 300 px wide gets its own small file (a -thumb variant or sized copy), not the full-size original. Every file you add to site/public needs a row in assets/register.json',
           'Hero images stay small: aim under 60 KB for the first-screen image; prefer a tighter crop or stronger compression over a heavier file',
           'The verify command builds the site and renders it. Its output lists exactly what failed; fix that on the next attempt',
-        ],
-        verify: verify('site-build'),
-      },
+            'If the shared foundation (styles, components, lib, site/public) lacks something this page needs, build what you can inside these files and say what is missing in your evidence; do not edit shared files',
+          ],
+          verify: `${verify('site-build')} --page ${q(pagePlan.slug)}`,
+        };
+      }),
     ];
   },
 };
+
+// One build task per page, so pages are built in parallel.
+export const pageTaskId = (slug) => `build-page-${slug === '/' ? 'home' : slug.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase()}`;
+
+// A placeholder for every planned section that has no component yet, written by the harness at no
+// model cost, so the whole site builds while page tasks are still running. The full build check
+// refuses any placeholder that remains.
+export function writeStubs(dir, approach, plan) {
+  for (const page of plan?.pages ?? []) {
+    for (const x of page.sections) {
+      const file = join(dir, 'site', 'src', 'sections', `${sectionUse(approach, x.id)}.astro`);
+      if (existsSync(file)) continue;
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, `---\nconst { headline = '' } = Astro.props;\n---\n<section ${STUB_MARK}="${x.id}"><h2>{headline}</h2></section>\n`);
+    }
+  }
+}
 
 // planPhase(project, phase?) => the tasks added (none when the phase is already planned or has
 // no agent work).

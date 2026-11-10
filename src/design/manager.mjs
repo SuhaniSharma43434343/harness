@@ -5,7 +5,7 @@ import { agentsForPhase } from '../core/agents.mjs';
 import { advanceProject, exitBlockers } from '../core/advance.mjs';
 import { PermissionDenied } from '../core/errors.mjs';
 import * as ledger from '../core/ledger.mjs';
-import { planPhase, specTask } from '../core/planner.mjs';
+import { pageTaskId, planPhase, specTask } from '../core/planner.mjs';
 import { loadProject, returnToPhase } from '../core/project.mjs';
 import { runProject } from '../core/runner.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
@@ -71,7 +71,7 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
 // A build task out of attempts gets one more task, starting from what is there, with the last
 // verify output as its acceptance. Past that, the operator decides.
 function retryBuild(project, task, opts, findings) {
-  const m = task.id.match(/^(build-[a-z]+)(?:-fix-(\d+))?$/);
+  const m = task.id.match(/^(build-(?:foundation|sections|page-[a-z0-9-]+?))(?:-fix-(\d+))?$/);
   if (!m || Number(m[2] ?? 0) >= MAX_STAGE_RETURNS) return false;
   const { dir } = assertProjectExists(project, opts);
   const logs = join(dir, 'evidence', 'tasks', task.id);
@@ -84,6 +84,19 @@ function retryBuild(project, task, opts, findings) {
   return true;
 }
 
+// buildTargets(taskIds, findings) => the latest build task of each page to send back. A finding
+// names its page in [route]; when no finding names a planned page, every page goes back. A
+// project planned before per-page builds sends back its single build-sections task.
+export function buildTargets(taskIds, findings) {
+  const latest = (base) => taskIds.filter((id) => id === base || id.startsWith(`${base}-fix-`)).sort((a, b) => a.length - b.length || a.localeCompare(b)).at(-1);
+  const pages = [...new Set(taskIds.map((id) => id.match(/^(build-page-[a-z0-9-]+?)(?:-fix-\d+)?$/)?.[1]).filter(Boolean))];
+  if (!pages.length) return taskIds.some((id) => id.startsWith('build-sections')) ? [latest('build-sections')] : [];
+  const routeOf = (line) => line.match(/\[([^\]]+)\]/)?.[1]?.split(' @ ')[0].split(' (')[0].trim();
+  const failing = new Set(findings.map(routeOf).filter((r) => r?.startsWith('/')).map(pageTaskId));
+  const named = pages.filter((b) => failing.has(b));
+  return (named.length ? named : pages).map(latest);
+}
+
 // An integration gate failed on a site that had passed its build: back to the builder with what failed.
 function returnToBuild(project, opts) {
   const { dir } = assertProjectExists(project, opts);
@@ -91,9 +104,11 @@ function returnToBuild(project, opts) {
     const file = join(dir, 'evidence', 'gates', `${g}.json`);
     return existsSync(file) ? readJson(file).findings.map((f) => `- ${f.id}${f.location ? ` [${f.location}]` : ''}: ${f.message}`) : [];
   });
-  const builds = listTasks(project, opts).filter((t) => t.id.startsWith('build-sections')).sort((a, b) => a.id.length - b.id.length || a.id.localeCompare(b.id));
-  if (!builds.length) return false;
-  const retried = retryBuild(project, builds.at(-1), opts, findings);
+  const tasks = listTasks(project, opts);
+  let retried = false;
+  for (const id of buildTargets(tasks.map((t) => t.id), findings)) {
+    if (retryBuild(project, tasks.find((t) => t.id === id), opts, findings)) retried = true;
+  }
   if (retried) returnToPhase(project, 'BUILD', { reason: 'Integration gates failed', ...opts });
   return retried;
 }
