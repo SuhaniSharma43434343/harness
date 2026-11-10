@@ -53,7 +53,9 @@ canonical URL and the SEO gate fails with `canonical-missing`.
 ## Browser gates (T22)
 
 These serve `site/dist` on `127.0.0.1` (`src/gates/serve.mjs`, clean URLs, 404 page, no POST)
-and open it in Chromium. `runGates` starts one browser and shares it across them.
+and open it in Chromium. The server gzips HTML, CSS, JavaScript, JSON, XML, text and SVG when the
+browser accepts it, as every static host does, so `performance` measures the bytes a visitor
+actually downloads. Images, fonts and video are sent as they are. `runGates` starts one browser and shares it across them.
 
 | Gate | What it does | Findings |
 | --- | --- | --- |

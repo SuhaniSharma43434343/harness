@@ -1,6 +1,7 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
+import { createGzip } from 'node:zlib';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -26,6 +27,9 @@ const TYPES = {
   '.splinecode': 'application/octet-stream',
 };
 
+// Text files a static host compresses. Images, fonts and video are already compressed.
+const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.mjs', '.json', '.xml', '.txt', '.svg']);
+
 const isFile = (p) => existsSync(p) && statSync(p).isFile();
 
 // The file a URL path maps to, the way a static host serves an Astro "directory" build:
@@ -45,7 +49,8 @@ export function resolvePath(dist, urlPath) {
 }
 
 // serveSite(dist) => Promise<{ url, close }>: a static server on 127.0.0.1 and a free port,
-// with 404.html for missing pages. Only GET and HEAD; a form POST gets 405, so a form gate
+// with 404.html for missing pages. Text files are sent gzipped when the browser accepts it, as
+// every static host does, so the performance gate measures the bytes a visitor downloads. Only GET and HEAD; a form POST gets 405, so a form gate
 // must intercept its endpoint rather than rely on the server.
 export function serveSite(dist) {
   const server = createServer((req, res) => {
@@ -60,8 +65,16 @@ export function serveSite(dist) {
       res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
       return;
     }
-    res.writeHead(file ? 200 : 404, { 'Content-Type': TYPES[extname(target).toLowerCase()] ?? 'application/octet-stream', 'Cache-Control': 'no-store' });
+    const ext = extname(target).toLowerCase();
+    const gzip = COMPRESSIBLE.has(ext) && /(^|[\s,])gzip([\s,;]|$)/i.test(req.headers['accept-encoding'] ?? '');
+    res.writeHead(file ? 200 : 404, {
+      'Content-Type': TYPES[ext] ?? 'application/octet-stream',
+      'Cache-Control': 'no-store',
+      Vary: 'Accept-Encoding',
+      ...(gzip && { 'Content-Encoding': 'gzip' }),
+    });
     if (req.method === 'HEAD') res.end();
+    else if (gzip) createReadStream(target).pipe(createGzip()).pipe(res);
     else createReadStream(target).pipe(res);
   });
   return new Promise((resolve, reject) => {

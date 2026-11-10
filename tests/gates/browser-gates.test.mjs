@@ -7,8 +7,10 @@
 // logic is tested with a fake adapter either way.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import http from 'node:http';
 import { join } from 'node:path';
+import { gunzipSync } from 'node:zlib';
 import { Unavailable } from '../../src/core/errors.mjs';
 import { listDefects, materializeFixture } from '../../src/gates/fixtures.mjs';
 import { runGate, runGates } from '../../src/gates/index.mjs';
@@ -170,6 +172,41 @@ test('the static server maps clean URLs to the directory build and answers 404 w
     assert.equal(missing.status, 404);
     assert.match(await missing.text(), /<html/);
     assert.equal((await fetch(`${server.url}/api/quote`, { method: 'POST' })).status, 405);
+  } finally {
+    await server.close();
+  }
+});
+
+test('the static server gzips text files like a static host, and leaves images alone', async () => {
+  const { siteDir } = materializeFixture('known-good');
+  const dist = join(siteDir, 'dist');
+  const server = await serveSite(dist);
+  const get = (path, encoding) => new Promise((resolve, reject) => {
+    http.get(`${server.url}${path}`, { headers: encoding ? { 'Accept-Encoding': encoding } : {} }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve({ res, body: Buffer.concat(chunks) }));
+    }).on('error', reject);
+  });
+  try {
+    const raw = readFileSync(join(dist, 'index.html'));
+    const zipped = await get('/', 'gzip, deflate, br');
+    assert.equal(zipped.res.headers['content-encoding'], 'gzip');
+    assert.equal(zipped.res.headers.vary, 'Accept-Encoding');
+    assert.deepEqual(gunzipSync(zipped.body), raw, 'the page decompresses to the file on disk');
+    const plain = await get('/');
+    assert.equal(plain.res.headers['content-encoding'], undefined, 'no gzip unless the client asks');
+    assert.deepEqual(plain.body, raw);
+    const missing = await get('/nope', 'gzip');
+    assert.equal(missing.res.statusCode, 404);
+    assert.match(gunzipSync(missing.body).toString(), /<html/);
+    // The fixture is a temporary copy, so an image can be added to it.
+    const png = Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex');
+    writeFileSync(join(dist, 'pixel.png'), png);
+    const img = await get('/pixel.png', 'gzip');
+    assert.equal(img.res.statusCode, 200);
+    assert.equal(img.res.headers['content-encoding'], undefined, 'images and fonts are sent as they are');
+    assert.deepEqual(img.body, png);
   } finally {
     await server.close();
   }
