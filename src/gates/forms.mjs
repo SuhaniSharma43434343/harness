@@ -55,37 +55,44 @@ export default {
 
           const context = await browser.newContext();
           const page = await context.newPage();
+          page.setDefaultTimeout(10_000); // a local static page: a control not usable in 10 s is not usable
           let sent = 0;
           let answer = 200;
           await page.route((url) => url.pathname === new URL(action, base + route).pathname, (r) => {
             sent++;
             return r.fulfill({ status: answer, contentType: 'application/json', body: answer < 400 ? '{"ok":true}' : '{"ok":false}' });
           });
-          await page.goto(base + route, { waitUntil: 'load' });
+          // A form the browser cannot use (a submit button that is hidden, covered or missing) is
+          // a defect on this page, not a gate that cannot run.
+          try {
+            await page.goto(base + route, { waitUntil: 'load' });
 
-          // An empty submission must be stopped by the required fields.
-          await page.click(`${selector} [type=submit]`);
-          await page.waitForTimeout(150);
-          const emptyState = await state(page, selector);
-          if (sent > 0 || emptyState === 'success' || emptyState === 'sending') add('no-validation', 'serious', `${at} sent an empty submission: mark its required fields required`, at);
+            // An empty submission must be stopped by the required fields.
+            await page.click(`${selector} [type=submit]`);
+            await page.waitForTimeout(150);
+            const emptyState = await state(page, selector);
+            if (sent > 0 || emptyState === 'success' || emptyState === 'sending') add('no-validation', 'serious', `${at} sent an empty submission: mark its required fields required`, at);
 
-          if (!forms[i].querySelector('.form-status')) {
+            if (!forms[i].querySelector('.form-status')) {
+              continue;
+            }
+            await page.goto(base + route, { waitUntil: 'load' });
+            sent = 0;
+            await fill(page, selector);
+            await page.click(`${selector} [type=submit]`);
+            if (!(await waitForState(page, selector, 'success'))) add('no-success-state', 'serious', `${at} did not show the success state after the endpoint answered 200`, at);
+            else if (sent === 0) add('not-sent', 'critical', `${at} showed success without sending anything`, at);
+
+            answer = 500;
+            await page.goto(base + route, { waitUntil: 'load' });
+            await fill(page, selector);
+            await page.click(`${selector} [type=submit]`);
+            if (!(await waitForState(page, selector, 'error'))) add('no-error-state', 'serious', `${at} did not show the error state after the endpoint answered 500`, at);
+          } catch (err) {
+            add('form-unusable', 'serious', `${at} could not be used in the browser: ${String(err.message ?? err).split('\n')[0]}`, at);
+          } finally {
             await context.close();
-            continue;
           }
-          await page.goto(base + route, { waitUntil: 'load' });
-          sent = 0;
-          await fill(page, selector);
-          await page.click(`${selector} [type=submit]`);
-          if (!(await waitForState(page, selector, 'success'))) add('no-success-state', 'serious', `${at} did not show the success state after the endpoint answered 200`, at);
-          else if (sent === 0) add('not-sent', 'critical', `${at} showed success without sending anything`, at);
-
-          answer = 500;
-          await page.goto(base + route, { waitUntil: 'load' });
-          await fill(page, selector);
-          await page.click(`${selector} [type=submit]`);
-          if (!(await waitForState(page, selector, 'error'))) add('no-error-state', 'serious', `${at} did not show the error state after the endpoint answered 500`, at);
-          await context.close();
         }
       }
       return { findings, metrics: { forms: count } };

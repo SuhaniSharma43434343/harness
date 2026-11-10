@@ -82,6 +82,20 @@ test('forms: a form whose endpoint fails must show the error state', { skip }, a
   assert.ok(r.findings.some((f) => f.id === 'no-error-state'));
 });
 
+test('forms: a submit button the browser cannot click is a finding on its page, not a gate error', { skip }, async () => {
+  const { siteDir } = materializeFixture('known-good');
+  const { writeFileSync, readFileSync } = await import('node:fs');
+  const dist = join(siteDir, 'dist');
+  const pages = readdirSync(dist, { recursive: true }).map(String).filter((f) => f.endsWith('.html') && readFileSync(join(dist, f), 'utf8').includes('<form'));
+  assert.ok(pages.length, 'the known-good site has a form');
+  for (const f of pages) writeFileSync(join(dist, f), readFileSync(join(dist, f), 'utf8').replace('</head>', '<style>form [type=submit]{display:none}</style></head>'));
+  const r = await runGate('forms', siteDir, { browser });
+  assert.notEqual(r.status, 'error');
+  const found = r.findings.filter((f) => f.id === 'form-unusable');
+  assert.ok(found.length, 'the hidden button is reported');
+  assert.ok(found.every((f) => /^\/\S* \(/.test(f.location)), 'with the page route, so the right page goes back to its builder');
+});
+
 test('runGates shares one browser across the browser gates', { skip: skip || skipAxe }, async () => {
   const { siteDir } = materializeFixture('known-good');
   const results = await runGates(siteDir, { gates: BROWSER_GATES, screenshots: false });

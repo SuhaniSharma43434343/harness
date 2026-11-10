@@ -558,13 +558,18 @@ test('placeholders never overwrite a built section, and the build phase cannot e
   assert.ok(!exitBlockers(project, opts).some((b) => /placeholder/.test(b)));
 });
 
-test('an integration failure sends back only the pages it names, at their latest attempt', () => {
+test('an integration failure goes back only to the task that can fix it, with only its findings', () => {
   const ids = ['build-foundation', 'build-page-home', 'build-page-about', 'build-page-about-fix-1', 'build-page-services'];
-  assert.deepEqual(buildTargets(ids, ['- routes.missing [/about]: no page']), ['build-page-about-fix-1']);
-  assert.deepEqual(buildTargets(ids, ['- parity.text [/ @ 375px]: text differs', '- x [/services (form)]: y']), ['build-page-home', 'build-page-services']);
-  assert.deepEqual(buildTargets(ids, ['- forms.endpoint: no endpoint']), ['build-page-home', 'build-page-about-fix-1', 'build-page-services'], 'no page named: every page');
-  assert.deepEqual(buildTargets(['build-foundation', 'build-sections', 'build-sections-fix-1'], ['- x [/]: y']), ['build-sections-fix-1'], 'a project planned before per-page builds');
-  assert.deepEqual(buildTargets(['build-foundation'], ['- x [/]: y']), []);
+  const about = '- routes.missing [/about]: no page';
+  assert.deepEqual(buildTargets(ids, [about]), [{ id: 'build-page-about-fix-1', findings: [about] }], 'the page named, at its latest attempt');
+  const home = '- parity.text [/ @ 375px]: text differs';
+  const form = '- form-unusable [/services (contact)]: the submit button could not be clicked';
+  assert.deepEqual(buildTargets(ids, [home, form]), [{ id: 'build-page-home', findings: [home] }, { id: 'build-page-services', findings: [form] }]);
+  const shared = '- forms.endpoint: no endpoint';
+  assert.deepEqual(buildTargets(ids, [shared, about]), [{ id: 'build-foundation', findings: [shared] }, { id: 'build-page-about-fix-1', findings: [about] }], 'a finding with no page goes to the foundation, not to every page');
+  assert.deepEqual(buildTargets(ids, ['- x [/gone]: y']), [{ id: 'build-foundation', findings: ['- x [/gone]: y'] }], 'a route with no page task is shared work too');
+  assert.deepEqual(buildTargets(ids, []), [], 'a gate that could not run sends nothing back: the operator decides');
+  assert.deepEqual(buildTargets(['build-foundation', 'build-sections', 'build-sections-fix-1'], ['- x [/]: y']), [{ id: 'build-sections-fix-1', findings: ['- x [/]: y'] }], 'a project planned before per-page builds');
   assert.equal(pageTaskId('/'), 'build-page-home');
   assert.equal(pageTaskId('/Our Work/'), 'build-page-our-work');
 });

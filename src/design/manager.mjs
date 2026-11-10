@@ -84,17 +84,26 @@ function retryBuild(project, task, opts, findings) {
   return true;
 }
 
-// buildTargets(taskIds, findings) => the latest build task of each page to send back. A finding
-// names its page in [route]; when no finding names a planned page, every page goes back. A
-// project planned before per-page builds sends back its single build-sections task.
+// buildTargets(taskIds, findings) => [{ id, findings }]: the latest build task to send back for
+// each failure, with only the findings it can fix. A finding names its page in [route] and goes to
+// that page's task. A finding that names no page is about what the pages share, so it goes to
+// the foundation, never to every page. No findings (a gate that could not run) sends nothing back:
+// a builder cannot fix that, so the workflow stops for the operator. A project planned before
+// per-page builds sends everything to its single build-sections task.
 export function buildTargets(taskIds, findings) {
+  if (!findings.length) return [];
   const latest = (base) => taskIds.filter((id) => id === base || id.startsWith(`${base}-fix-`)).sort((a, b) => a.length - b.length || a.localeCompare(b)).at(-1);
   const pages = [...new Set(taskIds.map((id) => id.match(/^(build-page-[a-z0-9-]+?)(?:-fix-\d+)?$/)?.[1]).filter(Boolean))];
-  if (!pages.length) return taskIds.some((id) => id.startsWith('build-sections')) ? [latest('build-sections')] : [];
+  if (!pages.length) return taskIds.some((id) => id.startsWith('build-sections')) ? [{ id: latest('build-sections'), findings }] : [];
   const routeOf = (line) => line.match(/\[([^\]]+)\]/)?.[1]?.split(' @ ')[0].split(' (')[0].trim();
-  const failing = new Set(findings.map(routeOf).filter((r) => r?.startsWith('/')).map(pageTaskId));
-  const named = pages.filter((b) => failing.has(b));
-  return (named.length ? named : pages).map(latest);
+  const owner = (line) => {
+    const route = routeOf(line);
+    const page = route?.startsWith('/') ? pageTaskId(route) : null;
+    return page && pages.includes(page) ? page : 'build-foundation';
+  };
+  const groups = new Map();
+  for (const f of findings) groups.set(owner(f), [...(groups.get(owner(f)) ?? []), f]);
+  return [...groups].map(([base, own]) => ({ id: latest(base), findings: own })).filter((t) => t.id);
 }
 
 // An integration gate failed on a site that had passed its build: back to the builder with what failed.
@@ -106,8 +115,8 @@ function returnToBuild(project, opts) {
   });
   const tasks = listTasks(project, opts);
   let retried = false;
-  for (const id of buildTargets(tasks.map((t) => t.id), findings)) {
-    if (retryBuild(project, tasks.find((t) => t.id === id), opts, findings)) retried = true;
+  for (const target of buildTargets(tasks.map((t) => t.id), findings)) {
+    if (retryBuild(project, tasks.find((t) => t.id === target.id), opts, target.findings)) retried = true;
   }
   if (retried) returnToPhase(project, 'BUILD', { reason: 'Integration gates failed', ...opts });
   return retried;
