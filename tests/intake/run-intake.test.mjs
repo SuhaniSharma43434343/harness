@@ -114,7 +114,11 @@ test('with a worker, the client material is read into facts through a runner tas
   assert.equal(r.status, 'ready');
   assert.equal(r.brief.client.name, 'Harbor Home');
   assert.ok(!asked.includes('q-client-name'));
-  assert.ok(asked.includes('q-business-goals'));
+  // The business has no specific playbook, so the general business playbook asks the goals question
+  // in the place of the generic one (it is deeper, and it records the primary action).
+  assert.ok(asked.includes('q-general-business-goals'));
+  assert.ok(!asked.includes('q-business-goals'));
+  assert.equal(r.brief.business.industryId, 'general-business');
 });
 
 test('intake refuses to run outside P1 and needs an ask function', async () => {
@@ -203,7 +207,7 @@ test('audience views are optional brief fields, shown in the plan and asked for 
   assert.ok(plan.includes('- Homeowners: a builder they can trust; wants: a fixed quote; needs to see: finished jobs nearby; should: book a home visit'), plan);
   const { questions } = loadRegistry();
   const audience = questions.questions.filter((x) => x.fills.length === 1 && x.fills[0] === 'audience');
-  assert.equal(audience.length, 7);
+  assert.ok(audience.length >= 7, "one per project type, and one more per industry playbook");
   for (const x of audience) {
     assert.match(x.prompt, /wants: .* proof: .* action: /);
     assert.ok(x.recommendation.value.every((v) => v.action), x.id);

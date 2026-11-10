@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ConfigInvalid, ConfigMissing, SchemaInvalid } from '../core/errors.mjs';
 import { assertValid } from '../core/schemas.mjs';
+import { loadIndustries, playbookQuestions } from './industries.mjs';
 
 export const REGISTRY_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'registry');
 export const APPROACH_IDS = ['APP-01', 'APP-02', 'APP-03', 'APP-04', 'APP-05', 'APP-06', 'APP-07', 'APP-08'];
@@ -74,7 +75,9 @@ export function loadQuestionBank(root = REGISTRY_DIR) {
   const errors = [];
   const versions = new Set(banks.map((b) => b.bankVersion));
   if (versions.size > 1) errors.push(`question files disagree on bankVersion: ${[...versions].join(', ')}`);
-  const questions = banks.flatMap((b) => b.questions);
+  // Industry playbooks add their own questions (goals, pages, the primary action and the
+  // industry's deep questions), which apply once the industry is detected.
+  const questions = [...banks.flatMap((b) => b.questions), ...loadIndustries(root).flatMap(playbookQuestions)];
   const ids = new Set();
   for (const q of questions) {
     if (ids.has(q.id)) errors.push(`${q.id} is defined twice`);
@@ -91,8 +94,8 @@ export function loadQuestionBank(root = REGISTRY_DIR) {
   return assertValid('questionBank', { schemaVersion: banks[0].schemaVersion, bankVersion: banks[0].bankVersion, questions });
 }
 
-// loadRegistry(root?) => { questions, approaches, matrix }: the only function that reads the
-// registry from disk. The selectors take its output, so tests can pass fixtures in directly.
+// loadRegistry(root?) => { questions, approaches, matrix, industries }: the only function that
+// reads the registry from disk. The selectors take its output, so tests can pass fixtures in directly.
 export function loadRegistry(root = REGISTRY_DIR) {
-  return { questions: loadQuestionBank(root), ...loadApproaches(root) };
+  return { questions: loadQuestionBank(root), ...loadApproaches(root), industries: loadIndustries(root) };
 }

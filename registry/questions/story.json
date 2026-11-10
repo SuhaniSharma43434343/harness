@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-visitor-sources",
+      "fills": [
+        "business.visitorSources"
+      ],
+      "prompt": "Where do visitors come from before they open the site? Pick all that apply.",
+      "why": "The first screen is designed for the way people arrive, for example an Instagram visitor on a phone wants the next step at once.",
+      "kind": "multi",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "options": [
+        {
+          "value": "google-search",
+          "label": "Google search"
+        },
+        {
+          "value": "google-maps",
+          "label": "Google Maps"
+        },
+        {
+          "value": "instagram",
+          "label": "Instagram"
+        },
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp shares"
+        },
+        {
+          "value": "qr-offline",
+          "label": "QR codes and printed material"
+        },
+        {
+          "value": "paid-ads",
+          "label": "Paid ads"
+        },
+        {
+          "value": "word-of-mouth",
+          "label": "Word of mouth"
+        }
+      ],
+      "recommendation": {
+        "value": [
+          "google-search",
+          "instagram"
+        ],
+        "reason": "The usual routes for a local business."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-visitor-device",
+      "fills": [
+        "business.visitorDevice"
+      ],
+      "prompt": "Which device do most visitors use?",
+      "why": "The phone is designed first when most visitors are on phones.",
+      "kind": "single",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "options": [
+        {
+          "value": "phone-mostly",
+          "label": "Mostly phones"
+        },
+        {
+          "value": "mixed",
+          "label": "Phones and computers about equally"
+        },
+        {
+          "value": "desktop-mostly",
+          "label": "Mostly computers"
+        }
+      ],
+      "recommendation": {
+        "value": "phone-mostly",
+        "reason": "Most visitors to a local business use a phone."
+      },
+      "round": 2
+    }
+  ]
+}

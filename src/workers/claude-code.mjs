@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, win32 } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadAgents } from '../core/agents.mjs';
 import { AuthFailed, ConfigInvalid, ConfigMissing, RateLimited, Unavailable } from '../core/errors.mjs';
@@ -128,13 +128,37 @@ export function recordingPath(recordDir, taskId, attempt) {
   return join(recordDir, taskId, `attempt-${attempt}.json`);
 }
 
+// On Windows an npm-installed Claude Code is a .cmd shim, which spawn() cannot start without a
+// shell, and a shell would mangle the multi-line role prompt. So the shim is resolved to the
+// program it starts: an .exe as it is, a .js through this Node. Anything else is left alone.
+export function resolveCommand(command, { platform = process.platform, env = process.env, exists = existsSync, read = (f) => readFileSync(f, 'utf8'), nodePath = process.execPath } = {}) {
+  const [name, ...rest] = command;
+  if (platform !== 'win32' || /[\\/]/.test(name)) return command;
+  const key = (k) => Object.keys(env).find((e) => e.toUpperCase() === k);
+  const dirs = String(env[key('PATH')] ?? '').split(';').filter(Boolean);
+  const exts = /\.[^.]+$/.test(name) ? [''] : String(env[key('PATHEXT')] ?? '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean);
+  for (const dir of dirs) {
+    for (const ext of exts) {
+      const file = win32.join(dir, name + ext);
+      if (!exists(file)) continue;
+      if (!/\.(cmd|bat)$/i.test(file)) return [file, ...rest];
+      const target = read(file).match(/"%(?:~dp0|dp0%)\\?([^"]+\.(exe|c?js|mjs))"/i);
+      if (!target) return command;
+      const resolved = win32.join(dir, target[1]);
+      return target[2].toLowerCase() === 'exe' ? [resolved, ...rest] : [nodePath, resolved, ...rest];
+    }
+  }
+  return command;
+}
+
 function runClaude({ command, args, prompt, cwd, env, signal }) {
   return new Promise((resolvePromise) => {
     let stdout = '';
     let stderr = '';
     let child;
     try {
-      child = spawn(command[0], [...command.slice(1), ...args], { cwd, env, signal, windowsHide: true });
+      const argv = resolveCommand(command, { env });
+      child = spawn(argv[0], [...argv.slice(1), ...args], { cwd, env, signal, windowsHide: true });
     } catch (err) {
       resolvePromise({ exitCode: null, stdout, stderr, spawnError: err });
       return;

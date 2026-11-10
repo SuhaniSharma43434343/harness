@@ -130,6 +130,96 @@
         "splineSceneUrl": { "type": "string", "format": "uri" }
       }
     },
+    "business": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What this kind of business needs from its site, filled from its industry playbook and the owner's answers. The home hero must carry the primary conversion.",
+      "properties": {
+        "industryId": { "$ref": "common.schema.json#/definitions/slug" },
+        "primaryAction": { "$ref": "common.schema.json#/definitions/slug" },
+        "secondaryActions": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/slug" } },
+        "primaryConversion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label", "kind"],
+          "properties": {
+            "id": { "$ref": "common.schema.json#/definitions/slug" },
+            "label": { "type": "string", "minLength": 3 },
+            "kind": { "type": "string", "minLength": 3 }
+          }
+        },
+        "secondaryConversions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "kind"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/definitions/slug" },
+              "label": { "type": "string", "minLength": 3 },
+              "kind": { "type": "string", "minLength": 3 },
+              "hero": { "type": "boolean" }
+            }
+          }
+        },
+        "heroMustHave": { "type": "array", "items": { "type": "string", "minLength": 5 } },
+        "trustSignals": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 2 } },
+        "contentNeeds": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+        "requiredSections": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 5 } } },
+        "compliance": { "type": "array", "items": { "type": "string", "minLength": 10 } },
+        "visitorSources": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/slug" } },
+        "visitorDevice": { "$ref": "common.schema.json#/definitions/slug" },
+        "details": { "type": "object", "description": "The owner's answers to the industry questions, one key per question." }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The 3D object and the video the operator chose, written by the media step of forge go. Every design stage reads it.",
+      "properties": {
+        "threeD": {
+          "type": "object",
+          "properties": {
+            "decision": { "enum": ["chosen", "skipped"] },
+            "reason": { "type": "string" },
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "creator": { "type": "string" },
+            "licence": { "type": "string" },
+            "source": { "type": "string" },
+            "url": { "type": "string" },
+            "file": { "type": "string" },
+            "poster": { "type": "string" },
+            "concept": { "type": "string" },
+            "page": { "type": "string" },
+            "position": { "type": "string" },
+            "forced": { "type": "boolean" }
+          },
+          "required": ["decision"]
+        },
+        "video": {
+          "type": "object",
+          "properties": {
+            "decision": { "enum": ["chosen", "skipped"] },
+            "reason": { "type": "string" },
+            "id": { "type": "string" },
+            "role": { "enum": ["hero-loop", "story-clip"] },
+            "sound": { "type": "boolean" },
+            "page": { "type": "string" },
+            "section": { "type": "string" },
+            "reasons": { "type": "array", "items": { "type": "string" } },
+            "source": { "type": "string" },
+            "licence": { "type": "string" },
+            "creator": { "type": "string" },
+            "url": { "type": "string" },
+            "mp4": { "type": "string" },
+            "webm": { "type": "string" },
+            "poster": { "type": "string" }
+          },
+          "required": ["decision"]
+        }
+      }
+    },
     "brand": {
       "type": "object",
       "additionalProperties": false,

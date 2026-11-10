@@ -1,0 +1,447 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "healthcare-clinic",
+  "name": "Clinic or healthcare",
+  "description": "Doctors, dental and eye clinics, physiotherapy, diagnostics and wellness centres. Patients are anxious and in a hurry: they need to know you treat their problem, trust the doctor and book in a minute.",
+  "keywords": [
+    "clinic",
+    "doctor",
+    "doctors",
+    "hospital",
+    "dental",
+    "dentist",
+    "dentistry",
+    "physiotherapy",
+    "physiotherapist",
+    "skin clinic",
+    "dermatology",
+    "orthodontist",
+    "eye care",
+    "ophthalmology",
+    "diagnostic",
+    "pathology lab",
+    "healthcare",
+    "pediatric",
+    "paediatric",
+    "gynecologist",
+    "gynaecologist",
+    "ayurveda",
+    "homeopathy",
+    "wellness centre",
+    "medical centre"
+  ],
+  "goals": {
+    "prompt": "What should the website do for your practice? Name the one or two results that matter most.",
+    "why": "A clinic site is judged by appointments booked and calls answered, and by whether patients trust the doctor on sight.",
+    "recommendation": [
+      {
+        "id": "appointments",
+        "statement": "Get patients to book an appointment online",
+        "metric": "appointments booked per week"
+      },
+      {
+        "id": "trust",
+        "statement": "Show the doctors' qualifications and patient trust before the first visit"
+      }
+    ],
+    "reason": "The two things that bring a new patient through the door."
+  },
+  "audience": {
+    "prompt": "Who are your patients, and what are they worried about when they search for you? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
+    "why": "A parent booking for a child, an older adult and someone in pain look for different things.",
+    "recommendation": [
+      {
+        "segment": "Patients and families in the neighbourhood",
+        "need": "Know you treat their problem, trust the doctor and book a time",
+        "action": "Book an appointment"
+      },
+      {
+        "segment": "Patients looking for a second opinion",
+        "need": "See qualifications, experience and clear next steps",
+        "action": "Book an appointment"
+      }
+    ],
+    "reason": "The two groups most clinics serve; research in P2 refines them."
+  },
+  "conversions": [
+    {
+      "id": "book-appointment",
+      "label": "Book an appointment",
+      "kind": "book",
+      "hero": true
+    },
+    {
+      "id": "call",
+      "label": "Call the clinic",
+      "kind": "call",
+      "hero": true
+    },
+    {
+      "id": "whatsapp",
+      "label": "WhatsApp the clinic",
+      "kind": "message",
+      "hero": true
+    },
+    {
+      "id": "teleconsult",
+      "label": "Book a video consultation",
+      "kind": "book",
+      "hero": false
+    },
+    {
+      "id": "directions",
+      "label": "Get directions",
+      "kind": "visit",
+      "hero": false
+    },
+    {
+      "id": "callback",
+      "label": "Request a callback",
+      "kind": "callback",
+      "hero": false
+    }
+  ],
+  "primaryDefault": "book-appointment",
+  "secondaryDefault": [
+    "call",
+    "whatsapp"
+  ],
+  "trustSignals": [
+    {
+      "id": "qualifications",
+      "label": "Doctors' qualifications and registration numbers"
+    },
+    {
+      "id": "experience",
+      "label": "Years of experience"
+    },
+    {
+      "id": "patients",
+      "label": "Patients treated"
+    },
+    {
+      "id": "reviews",
+      "label": "Patient reviews"
+    },
+    {
+      "id": "accreditations",
+      "label": "Accreditations and memberships"
+    },
+    {
+      "id": "insurance",
+      "label": "Insurance and cashless partners"
+    }
+  ],
+  "trustDefault": [
+    "qualifications",
+    "experience",
+    "reviews"
+  ],
+  "heroMustHave": [
+    "The main speciality and the area in the headline, so a patient knows at once that this is the right clinic",
+    "The lead doctor's name and qualification near the headline",
+    "Today's opening hours and the phone number, large enough to tap on a phone"
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Show the speciality, the doctor and the area, build trust, and lead the patient to book",
+      "cta": "Book an appointment",
+      "level": "S",
+      "sections": [
+        "testimonials",
+        "faq"
+      ]
+    },
+    {
+      "slug": "/treatments",
+      "title": "Treatments",
+      "purpose": "Explain each treatment in plain words: who it is for, what happens and how long it takes",
+      "cta": "Book an appointment",
+      "level": "S"
+    },
+    {
+      "slug": "/doctors",
+      "title": "Our Doctors",
+      "purpose": "Introduce each doctor with qualifications, registration and experience",
+      "cta": "Book an appointment",
+      "level": "S"
+    },
+    {
+      "slug": "/about",
+      "title": "The Clinic",
+      "purpose": "Show the clinic, the equipment and the care that sets it apart, with real photographs",
+      "cta": "Visit us",
+      "level": "S",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/contact",
+      "title": "Book and Contact",
+      "purpose": "Make booking easy, with the form, phone, address, hours and map",
+      "cta": "Book an appointment",
+      "level": "S"
+    },
+    {
+      "slug": "/patient-stories",
+      "title": "Patient Stories",
+      "purpose": "Let patients describe their experience, with their consent",
+      "cta": "Book an appointment",
+      "level": "M",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/faq",
+      "title": "Questions Patients Ask",
+      "purpose": "Answer cost, pain, recovery time, first-visit and insurance questions",
+      "cta": "Call the clinic",
+      "level": "M",
+      "sections": [
+        "faq"
+      ]
+    },
+    {
+      "slug": "/first-visit",
+      "title": "Your First Visit",
+      "purpose": "Remove fear by showing what to bring, what happens and how long it takes",
+      "cta": "Book an appointment",
+      "level": "M",
+      "sections": [
+        "steps"
+      ]
+    },
+    {
+      "slug": "/insurance-payments",
+      "title": "Insurance and Payments",
+      "purpose": "State what insurance, cashless and payment options are accepted",
+      "cta": "Call the clinic",
+      "level": "M"
+    },
+    {
+      "slug": "/facilities",
+      "title": "Facilities and Technology",
+      "purpose": "Show the equipment and the hygiene standards patients cannot see from outside",
+      "cta": "Visit us",
+      "level": "M",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/health-guides",
+      "title": "Health Guides",
+      "purpose": "Publish reviewed guidance on common conditions that brings patients before they are in pain",
+      "cta": "Book an appointment",
+      "level": "L"
+    },
+    {
+      "slug": "/packages",
+      "title": "Health Packages",
+      "purpose": "Offer check-up and treatment packages with clear contents and prices",
+      "cta": "Book a package",
+      "level": "L"
+    },
+    {
+      "slug": "/video-consultation",
+      "title": "Video Consultation",
+      "purpose": "Explain how to consult the doctor online and what it costs",
+      "cta": "Book a video consultation",
+      "level": "L"
+    }
+  ],
+  "forms": [
+    {
+      "id": "appointment",
+      "purpose": "Book an appointment",
+      "fields": [
+        "name",
+        "phone",
+        "treatment",
+        "preferred-date",
+        "preferred-time"
+      ],
+      "destination": "form-function"
+    }
+  ],
+  "questions": [
+    {
+      "key": "specialities",
+      "prompt": "List the specialities and treatments you offer, most requested first.",
+      "why": "The first one is the hero headline; each gets its own section or page.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 10,
+      "round": 2
+    },
+    {
+      "key": "doctors",
+      "prompt": "Who are the doctors, with qualifications, registration numbers and years of experience?",
+      "why": "Patients choose the doctor before the clinic; credentials must be exact.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Credentials must be exact and cannot be guessed.",
+      "weight": 10,
+      "round": 2
+    },
+    {
+      "key": "bookingMethod",
+      "prompt": "How should an appointment request reach you?",
+      "why": "This decides what the Book button does and who answers it.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "form",
+          "label": "A form that the front desk checks"
+        },
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp to the front desk"
+        },
+        {
+          "value": "call",
+          "label": "A phone call"
+        },
+        {
+          "value": "booking-tool",
+          "label": "An online booking tool we already use"
+        }
+      ],
+      "recommendation": "form",
+      "reason": "The simplest option that needs no new tool.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "hours",
+      "prompt": "What are your clinic hours, and how do you handle emergencies?",
+      "why": "Hours and emergency guidance appear in the hero and the footer.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "insurance",
+      "prompt": "Which insurance or cashless options do you accept?",
+      "why": "Cost is the most common reason a patient hesitates.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 7,
+      "round": 3
+    },
+    {
+      "key": "languages",
+      "prompt": "Which languages do the doctors and staff speak?",
+      "why": "Patients trust a clinic that speaks their language.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "A common pattern; replace with the real list.",
+      "weight": 5,
+      "round": 3
+    },
+    {
+      "key": "teleconsult",
+      "prompt": "Do you offer video or phone consultations?",
+      "why": "If yes, a video-consultation page and button are added.",
+      "kind": "boolean",
+      "recommendation": false,
+      "reason": "Not every practice does.",
+      "weight": 6,
+      "round": 3
+    },
+    {
+      "key": "assetsOnHand",
+      "prompt": "Which of these do you already have?",
+      "why": "Real photographs of the doctors and the clinic build trust far more than stock images.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "doctor-photos",
+          "label": "Professional photographs of the doctors"
+        },
+        {
+          "value": "clinic-photos",
+          "label": "Photographs of the clinic and equipment"
+        },
+        {
+          "value": "reviews",
+          "label": "Patient reviews we may show"
+        },
+        {
+          "value": "logo",
+          "label": "A logo file"
+        }
+      ],
+      "recommendation": [
+        "logo"
+      ],
+      "reason": "The minimum most clinics have.",
+      "weight": 7,
+      "round": 3
+    }
+  ],
+  "requiredSections": {
+    "/": [
+      "hero naming the speciality and the area, with the doctor, the hours and the primary action",
+      "the main treatments in plain words",
+      "the doctor's credentials",
+      "patient reviews with consent",
+      "how booking works in three steps",
+      "frequently asked questions",
+      "a closing booking call to action"
+    ],
+    "/doctors": [
+      "a profile per doctor with photograph, qualifications, registration and experience",
+      "a book-with-this-doctor action"
+    ],
+    "/contact": [
+      "the appointment form",
+      "phone, address, hours and map",
+      "emergency guidance"
+    ]
+  },
+  "contentNeeds": [
+    "Doctors' photographs, qualifications and registration numbers",
+    "List of treatments with short descriptions",
+    "Clinic photographs",
+    "Hours, address and phone",
+    "Insurance and payment details",
+    "Patient reviews with permission"
+  ],
+  "compliance": [
+    "Never state or imply a cure, guaranteed result or success rate the client has not supplied with a source",
+    "Doctors' qualifications and registration numbers must be exactly as supplied",
+    "Patient testimonials and photographs need the patient's consent; never use stock photos as patients",
+    "Advice pages are general information and must say that they do not replace a consultation"
+  ],
+  "extras": [
+    {
+      "id": "booking-widget",
+      "fit": "strong",
+      "note": "An online booking tool cuts missed calls and lifts appointments."
+    },
+    {
+      "id": "map",
+      "fit": "strong",
+      "note": "A map and directions answer where the clinic is and how to reach it."
+    },
+    {
+      "id": "gallery",
+      "fit": "possible",
+      "note": "Real clinic and equipment photographs reassure anxious patients."
+    },
+    {
+      "id": "3d-object",
+      "fit": "possible",
+      "note": "A 3D anatomical model can illustrate a treatment, if a properly licensed one exists."
+    }
+  ]
+}

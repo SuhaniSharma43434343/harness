@@ -1,0 +1,472 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "restaurant-cafe",
+  "name": "Restaurant or cafe",
+  "description": "Restaurants, cafes, tea houses, bakeries and food outlets. People decide with their eyes and their phones: the menu, the photographs, the opening hours and one tap to order or reserve.",
+  "keywords": [
+    "restaurant",
+    "cafe",
+    "café",
+    "coffee shop",
+    "coffee",
+    "tea house",
+    "chai",
+    "bistro",
+    "bakery",
+    "dessert",
+    "food",
+    "diner",
+    "eatery",
+    "pizzeria",
+    "kitchen",
+    "canteen",
+    "dhaba",
+    "ice cream",
+    "juice bar",
+    "bar and grill"
+  ],
+  "goals": {
+    "prompt": "What should the website do for your food business? Name the one or two results that matter most.",
+    "why": "A food site is judged by orders placed, tables booked and people walking in, not by visits.",
+    "recommendation": [
+      {
+        "id": "orders",
+        "statement": "Get customers to order ahead or reserve a table",
+        "metric": "orders and bookings per week"
+      },
+      {
+        "id": "footfall",
+        "statement": "Bring people in with the menu, the photographs and the place",
+        "metric": "visits from Google Maps and the site"
+      }
+    ],
+    "reason": "The two results every food business wants."
+  },
+  "audience": {
+    "prompt": "Who comes to you, and what do they want from a visit or an order? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
+    "why": "Students, office workers, families and tourists want different things at different hours.",
+    "recommendation": [
+      {
+        "segment": "Regulars and people nearby",
+        "need": "See the menu, check the hours, and order or reserve quickly",
+        "action": "Reserve a table"
+      },
+      {
+        "segment": "New visitors who found you on Google or Instagram",
+        "need": "Judge the food and the place from photographs, then find the way in",
+        "action": "See the menu"
+      }
+    ],
+    "reason": "The two groups every food site serves; research in P2 refines them."
+  },
+  "conversions": [
+    {
+      "id": "order-ahead",
+      "label": "Order ahead",
+      "kind": "order",
+      "hero": true
+    },
+    {
+      "id": "book-table",
+      "label": "Book a table",
+      "kind": "book",
+      "hero": true
+    },
+    {
+      "id": "see-menu",
+      "label": "See the menu",
+      "kind": "visit",
+      "hero": true
+    },
+    {
+      "id": "directions",
+      "label": "Get directions",
+      "kind": "visit",
+      "hero": false
+    },
+    {
+      "id": "whatsapp",
+      "label": "Order on WhatsApp",
+      "kind": "message",
+      "hero": false
+    },
+    {
+      "id": "call",
+      "label": "Call to order",
+      "kind": "call",
+      "hero": false
+    }
+  ],
+  "primaryDefault": "order-ahead",
+  "secondaryDefault": [
+    "see-menu",
+    "directions"
+  ],
+  "trustSignals": [
+    {
+      "id": "ratings",
+      "label": "Google or Zomato rating"
+    },
+    {
+      "id": "years",
+      "label": "Years serving the neighbourhood"
+    },
+    {
+      "id": "signature",
+      "label": "Signature dishes and bestsellers"
+    },
+    {
+      "id": "hygiene",
+      "label": "Hygiene or food-safety certification"
+    },
+    {
+      "id": "press",
+      "label": "Press or food-blogger mentions"
+    }
+  ],
+  "trustDefault": [
+    "ratings",
+    "signature"
+  ],
+  "heroMustHave": [
+    "A real photograph of the food or the room that makes someone hungry, not a stock image",
+    "Today's opening hours and the area or landmark, so a visitor knows it is open and near"
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Make the food and the place irresistible, show today's hours and lead to ordering or booking",
+      "cta": "Order ahead",
+      "level": "S",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/menu",
+      "title": "Menu",
+      "purpose": "Show the full menu with prices, dietary tags and the bestsellers first",
+      "cta": "Order ahead",
+      "level": "S"
+    },
+    {
+      "slug": "/order",
+      "title": "Order",
+      "purpose": "Take an order for pickup or delivery in a few taps",
+      "cta": "Send order",
+      "level": "S"
+    },
+    {
+      "slug": "/gallery",
+      "title": "Gallery",
+      "purpose": "Show the dishes, the room and the people with real photographs",
+      "cta": "See the menu",
+      "level": "S",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/visit",
+      "title": "Visit",
+      "purpose": "Give the address, hours, map, parking and how to reach the place",
+      "cta": "Get directions",
+      "level": "S"
+    },
+    {
+      "slug": "/our-story",
+      "title": "Our Story",
+      "purpose": "Tell why the place exists and what makes the food different",
+      "cta": "See the menu",
+      "level": "M"
+    },
+    {
+      "slug": "/reservations",
+      "title": "Reservations",
+      "purpose": "Let groups book a table with the date, time and party size",
+      "cta": "Book a table",
+      "level": "M"
+    },
+    {
+      "slug": "/events-catering",
+      "title": "Events and Catering",
+      "purpose": "Sell private dining, birthdays, corporate orders and catering with packages and an enquiry form",
+      "cta": "Plan an event",
+      "level": "M"
+    },
+    {
+      "slug": "/offers",
+      "title": "Offers and Loyalty",
+      "purpose": "Show current offers, combos and the loyalty programme",
+      "cta": "Order ahead",
+      "level": "M"
+    },
+    {
+      "slug": "/reviews",
+      "title": "Reviews",
+      "purpose": "Let customers speak with their ratings and photographs",
+      "cta": "Order ahead",
+      "level": "M",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/faq",
+      "title": "Questions",
+      "purpose": "Answer delivery area, dietary needs, parking, payment and booking questions",
+      "cta": "Call to order",
+      "level": "M",
+      "sections": [
+        "faq"
+      ]
+    },
+    {
+      "slug": "/franchise",
+      "title": "Franchise",
+      "purpose": "Show the model, the investment and the support for people who want to open an outlet",
+      "cta": "Enquire about a franchise",
+      "level": "L"
+    },
+    {
+      "slug": "/blog",
+      "title": "From the Kitchen",
+      "purpose": "Share recipes, seasonal specials and stories that bring people back",
+      "cta": "See the menu",
+      "level": "L"
+    },
+    {
+      "slug": "/careers",
+      "title": "Careers",
+      "purpose": "Recruit cooks, baristas and front-of-house with the roles and a way to apply",
+      "cta": "See open roles",
+      "level": "L"
+    }
+  ],
+  "forms": [
+    {
+      "id": "order-ahead",
+      "purpose": "Order ahead for pickup",
+      "fields": [
+        "name",
+        "phone",
+        "items",
+        "pickup-time"
+      ],
+      "destination": "form-function"
+    },
+    {
+      "id": "event-enquiry",
+      "purpose": "Plan an event or catering order",
+      "fields": [
+        "name",
+        "phone",
+        "event-date",
+        "guests",
+        "message"
+      ],
+      "destination": "form-function"
+    }
+  ],
+  "questions": [
+    {
+      "key": "serviceModes",
+      "prompt": "How do customers get your food?",
+      "why": "Ordering, delivery and dine-in each need different buttons and different copy.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "dine-in",
+          "label": "Dine-in"
+        },
+        {
+          "value": "takeaway",
+          "label": "Takeaway or pickup"
+        },
+        {
+          "value": "delivery",
+          "label": "Own delivery"
+        },
+        {
+          "value": "aggregators",
+          "label": "Zomato, Swiggy or similar"
+        },
+        {
+          "value": "catering",
+          "label": "Catering and bulk orders"
+        }
+      ],
+      "recommendation": [
+        "dine-in",
+        "takeaway"
+      ],
+      "reason": "The minimum every food outlet offers.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "orderingMethod",
+      "prompt": "How should an online order reach you?",
+      "why": "An order form that nobody sees is worse than none. This decides what the Order button does.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "form",
+          "label": "A form on the site that comes to us"
+        },
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp message to our number"
+        },
+        {
+          "value": "aggregator",
+          "label": "Link out to Zomato or Swiggy"
+        },
+        {
+          "value": "call",
+          "label": "A phone call"
+        }
+      ],
+      "recommendation": "whatsapp",
+      "reason": "The fastest option for a small kitchen to handle.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "menuSource",
+      "prompt": "What do you have for the menu?",
+      "why": "Typing a menu from photographs takes care; a spreadsheet is fastest.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "pdf",
+          "label": "A PDF or printed menu"
+        },
+        {
+          "value": "photos",
+          "label": "Photographs of the menu cards"
+        },
+        {
+          "value": "spreadsheet",
+          "label": "A spreadsheet or document with items and prices"
+        },
+        {
+          "value": "none",
+          "label": "Nothing yet"
+        }
+      ],
+      "recommendation": "photos",
+      "reason": "What most small outlets have.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "hours",
+      "prompt": "What are your opening hours, and do they change on weekends or holidays?",
+      "why": "Hours are shown in the hero and on the visit page, so a wrong time is an angry customer.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "signatureDishes",
+      "prompt": "Which three dishes or drinks should a first-time visitor try?",
+      "why": "The hero and the menu lead with these.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "atmosphere",
+      "prompt": "How would a regular describe the place in three words?",
+      "why": "It sets the tone of the copy and the design.",
+      "kind": "text",
+      "recommendation": "Warm, relaxed, friendly",
+      "reason": "A neutral starting point.",
+      "weight": 6,
+      "round": 3
+    },
+    {
+      "key": "events",
+      "prompt": "Do you host events, private dining or take large orders?",
+      "why": "If yes, the Events and Catering page and its form are built.",
+      "kind": "boolean",
+      "recommendation": false,
+      "reason": "Not every outlet does.",
+      "weight": 5,
+      "round": 3
+    },
+    {
+      "key": "social",
+      "prompt": "Which social or review pages should the site link to?",
+      "why": "Instagram and Google reviews are often the real proof.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 5,
+      "round": 3
+    }
+  ],
+  "requiredSections": {
+    "/": [
+      "hero with a real food or room photograph, today's hours, the primary action and the menu link",
+      "bestsellers or signature items with photographs",
+      "how to order: dine-in, pickup, delivery",
+      "reviews or rating",
+      "the place: address, map and hours",
+      "a closing order or booking call to action"
+    ],
+    "/menu": [
+      "categories with items, prices and dietary tags",
+      "bestsellers highlighted",
+      "an order button that stays in view on a phone"
+    ],
+    "/visit": [
+      "address with a map",
+      "opening hours",
+      "how to get there and where to park",
+      "a call and a directions button"
+    ]
+  },
+  "contentNeeds": [
+    "Menu with prices",
+    "Food and place photographs",
+    "Opening hours",
+    "Address and map link",
+    "Order phone or WhatsApp number",
+    "Instagram and Google listing links",
+    "Logo file"
+  ],
+  "compliance": [
+    "Prices, opening hours and addresses must be exactly what the client supplied; a wrong price or hour is a customer complaint",
+    "Never claim dietary properties (vegan, gluten-free, halal) the client has not confirmed",
+    "Sample items and prices must be marked as samples until the client confirms them"
+  ],
+  "extras": [
+    {
+      "id": "video-loop",
+      "fit": "strong",
+      "note": "A short loop of steam, pouring or the kitchen makes people hungry; it must be silent and fall back to a photograph."
+    },
+    {
+      "id": "3d-object",
+      "fit": "possible",
+      "note": "One signature object (a cup, a pizza box, a kulhad) can add delight as a small interactive section, but never in front of the order button."
+    },
+    {
+      "id": "gallery",
+      "fit": "strong",
+      "note": "Real photographs of the food and the room are what decide a visit."
+    },
+    {
+      "id": "map",
+      "fit": "strong",
+      "note": "A map and a directions button answer the question every new visitor has."
+    }
+  ]
+}

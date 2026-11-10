@@ -1,0 +1,553 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "real-estate",
+  "name": "Real estate",
+  "description": "Builders, developers, brokers and property consultants. Buyers decide after seeing the place, so the site exists to book site visits and to put the brochure in their hands.",
+  "keywords": [
+    "real estate",
+    "realty",
+    "property",
+    "properties",
+    "builder",
+    "developer",
+    "developers",
+    "broker",
+    "estate agent",
+    "apartment",
+    "apartments",
+    "flats",
+    "villa",
+    "villas",
+    "plots",
+    "township",
+    "housing",
+    "residential",
+    "commercial space"
+  ],
+  "goals": {
+    "prompt": "What should the website do for your property business? Name the one or two results that matter most.",
+    "why": "For a property business the site is judged by site visits booked and brochures downloaded, not by page views.",
+    "recommendation": [
+      {
+        "id": "site-visits",
+        "statement": "Get qualified buyers to book a site visit",
+        "metric": "site visit bookings per month"
+      },
+      {
+        "id": "brochure-leads",
+        "statement": "Capture buyer details when they download the brochure",
+        "metric": "brochure downloads with a phone number"
+      }
+    ],
+    "reason": "The two actions that turn a property enquiry into a sale conversation."
+  },
+  "audience": {
+    "prompt": "Who buys or rents from you, and what do they need to see before they will visit? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
+    "why": "A first-time home buyer, an investor and an NRI need different proof and different pages.",
+    "recommendation": [
+      {
+        "segment": "Families buying their first or next home",
+        "need": "Prices, floor plans, location and possession date, then a visit",
+        "action": "Book a site visit"
+      },
+      {
+        "segment": "Investors",
+        "need": "Appreciation, rental yield, builder track record and legal clarity",
+        "action": "Book a site visit"
+      }
+    ],
+    "reason": "The two groups most property sites serve; research in P2 refines them."
+  },
+  "conversions": [
+    {
+      "id": "book-visit",
+      "label": "Book a site visit",
+      "kind": "book",
+      "hero": true
+    },
+    {
+      "id": "callback",
+      "label": "Request a callback",
+      "kind": "callback",
+      "hero": false
+    },
+    {
+      "id": "brochure",
+      "label": "Download brochure",
+      "kind": "download",
+      "hero": true
+    },
+    {
+      "id": "whatsapp",
+      "label": "WhatsApp us",
+      "kind": "message",
+      "hero": true
+    },
+    {
+      "id": "call",
+      "label": "Call now",
+      "kind": "call",
+      "hero": false
+    },
+    {
+      "id": "emi",
+      "label": "Check your EMI",
+      "kind": "calculator",
+      "hero": false
+    },
+    {
+      "id": "virtual-tour",
+      "label": "Take a virtual tour",
+      "kind": "tour",
+      "hero": false
+    }
+  ],
+  "primaryDefault": "book-visit",
+  "secondaryDefault": [
+    "brochure",
+    "whatsapp",
+    "call"
+  ],
+  "trustSignals": [
+    {
+      "id": "registration",
+      "label": "Registration number (such as RERA)"
+    },
+    {
+      "id": "years",
+      "label": "Years in business"
+    },
+    {
+      "id": "delivered",
+      "label": "Homes or projects delivered"
+    },
+    {
+      "id": "awards",
+      "label": "Awards and recognitions"
+    },
+    {
+      "id": "bank-approved",
+      "label": "Bank-approved project"
+    },
+    {
+      "id": "reviews",
+      "label": "Buyer reviews and testimonials"
+    }
+  ],
+  "trustDefault": [
+    "registration",
+    "delivered",
+    "reviews"
+  ],
+  "heroMustHave": [
+    "A headline that names the project or the promise and the location, not the company name alone",
+    "One strong image of the actual project or the neighbourhood, never a stock skyline"
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Show the project and the location, prove the builder can be trusted, and move the buyer to book a site visit or take the brochure",
+      "cta": "Book a site visit",
+      "level": "S",
+      "sections": [
+        "testimonials",
+        "FAQ"
+      ]
+    },
+    {
+      "slug": "/projects",
+      "title": "Projects",
+      "purpose": "Show every project with its status, configuration, starting price and location so a buyer can shortlist in a minute",
+      "cta": "Book a site visit",
+      "level": "S",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/amenities-gallery",
+      "title": "Amenities and Gallery",
+      "purpose": "Make the lifestyle real with the amenities, the actual site photographs and the walkthrough",
+      "cta": "Download brochure",
+      "level": "S",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/about",
+      "title": "About",
+      "purpose": "Show who is behind the project: the builder's track record, delivered projects and approvals",
+      "cta": "Talk to our team",
+      "level": "S",
+      "sections": [
+        "stats"
+      ]
+    },
+    {
+      "slug": "/contact",
+      "title": "Contact",
+      "purpose": "Make the visit easy to book, with the site address, the sales office hours and the directions",
+      "cta": "Book a site visit",
+      "level": "S"
+    },
+    {
+      "slug": "/floor-plans-pricing",
+      "title": "Floor Plans and Pricing",
+      "purpose": "Give each configuration its floor plan, carpet area and price range so buyers stop guessing",
+      "cta": "Get the price sheet",
+      "level": "M"
+    },
+    {
+      "slug": "/location",
+      "title": "Location and Connectivity",
+      "purpose": "Show what is nearby and how long it takes to reach schools, work, hospitals and transport",
+      "cta": "Book a site visit",
+      "level": "M"
+    },
+    {
+      "slug": "/construction-updates",
+      "title": "Construction Updates",
+      "purpose": "Prove progress with dated photographs, so buyers trust the possession date",
+      "cta": "Book a site visit",
+      "level": "M",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/home-loan-emi",
+      "title": "Home Loan and EMI",
+      "purpose": "Answer how a buyer will pay: bank partners, eligibility and an EMI calculation",
+      "cta": "Check your EMI",
+      "level": "M",
+      "sections": [
+        "faq"
+      ]
+    },
+    {
+      "slug": "/reviews",
+      "title": "Buyer Reviews",
+      "purpose": "Let happy buyers speak, with names, projects and photographs where they agree",
+      "cta": "Book a site visit",
+      "level": "M",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/buyers-guide",
+      "title": "Buyer's Guide",
+      "purpose": "Answer the questions every buyer has about documents, registration, taxes and possession",
+      "cta": "Talk to our team",
+      "level": "M",
+      "sections": [
+        "faq",
+        "steps"
+      ]
+    },
+    {
+      "slug": "/nri-buyers",
+      "title": "NRI Buyers",
+      "purpose": "Explain remote booking, power of attorney, remittance and handover for buyers abroad",
+      "cta": "Request a callback",
+      "level": "L"
+    },
+    {
+      "slug": "/investors",
+      "title": "Investors",
+      "purpose": "Show the investment case with location growth, rental demand and the builder's record, without promising returns",
+      "cta": "Request a callback",
+      "level": "L"
+    },
+    {
+      "slug": "/blog",
+      "title": "Property Insights",
+      "purpose": "Publish local market guides that bring in buyers searching before they are ready to visit",
+      "cta": "Book a site visit",
+      "level": "L"
+    },
+    {
+      "slug": "/partners",
+      "title": "Channel Partners",
+      "purpose": "Recruit brokers with commission terms, support material and a registration form",
+      "cta": "Become a partner",
+      "level": "L"
+    }
+  ],
+  "forms": [
+    {
+      "id": "site-visit",
+      "purpose": "Book a site visit",
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "preferred-date",
+        "project-interest"
+      ],
+      "destination": "form-function"
+    },
+    {
+      "id": "brochure",
+      "purpose": "Download the brochure",
+      "fields": [
+        "name",
+        "phone",
+        "email"
+      ],
+      "destination": "form-function"
+    }
+  ],
+  "questions": [
+    {
+      "key": "offering",
+      "prompt": "What do you sell or rent?",
+      "why": "Selling homes, renting commercial space and selling plots each need a different page set and different proof.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "residential-sale",
+          "label": "Homes and apartments for sale"
+        },
+        {
+          "value": "plots",
+          "label": "Plots and land"
+        },
+        {
+          "value": "commercial",
+          "label": "Commercial space (shops, offices)"
+        },
+        {
+          "value": "rentals",
+          "label": "Rentals and leasing"
+        },
+        {
+          "value": "mixed",
+          "label": "A mix of these"
+        }
+      ],
+      "recommendation": "residential-sale",
+      "reason": "The most common property business site.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "projectCount",
+      "prompt": "How many projects or listings will the site show?",
+      "why": "One project needs a landing-page feel. Many need filters and a page per project.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "one",
+          "label": "One project"
+        },
+        {
+          "value": "few",
+          "label": "Two to five projects"
+        },
+        {
+          "value": "many",
+          "label": "Six or more, with filters"
+        }
+      ],
+      "recommendation": "few",
+      "reason": "A typical builder site shows a few active projects.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "priceDisplay",
+      "prompt": "How should prices appear?",
+      "why": "Buyers leave sites that hide prices, but some builders prefer to give them on a call.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "full",
+          "label": "Show the price of each configuration"
+        },
+        {
+          "value": "starting-from",
+          "label": "Show a starting price only"
+        },
+        {
+          "value": "on-request",
+          "label": "On request, after the buyer shares a phone number"
+        }
+      ],
+      "recommendation": "starting-from",
+      "reason": "A starting price builds interest without committing the sales team.",
+      "weight": 7,
+      "round": 2
+    },
+    {
+      "key": "locations",
+      "prompt": "Which cities or areas are your projects in, and what is the landmark a buyer knows them by?",
+      "why": "The hero headline and the location page are built around this.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Needed to write a location-specific headline.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "assetsOnHand",
+      "prompt": "Which of these do you already have?",
+      "why": "The brochure is the hero's second action, and real photographs decide how good the site looks.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "brochure-pdf",
+          "label": "Brochure PDF"
+        },
+        {
+          "value": "floor-plans",
+          "label": "Floor plans"
+        },
+        {
+          "value": "price-list",
+          "label": "Price list"
+        },
+        {
+          "value": "site-photos",
+          "label": "Photographs of the site or model flat"
+        },
+        {
+          "value": "walkthrough-video",
+          "label": "Walkthrough or drone video"
+        },
+        {
+          "value": "3d-model",
+          "label": "A 3D model or render of the building"
+        }
+      ],
+      "recommendation": [
+        "brochure-pdf",
+        "site-photos"
+      ],
+      "reason": "The minimum a property site needs to look credible.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "leadChannel",
+      "prompt": "Where should enquiries go, and who follows them up?",
+      "why": "A lead that waits a day is usually lost. The form and the call to action are wired to this.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp to the sales team"
+        },
+        {
+          "value": "phone",
+          "label": "A phone call from the sales team"
+        },
+        {
+          "value": "email",
+          "label": "Email to a sales inbox"
+        },
+        {
+          "value": "crm",
+          "label": "Our CRM"
+        }
+      ],
+      "recommendation": "whatsapp",
+      "reason": "Most property buyers prefer to be reached on WhatsApp first.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "visitSlots",
+      "prompt": "When can buyers visit the site or sales office, and do you offer pick-up?",
+      "why": "The booking form offers real slots, not an open question.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "A common sales-office pattern; replace with the real hours.",
+      "weight": 6,
+      "round": 3
+    },
+    {
+      "key": "differentiator",
+      "prompt": "In one sentence, why should a buyer choose you over the other builder down the road?",
+      "why": "This becomes the hero promise and the about page opening.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "A real differentiator cannot be guessed.",
+      "weight": 8,
+      "round": 3
+    },
+    {
+      "key": "competitors",
+      "prompt": "Which two or three competing projects do your buyers compare you with?",
+      "why": "Research studies them so the site answers the comparisons buyers actually make.",
+      "kind": "text",
+      "recommendation": "(none named)",
+      "reason": "Research will identify likely competitors.",
+      "weight": 5,
+      "round": 3
+    }
+  ],
+  "requiredSections": {
+    "/": [
+      "hero with the project headline, a proof line, the primary action and the brochure download",
+      "featured projects with status, configuration and starting price",
+      "why buy from this builder, with registration and delivery proof",
+      "location advantages with a map",
+      "buyer testimonials",
+      "frequently asked questions",
+      "a closing site-visit call to action"
+    ],
+    "/projects": [
+      "a card per project with status, configuration, area, starting price and the visit action",
+      "a filter or a clear grouping by status"
+    ],
+    "/contact": [
+      "the booking form with real slots",
+      "address, sales office hours, map and directions",
+      "phone and WhatsApp buttons"
+    ]
+  },
+  "contentNeeds": [
+    "Brochure PDF",
+    "Floor plans",
+    "Price list or price range",
+    "Registration (RERA) number",
+    "Site and model-flat photographs",
+    "Builder's delivered-project list",
+    "Sales office address and hours"
+  ],
+  "compliance": [
+    "Show the registration number wherever the regulator requires it, and never publish one the client has not supplied",
+    "Never promise returns, appreciation or possession dates the client has not given as facts with a source",
+    "Prices and areas on the page must match the price list the client supplied"
+  ],
+  "extras": [
+    {
+      "id": "virtual-tour",
+      "fit": "strong",
+      "note": "Buyers who cannot visit at once can walk the model flat, which lifts site-visit bookings."
+    },
+    {
+      "id": "video-loop",
+      "fit": "strong",
+      "note": "A short drone or construction loop in the hero shows the real project and the neighbourhood."
+    },
+    {
+      "id": "3d-object",
+      "fit": "possible",
+      "note": "A 3D building or floor-plan model suits a premium project, if the builder has one to supply."
+    },
+    {
+      "id": "map",
+      "fit": "strong",
+      "note": "A location map with nearby places answers the question every buyer asks first."
+    },
+    {
+      "id": "calculator",
+      "fit": "strong",
+      "note": "An EMI calculator keeps buyers on the site and starts the finance conversation."
+    }
+  ]
+}

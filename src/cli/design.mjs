@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join } from 'node:path';
 import { loadConfig } from '../core/config.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { approve, loadProject } from '../core/project.mjs';
+import { chooseDirection } from '../design/choose.mjs';
 import { releaseChecks } from '../design/release.mjs';
 import { designStatus, retryBuildTask, retryStage, runDesignWorkflow } from '../design/manager.mjs';
 import { openDefects } from '../qa/defects.mjs';
@@ -49,15 +50,14 @@ export async function cmdDesign(root, args) {
   }
 
   if (action === 'choose') {
-    const file = join(workspace, project, 'design', 'directions.json');
-    const decision = JSON.parse(readFileSync(file, 'utf8'));
     const id = args[2];
-    if (!decision.directions.some((d) => d.id === id)) {
-      console.error(`No direction ${id}. Directions: ${decision.directions.map((d) => d.id).join(', ')}`);
+    let entry;
+    try {
+      entry = chooseDirection(project, id, { workspace, note: flag(args, '--note') });
+    } catch (err) {
+      console.error(err.message);
       return 2;
     }
-    const entry = approve(project, 'B2', { workspace, note: flag(args, '--note') ?? `Chose ${id}` });
-    writeFileSync(file, JSON.stringify({ ...decision, status: 'chosen', chosen: id, approval: { code: 'B2', ledgerSeq: entry.seq } }, null, 2) + '\n');
     console.log(`Recorded B2 for ${project}: ${id} (ledger #${entry.seq}).`);
     return 0;
   }

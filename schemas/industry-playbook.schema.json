@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/industry-playbook.schema.json",
+  "title": "Industry playbook (registry/industries/*.json)",
+  "description": "What a business of one kind needs from its website: the action that makes it money, the pages that carry it, what the home hero must show, and the questions worth asking its owner. Intake detects the industry from the client's own words and loads the playbook, so the questions, pages and calls to action fit the business instead of a generic template.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "keywords", "goals", "audience", "conversions", "primaryDefault", "secondaryDefault", "pages", "forms", "questions", "requiredSections", "heroMustHave"],
+  "properties": {
+    "schemaVersion": { "$ref": "common.schema.json#/definitions/semver" },
+    "id": { "$ref": "common.schema.json#/definitions/slug" },
+    "name": { "type": "string", "minLength": 2 },
+    "description": { "type": "string" },
+    "keywords": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 2 },
+      "description": "Words in the client's industry description that select this playbook. The longest match wins. The fallback playbook has none."
+    },
+    "goals": { "$ref": "#/definitions/textQuestion", "description": "The goals question for this industry, with its recommended answer." },
+    "audience": { "$ref": "#/definitions/textQuestion" },
+    "conversions": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/definitions/conversion" },
+      "description": "Actions a visitor can take. One is the primary action: the one the whole site is built to make happen."
+    },
+    "primaryDefault": { "$ref": "common.schema.json#/definitions/slug" },
+    "secondaryDefault": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/slug" } },
+    "trustSignals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label"],
+        "properties": { "id": { "$ref": "common.schema.json#/definitions/slug" }, "label": { "type": "string", "minLength": 2 } }
+      },
+      "description": "Proof a visitor looks for before acting. Intake asks which the client can honestly show."
+    },
+    "trustDefault": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/slug" } },
+    "heroMustHave": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 10 },
+      "description": "What the home hero must show above the fold for this kind of business, besides the primary and hero secondary actions."
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "title", "purpose", "cta", "level"],
+        "properties": {
+          "slug": { "type": "string", "pattern": "^(/|(/[a-z0-9][a-z0-9-]*)+)$" },
+          "title": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 10 },
+          "cta": { "type": "string", "minLength": 1 },
+          "level": { "type": "string", "enum": ["S", "M", "L"], "description": "The smallest tier that includes this page. Tier M includes S pages, tier L includes all." },
+          "sections": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "forms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "purpose", "fields", "destination"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/definitions/slug" },
+          "purpose": { "type": "string" },
+          "fields": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "destination": { "type": "string", "enum": ["form-function", "email", "none-yet"] }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 14,
+      "items": { "$ref": "#/definitions/deepQuestion" },
+      "description": "Industry questions beyond goals, audience, pages, forms, primary action, secondary actions and proof. The answers land in brief.business.details."
+    },
+    "requiredSections": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 5 } },
+      "description": "Page slug to the sections that page must have to do its job for this business."
+    },
+    "contentNeeds": { "type": "array", "items": { "type": "string", "minLength": 3 }, "description": "Material the client should supply (a brochure PDF, price list, licence number)." },
+    "compliance": { "type": "array", "items": { "type": "string", "minLength": 10 }, "description": "Rules the copy must follow in this industry." },
+    "extras": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "fit", "note"],
+        "properties": {
+          "id": { "type": "string", "enum": ["3d-object", "video-loop", "virtual-tour", "map", "calculator", "gallery", "booking-widget"] },
+          "fit": { "type": "string", "enum": ["strong", "possible", "weak"] },
+          "note": { "type": "string", "minLength": 10 }
+        }
+      },
+      "description": "Media and tools that usually suit this business, for the media workflows to read."
+    }
+  },
+  "definitions": {
+    "textQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prompt", "recommendation", "reason"],
+      "properties": {
+        "prompt": { "type": "string", "minLength": 10, "maxLength": 300 },
+        "why": { "type": "string" },
+        "recommendation": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "conversion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/slug" },
+        "label": { "type": "string", "minLength": 3, "maxLength": 40 },
+        "kind": { "type": "string", "enum": ["book", "callback", "call", "message", "download", "order", "enquiry", "visit", "buy", "calculator", "tour", "subscribe"] },
+        "hero": { "type": "boolean", "description": "True when this action belongs in the home hero next to the primary action." }
+      }
+    },
+    "deepQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "prompt", "kind", "recommendation", "reason"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$", "description": "Becomes business.details.<key>." },
+        "prompt": { "type": "string", "minLength": 10, "maxLength": 300 },
+        "why": { "type": "string" },
+        "kind": { "type": "string", "enum": ["single", "multi", "text", "number", "boolean"] },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "label"],
+            "properties": { "value": {}, "label": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "recommendation": {},
+        "reason": { "type": "string", "minLength": 1 },
+        "weight": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "round": { "type": "integer", "minimum": 2, "maximum": 3 }
+      }
+    }
+  }
+}

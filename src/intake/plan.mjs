@@ -1,3 +1,22 @@
+// What the site is built to make happen for this kind of business, in the operator's words.
+function businessLines(brief) {
+  const b = brief.business;
+  if (!b?.primaryConversion) return [];
+  const lines = [
+    '## What the site is built to do',
+    '',
+    `Industry playbook: **${b.industryId}**. The whole site leads to one action: **${b.primaryConversion.label}**.`,
+    '',
+    'The home hero must show:',
+    '',
+    ...(b.heroMustHave ?? []).map((h) => `- ${h}`),
+    '',
+  ];
+  if (b.contentNeeds?.length) lines.push('Material the client should supply:', '', ...b.contentNeeds.map((c) => `- ${c}`), '');
+  if (b.compliance?.length) lines.push('Rules for the copy in this industry:', '', ...b.compliance.map((c) => `- ${c}`), '');
+  return lines;
+}
+
 // What only this business can claim. With fewer than three, the first deliverable is questions
 // for the client, not a design, and the plan says so.
 function truthLines(brief) {
@@ -43,11 +62,14 @@ export function renderPlan(brief, decision, estimate) {
     '',
     ...brief.audience.map((a) => `- ${a.segment}: ${a.need}${[['wants', 'wants'], ['needs to see', 'proof'], ['should', 'action'], ['arrives from', 'arrivesFrom'], ['mood', 'mood']].filter(([, k]) => a[k]?.length).map(([l, k]) => `; ${l}: ${[a[k]].flat().join(', ')}`).join('')}`),
     '',
+    ...businessLines(brief),
     ...truthLines(brief),
     ...(brief.jobs?.length ? ['## One-tap jobs', '', 'Every page gives a visitor these in one tap:', '', ...brief.jobs.map((j) => `- ${j}`), ''] : []),
     ...(brief.contentRules?.length ? ['## Content rules', '', 'The copy check refuses copy that breaks these.', '', ...brief.contentRules.map((r) => `- ${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.map((x) => (x === '*' ? 'every page' : `\`${x}\``)).join(', ')}: "${r.text}"${r.note ? ` (${r.note})` : ''}`), ''] : []),
     ...accessLines(brief),
     '## Pages',
+    '',
+    `${brief.pages.length} pages.`,
     '',
     '| Page | Purpose | Call to action |',
     '| --- | --- | --- |',

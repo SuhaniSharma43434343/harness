@@ -85,6 +85,11 @@ const GENERIC_COPY = [
 const LABEL_HEADLINE = /^(services|our services|about|about us|features|our work|projects|gallery|testimonials|reviews|faq|faqs|contact|contact us|hero|why us|why choose us|how it works|get in touch)$/i;
 
 const CARD_PATTERNS = /card|grid|tile/;
+// The asset id for a chosen model or video, the same everywhere (see mediaAcceptance in the planner).
+const mediaId = (kind, id) => `${kind}-${String(id).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+// Words that say a composition breaks its own grid, and the centred-hero layout that does not.
+const BROKEN_GRID = /overlap|bleed|break|oversiz|asymmetr|off-?set|stagger|crop|off-?grid|sticky|pinned|straddl|spill|layer|rotated|diagonal|full-?bleed/i;
+const CENTRED_HERO = /^\s*(a\s+)?(centred|centered)\b|\bcentred (headline|text|stack)|\bcentered (headline|text|stack)/i;
 const words = (s) => String(s ?? '').trim().split(/\s+/).filter(Boolean).length;
 
 // The operational-fact patterns a section plan may not invent: clock times, am/pm hours, prices
@@ -279,10 +284,54 @@ export const CHECKS = {
       if (!page.sections.some((s) => s.assets.length)) problems.push(`${page.slug}: no section has a visual asset`);
       problems.push(...funnelProblems(page));
     }
+    // The business exists to make one action happen. If the home hero does not carry it, the site
+    // is a pretty brochure, so this is checked before anything is built.
+    const biz = brief?.business;
+    if (biz?.primaryConversion) {
+      const home = pagesOf(plan).find((p) => p.slug === '/');
+      const heroText = (home?.sections ?? []).slice(0, 2).map((s) => [s.purpose, s.composition, s.hierarchy].join(' ')).join(' ').toLowerCase();
+      if (home && !heroText.includes(biz.primaryConversion.label.toLowerCase())) {
+        problems.push(`design/section-plan.json: the home hero must carry the primary action "${biz.primaryConversion.label}", the one thing this business exists to make happen; say where the button sits in the first section's composition and hierarchy`);
+      }
+      for (const s of biz.secondaryConversions ?? []) {
+        if (s.hero && home && !heroText.includes(s.label.toLowerCase())) {
+          problems.push(`design/section-plan.json: the home hero must also carry "${s.label}" beside the primary action; place it in the first section`);
+        }
+      }
+    }
     const all = sectionsOf(plan);
     const cards = all.filter((s) => CARD_PATTERNS.test(s.pattern)).length;
     if (all.length && cards / all.length > 0.25) problems.push(`design/section-plan.json: ${cards} of ${all.length} sections are card or grid layouts; at most a quarter may be`);
     if (new Set(all.map((s) => s.pattern)).size < Math.min(4, all.length)) problems.push('design/section-plan.json: use at least four different layout patterns across the site');
+    // Craft: a site that wins awards breaks its own grid, and a real business site is not a brochure.
+    if (all.length >= 6) {
+      const broken = all.filter((s) => BROKEN_GRID.test(s.composition)).length;
+      if (broken < Math.ceil(all.length / 3)) problems.push(`design/section-plan.json: only ${broken} of ${all.length} sections break the grid; say in the composition what overlaps, bleeds off the edge, is offset or is cropped, in at least a third of them`);
+    }
+    const homePlan = pagesOf(plan).find((p) => p.slug === '/');
+    const minHome = brief?.tier === 'S' ? 5 : 7;
+    if (brief && homePlan && homePlan.sections.length < minHome) problems.push(`design/section-plan.json: the home page has ${homePlan.sections.length} sections; a ${brief.tier ?? 'M'} site needs at least ${minHome}, so it tells the whole story`);
+    const minInner = brief?.tier === 'S' ? 3 : 4;
+    for (const page of pagesOf(plan)) if (brief && page.slug !== '/' && page.sections.length < minInner) problems.push(`design/section-plan.json: ${page.slug} has ${page.sections.length} sections; an inner page needs at least ${minInner}`);
+    // The media the operator chose must be placed where the media step said, and a 3D object never in the hero.
+    const t3 = brief?.media?.threeD;
+    const vd = brief?.media?.video;
+    const spots = (id) => pagesOf(plan).flatMap((p) => p.sections.map((s, i) => ({ s, i, slug: p.slug }))).filter((x) => x.s.assets.includes(id));
+    if (t3?.decision === 'chosen') {
+      const id = mediaId('model', t3.id);
+      const hits = spots(id);
+      if (!hits.length) problems.push(`design/section-plan.json: the operator chose the 3D object "${t3.title}", so one section must list the asset "${id}"`);
+      else if (hits.every((h) => h.slug === '/' && h.i === 0)) problems.push(`design/section-plan.json: the 3D object "${id}" is in the home hero; move it below the hero so it never competes with the main action`);
+    }
+    if (vd?.decision === 'chosen') {
+      const id = mediaId('video', vd.id);
+      const hits = spots(id);
+      if (!hits.length) problems.push(`design/section-plan.json: the operator supplied a video, so one section must list the asset "${id}"`);
+      else if (vd.role === 'hero-loop' && !hits.some((h) => h.slug === '/' && h.i === 0)) problems.push(`design/section-plan.json: the video "${id}" is a hero loop and belongs in the first section of the home page`);
+      else if (vd.role === 'story-clip' && hits.every((h) => h.i === 0)) problems.push(`design/section-plan.json: the video "${id}" is a tap-to-play story clip; it must not sit in a page's first section`);
+    }
+    const heroSection = homePlan?.sections?.[0];
+    if (heroSection && CENTRED_HERO.test(heroSection.composition) && !BROKEN_GRID.test(heroSection.composition)) problems.push('design/section-plan.json: the home hero is a centred layout with nothing overlapping or bleeding; give it scale contrast and one element that breaks the grid');
     return problems;
   },
 
@@ -300,6 +349,9 @@ export const CHECKS = {
     }
     const used = new Set(sectionsOf(plan).flatMap((s) => s.motion));
     if (plan) for (const x of m.motions) if (!used.has(x.id)) problems.push(`design/motion-plan.json: motion ${x.id} is not used by any section`);
+    if (m.motions.length < 5) problems.push(`design/motion-plan.json: ${m.motions.length} motions; define at least 5, with a signature moment`);
+    if (kinds.size < 3) problems.push('design/motion-plan.json: use at least three kinds of motion (scroll, pin, hover, micro, transition, ambient), not one effect everywhere');
+    if (!kinds.has('scroll') && !kinds.has('pin')) problems.push('design/motion-plan.json: define at least one scroll-linked motion (kind "scroll" or "pin")');
     for (const x of m.motions) if (words(x.purpose) < 4) problems.push(`design/motion-plan.json: motion ${x.id} needs a purpose: what does it make clearer?`);
     return problems;
   },
@@ -308,6 +360,11 @@ export const CHECKS = {
     const [a, problems] = load(dir, 'assetPlan', 'assetPlan');
     if (!a) return problems;
     const [plan] = load(dir, 'sectionPlan');
+    const [brief] = load(dir, 'brief');
+    const t3 = brief?.media?.threeD;
+    const vd = brief?.media?.video;
+    if (t3?.decision === 'chosen' && !a.assets.some((x) => x.id === mediaId('model', t3.id))) problems.push(`design/asset-plan.json: the chosen 3D object needs the asset "${mediaId('model', t3.id)}" (kind 3d, file ${t3.file})`);
+    if (vd?.decision === 'chosen' && !a.assets.some((x) => x.id === mediaId('video', vd.id))) problems.push(`design/asset-plan.json: the supplied video needs the asset "${mediaId('video', vd.id)}" (kind video, file ${vd.mp4})`);
     const used = new Set(sectionsOf(plan).flatMap((s) => s.assets));
     if (plan) for (const x of a.assets) if (!used.has(x.id)) problems.push(`design/asset-plan.json: asset ${x.id} is not used by any section`);
     for (const x of a.assets) {
@@ -337,6 +394,13 @@ export const CHECKS = {
     const written = new Map(c.pages.flatMap((p) => p.sections.map((s) => [s.id, { ...s, slug: p.slug }])));
     for (const id of planned.keys()) if (!written.has(id)) problems.push(`content/copy.json: section ${id} has no copy`);
     for (const id of written.keys()) if (plan && !planned.has(id)) problems.push(`content/copy.json: section ${id} is not in the section plan`);
+    const biz = brief?.business;
+    if (biz?.primaryConversion) {
+      const hero = c.pages.find((p) => p.slug === '/')?.sections?.[0];
+      if (hero && !JSON.stringify(hero).toLowerCase().includes(biz.primaryConversion.label.toLowerCase())) {
+        problems.push(`content/copy.json: the home hero (${hero.id}) must offer the primary action "${biz.primaryConversion.label}" as its call to action`);
+      }
+    }
     const headlines = new Map();
     let total = 0;
     for (const s of written.values()) {

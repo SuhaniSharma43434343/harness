@@ -14,6 +14,7 @@ import {
   createReplayWorker,
   parseEvidence,
   recordingPath,
+  resolveCommand,
 } from '../../src/workers/claude-code.mjs';
 import { addTasks, newProject, passVerifier, task, tmpWorkspace } from './helpers.mjs';
 
@@ -181,4 +182,22 @@ test('recordings are kept per task and attempt under evidence/recordings', async
   await runProject(project, { ...opts, worker: fake('ok'), verifier: passVerifier });
   const dir = join(projectDir(opts, project), 'evidence', 'recordings', 'hero');
   assert.deepEqual(readdirSync(dir), ['attempt-1.json']);
+});
+
+test('on Windows a .cmd shim resolves to the program it starts, so no shell is needed', () => {
+  const env = { Path: 'C:\\other;C:\\npm', PATHEXT: '.com;.exe;.bat;.cmd' };
+  const files = {
+    'C:\\npm\\claude.cmd': '@ECHO off\r\n"%dp0%\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe"   %*\r\n',
+    'C:\\npm\\tool.cmd': '@ECHO off\r\n"%_prog%"  "%dp0%\\node_modules\\tool\\cli.js" %*\r\n',
+    'C:\\npm\\odd.cmd': 'echo hello\r\n',
+    'C:\\npm\\real.exe': '',
+  };
+  const io = { platform: 'win32', env, exists: (f) => f in files, read: (f) => files[f], nodePath: 'C:\\node.exe' };
+  assert.deepEqual(resolveCommand(['claude', '-x'], io), ['C:\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe', '-x']);
+  assert.deepEqual(resolveCommand(['tool'], io), ['C:\\node.exe', 'C:\\npm\\node_modules\\tool\\cli.js']);
+  assert.deepEqual(resolveCommand(['real'], io), ['C:\\npm\\real.exe']);
+  assert.deepEqual(resolveCommand(['odd'], io), ['odd'], 'an unknown shim is left alone');
+  assert.deepEqual(resolveCommand(['missing'], io), ['missing']);
+  assert.deepEqual(resolveCommand(['C:\\npm\\claude.cmd'], io), ['C:\\npm\\claude.cmd'], 'a path is left alone');
+  assert.deepEqual(resolveCommand(['claude'], { ...io, platform: 'linux' }), ['claude']);
 });

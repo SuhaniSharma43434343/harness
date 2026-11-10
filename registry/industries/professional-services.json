@@ -1,0 +1,456 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "professional-services",
+  "name": "Professional services",
+  "description": "Law firms, accountants, consultants, architects, agencies and advisers. Clients hire expertise they cannot judge, so the site sells trust: credentials, results and a clear first step.",
+  "keywords": [
+    "law firm",
+    "lawyer",
+    "advocate",
+    "attorney",
+    "legal",
+    "chartered accountant",
+    "accounting",
+    "accountant",
+    "tax",
+    "audit",
+    "consulting",
+    "consultancy",
+    "consultant",
+    "advisory",
+    "architect",
+    "architecture",
+    "interior design",
+    "design studio",
+    "marketing agency",
+    "digital agency",
+    "recruitment",
+    "financial planning",
+    "wealth management",
+    "insurance advisor",
+    "chartered",
+    "firm"
+  ],
+  "goals": {
+    "prompt": "What should the website do for your firm? Name the one or two results that matter most.",
+    "why": "A professional site is judged by consultations booked from the right kind of client.",
+    "recommendation": [
+      {
+        "id": "consultations",
+        "statement": "Get the right clients to book a first consultation",
+        "metric": "consultations booked per month"
+      },
+      {
+        "id": "authority",
+        "statement": "Show expertise and results that make a stranger trust the firm"
+      }
+    ],
+    "reason": "The two jobs of a professional-services site."
+  },
+  "audience": {
+    "prompt": "Who is your ideal client, and what problem is pushing them to look for help now? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
+    "why": "The site speaks to that person's problem first and the firm's credentials second.",
+    "recommendation": [
+      {
+        "segment": "Business owners and individuals with a specific problem to solve",
+        "need": "Know the firm handles it, see proof, and understand the first step and the cost",
+        "action": "Book a consultation"
+      }
+    ],
+    "reason": "A safe starting audience; research in P2 refines it."
+  },
+  "conversions": [
+    {
+      "id": "book-consultation",
+      "label": "Book a consultation",
+      "kind": "book",
+      "hero": true
+    },
+    {
+      "id": "call",
+      "label": "Call us",
+      "kind": "call",
+      "hero": true
+    },
+    {
+      "id": "whatsapp",
+      "label": "WhatsApp us",
+      "kind": "message",
+      "hero": false
+    },
+    {
+      "id": "download",
+      "label": "Download our profile",
+      "kind": "download",
+      "hero": true
+    },
+    {
+      "id": "callback",
+      "label": "Request a callback",
+      "kind": "callback",
+      "hero": false
+    },
+    {
+      "id": "subscribe",
+      "label": "Get our insights",
+      "kind": "subscribe",
+      "hero": false
+    }
+  ],
+  "primaryDefault": "book-consultation",
+  "secondaryDefault": [
+    "call",
+    "download"
+  ],
+  "trustSignals": [
+    {
+      "id": "credentials",
+      "label": "Professional credentials and registrations"
+    },
+    {
+      "id": "years",
+      "label": "Years of practice"
+    },
+    {
+      "id": "clients",
+      "label": "Clients served"
+    },
+    {
+      "id": "results",
+      "label": "Case results and outcomes"
+    },
+    {
+      "id": "recognition",
+      "label": "Awards, rankings and publications"
+    },
+    {
+      "id": "reviews",
+      "label": "Client testimonials"
+    }
+  ],
+  "trustDefault": [
+    "credentials",
+    "years",
+    "results"
+  ],
+  "heroMustHave": [
+    "A headline that names the problem solved and for whom, not the firm's name alone",
+    "A phone number visible without scrolling on a phone, next to the primary action"
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Name the problem the firm solves, prove the firm can be trusted and lead the visitor to a consultation",
+      "cta": "Book a consultation",
+      "level": "S",
+      "sections": [
+        "testimonials",
+        "faq"
+      ]
+    },
+    {
+      "slug": "/services",
+      "title": "Services",
+      "purpose": "Explain each service by the client problem it solves, who it is for and what happens next",
+      "cta": "Book a consultation",
+      "level": "S"
+    },
+    {
+      "slug": "/about",
+      "title": "About the Firm",
+      "purpose": "Show the firm's approach, history and values in plain words",
+      "cta": "Meet the team",
+      "level": "S",
+      "sections": [
+        "stats"
+      ]
+    },
+    {
+      "slug": "/team",
+      "title": "Our Team",
+      "purpose": "Introduce each partner and adviser with credentials and focus areas",
+      "cta": "Book a consultation",
+      "level": "S"
+    },
+    {
+      "slug": "/contact",
+      "title": "Contact",
+      "purpose": "Make the first step easy, with the booking form, phone, address and hours",
+      "cta": "Book a consultation",
+      "level": "S"
+    },
+    {
+      "slug": "/results",
+      "title": "Results and Case Studies",
+      "purpose": "Prove expertise with anonymised case studies: the problem, what was done and the outcome",
+      "cta": "Book a consultation",
+      "level": "M"
+    },
+    {
+      "slug": "/how-we-work",
+      "title": "How We Work",
+      "purpose": "Take away uncertainty by showing each step from first call to delivery",
+      "cta": "Book a consultation",
+      "level": "M",
+      "sections": [
+        "steps"
+      ]
+    },
+    {
+      "slug": "/fees",
+      "title": "Fees and Engagement",
+      "purpose": "Set expectations on cost and how the engagement works, without hiding behind 'it depends'",
+      "cta": "Request a callback",
+      "level": "M"
+    },
+    {
+      "slug": "/industries",
+      "title": "Industries We Serve",
+      "purpose": "Show the sectors the firm knows, so a visitor sees their own business reflected",
+      "cta": "Book a consultation",
+      "level": "M"
+    },
+    {
+      "slug": "/testimonials",
+      "title": "Client Testimonials",
+      "purpose": "Let clients speak, with names and companies where they agree",
+      "cta": "Book a consultation",
+      "level": "M",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/faq",
+      "title": "Frequently Asked Questions",
+      "purpose": "Answer the questions that stop a prospect from calling",
+      "cta": "Call us",
+      "level": "M",
+      "sections": [
+        "faq"
+      ]
+    },
+    {
+      "slug": "/insights",
+      "title": "Insights",
+      "purpose": "Publish expert guidance that brings in clients searching for answers",
+      "cta": "Get our insights",
+      "level": "L"
+    },
+    {
+      "slug": "/resources",
+      "title": "Resources",
+      "purpose": "Offer checklists and guides in exchange for a contact, to start relationships early",
+      "cta": "Download a guide",
+      "level": "L"
+    },
+    {
+      "slug": "/careers",
+      "title": "Careers",
+      "purpose": "Attract talent with the culture, the work and the roles open",
+      "cta": "See open roles",
+      "level": "L"
+    }
+  ],
+  "forms": [
+    {
+      "id": "consultation",
+      "purpose": "Book a consultation",
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "organisation",
+        "topic",
+        "preferred-time"
+      ],
+      "destination": "form-function"
+    }
+  ],
+  "questions": [
+    {
+      "key": "practiceAreas",
+      "prompt": "List the services or practice areas you offer, most important first.",
+      "why": "The first leads the home page; each gets a section or page.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 10,
+      "round": 2
+    },
+    {
+      "key": "idealClient",
+      "prompt": "Describe the client you most want more of: who they are and what they come to you for.",
+      "why": "The hero speaks to this person.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "feeModel",
+      "prompt": "How do you charge?",
+      "why": "Prospects who cannot guess the cost often do not call.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "fixed",
+          "label": "Fixed fees for defined work"
+        },
+        {
+          "value": "hourly",
+          "label": "Hourly"
+        },
+        {
+          "value": "retainer",
+          "label": "Monthly retainer"
+        },
+        {
+          "value": "mixed",
+          "label": "A mix, depending on the work"
+        }
+      ],
+      "recommendation": "mixed",
+      "reason": "The most common arrangement.",
+      "weight": 7,
+      "round": 2
+    },
+    {
+      "key": "firstStep",
+      "prompt": "What happens in the first consultation, how long is it and does it cost anything?",
+      "why": "A clear first step lowers the barrier to booking.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "proof",
+      "prompt": "What proof can you show: results, well-known clients, publications or awards?",
+      "why": "Proof does the selling; only what you supply is used.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 8,
+      "round": 2
+    },
+    {
+      "key": "confidentiality",
+      "prompt": "May the site name clients and describe results, or must everything be anonymised?",
+      "why": "It decides how case studies are written.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "named",
+          "label": "Clients may be named"
+        },
+        {
+          "value": "anonymised",
+          "label": "Anonymise everything"
+        }
+      ],
+      "recommendation": "anonymised",
+      "reason": "The safe default for confidential work.",
+      "weight": 6,
+      "round": 3
+    },
+    {
+      "key": "locations",
+      "prompt": "Where are your offices, and do you serve clients remotely?",
+      "why": "It decides the local promise and the contact page.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed.",
+      "weight": 5,
+      "round": 3
+    },
+    {
+      "key": "assetsOnHand",
+      "prompt": "Which of these do you already have?",
+      "why": "Real portraits and a profile deck are what the site is built from.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "team-photos",
+          "label": "Professional photographs of the team"
+        },
+        {
+          "value": "profile-deck",
+          "label": "A firm profile or capability deck"
+        },
+        {
+          "value": "case-studies",
+          "label": "Written case studies"
+        },
+        {
+          "value": "logo",
+          "label": "A logo file"
+        }
+      ],
+      "recommendation": [
+        "logo"
+      ],
+      "reason": "The minimum most firms have.",
+      "weight": 7,
+      "round": 3
+    }
+  ],
+  "requiredSections": {
+    "/": [
+      "hero naming the problem solved, a proof line, the primary action and a phone number",
+      "the main services by client problem",
+      "proof: credentials, results or well-known clients",
+      "how the first consultation works in three steps",
+      "client testimonials",
+      "frequently asked questions",
+      "a closing consultation call to action"
+    ],
+    "/team": [
+      "a profile per partner with photograph, credentials and focus",
+      "a book-with-this-person action"
+    ],
+    "/contact": [
+      "the consultation form",
+      "phone, address and hours",
+      "a map when there is an office"
+    ]
+  },
+  "contentNeeds": [
+    "Team photographs and credentials",
+    "List of services with a short description of each",
+    "Firm profile or capability deck",
+    "Case studies or results that may be shown",
+    "Office address, phone and hours",
+    "Logo file"
+  ],
+  "compliance": [
+    "Never state results, rankings or credentials the client has not supplied with a source",
+    "Never promise outcomes; describe what the firm does, not what the client will win or save",
+    "Follow the profession's advertising rules: the client must confirm the wording of any claim"
+  ],
+  "extras": [
+    {
+      "id": "booking-widget",
+      "fit": "strong",
+      "note": "A calendar link makes the first consultation a single step."
+    },
+    {
+      "id": "gallery",
+      "fit": "possible",
+      "note": "For architects and designers, the portfolio is the proof."
+    },
+    {
+      "id": "video-loop",
+      "fit": "weak",
+      "note": "Rarely helps a trust-led firm; a short founder video can, if recorded by the client."
+    },
+    {
+      "id": "3d-object",
+      "fit": "weak",
+      "note": "Only suits architecture and design firms with real models to show."
+    }
+  ]
+}
