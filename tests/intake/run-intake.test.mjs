@@ -155,6 +155,14 @@ test('typed text becomes the brief shape for structured fields', () => {
     { id: 'rank-locally-2', statement: 'Rank locally' },
   ]);
   assert.deepEqual(shapeAnswer(q('audience'), 'Homeowners: find a trusted builder'), [{ segment: 'Homeowners', need: 'find a trusted builder' }]);
+  assert.deepEqual(
+    shapeAnswer(q('audience'), 'Homeowners: a builder they can trust | wants: a fixed quote | proof: finished jobs nearby | action: book a home visit\nLandlords: quick turnarounds | Action: request a quote'),
+    [
+      { segment: 'Homeowners', need: 'a builder they can trust', wants: 'a fixed quote', proof: 'finished jobs nearby', action: 'book a home visit' },
+      { segment: 'Landlords', need: 'quick turnarounds', action: 'request a quote' },
+    ],
+    'audience views: each part after the need is optional',
+  );
   assert.deepEqual(shapeAnswer(q('pages'), 'Home; About us').map((p) => p.slug), ['/', '/about-us']);
   assert.equal(shapeAnswer(q('client.name'), 'Acme'), 'Acme');
   assert.deepEqual(shapeAnswer({ kind: 'single', fills: ['tier'] }, 'M'), 'M');
@@ -179,4 +187,25 @@ test('forge intake --use-recommendations writes a ready brief', async () => {
   assert.equal(brief.client.name, 'Studio North');
   assert.deepEqual(brief.goals, [{ id: 'win-more-bookings-1', statement: 'Win more bookings' }]);
   assert.ok(!brief.assumptions.includes('goals'));
+});
+
+test('audience views are optional brief fields, shown in the plan and asked for by every project type', async () => {
+  const { check } = await import('../../src/core/schemas.mjs');
+  const { renderPlan } = await import('../../src/intake/plan.mjs');
+  const { loadRegistry } = await import('../../src/registry/load.mjs');
+  const { readFileSync } = await import('node:fs');
+  const brief = JSON.parse(readFileSync(new URL('../../samples/briefs/business.json', import.meta.url), 'utf8'));
+  assert.equal(check('brief', brief).valid, true, 'a brief without views still validates');
+  brief.audience = [{ segment: 'Homeowners', need: 'a builder they can trust', wants: 'a fixed quote', proof: 'finished jobs nearby', action: 'book a home visit' }];
+  assert.equal(check('brief', brief).valid, true, check('brief', brief).errors.join('; '));
+  assert.equal(check('brief', { ...brief, audience: [{ segment: 'x', need: 'y', action: '' }] }).valid, false, 'an empty action is refused');
+  const plan = renderPlan(brief, null, { hours: { min: 1, max: 2 }, cost: { min: 1, max: 2, currency: 'USD' }, rateVersion: 'test', lines: [], assumptions: [] });
+  assert.ok(plan.includes('- Homeowners: a builder they can trust; wants: a fixed quote; needs to see: finished jobs nearby; should: book a home visit'), plan);
+  const { questions } = loadRegistry();
+  const audience = questions.questions.filter((x) => x.fills.length === 1 && x.fills[0] === 'audience');
+  assert.equal(audience.length, 7);
+  for (const x of audience) {
+    assert.match(x.prompt, /wants: .* proof: .* action: /);
+    assert.ok(x.recommendation.value.every((v) => v.action), x.id);
+  }
 });

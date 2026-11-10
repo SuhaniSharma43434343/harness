@@ -36,7 +36,7 @@
       "fills": [
         "audience"
       ],
-      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "prompt": "Who are the main visitors, and what do they need? One per line. If known, add what brings them, the proof they need and the one thing to do, e.g. \"Homeowners: a builder they trust | wants: a fixed quote | proof: finished jobs nearby | action: book a visit\".",
       "kind": "text",
       "appliesTo": {
         "projectTypes": [
@@ -53,7 +53,8 @@
         "value": [
           {
             "segment": "Early adopters",
-            "need": "Understand the product quickly and sign up"
+            "need": "Understand the product quickly and sign up",
+            "action": "Sign up"
           }
         ],
         "reason": "The usual main audience for a launch site; research in P2 refines it."

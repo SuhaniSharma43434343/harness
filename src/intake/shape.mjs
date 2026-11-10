@@ -16,10 +16,17 @@ const slugify = (s) =>
 
 const SHAPES = {
   goals: (t) => items(t).map((statement, i) => ({ id: `${slugify(statement).split('-').slice(0, 3).join('-')}-${i + 1}`, statement })),
+  // "Segment: need | wants: ... | proof: ... | action: ...": the parts after the need are optional.
   audience: (t) =>
     items(t).map((line) => {
-      const [segment, ...need] = line.split(':');
-      return { segment: segment.trim(), need: need.join(':').trim() || 'To be refined in research' };
+      const [head, ...views] = line.split('|');
+      const [segment, ...need] = head.split(':');
+      const out = { segment: segment.trim(), need: need.join(':').trim() || 'To be refined in research' };
+      for (const v of views) {
+        const m = v.match(/^\s*(wants|proof|action)\s*:\s*(.+?)\s*$/i);
+        if (m) out[m[1].toLowerCase()] = m[2];
+      }
+      return out;
     }),
   pages: (t) =>
     items(t).map((title, i) => ({
