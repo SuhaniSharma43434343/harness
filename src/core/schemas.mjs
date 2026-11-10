@@ -33,6 +33,7 @@ export const SCHEMAS = {
   // Design workflow: one file holds the definitions of every specification.
   methodology: 'design-spec.schema.json#/definitions/methodology',
   positioning: 'design-spec.schema.json#/definitions/positioning',
+  crux: 'design-spec.schema.json#/definitions/crux',
   designDirection: 'design-spec.schema.json#/definitions/direction',
   designSystem: 'design-spec.schema.json#/definitions/designSystem',
   sectionPlan: 'design-spec.schema.json#/definitions/sectionPlan',

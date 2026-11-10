@@ -141,7 +141,7 @@ When the site is ready, preview, deploy and report:
 ./forge advance harbor
 ./forge approve harbor B7            # production
 ./forge deploy harbor --production
-./forge report harbor                # reports/final-report.md, built from the ledger
+./forge report harbor                # reports/final-report.md from the ledger, and reports/gdd-roadmap.md
 ```
 
 To try the whole flow without a model or any paid API, run `./forge demo`. It replays the sample business project to a local preview. `./forge test --mock` runs the full suite with every plugin in mock mode.

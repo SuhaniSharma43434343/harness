@@ -18,11 +18,11 @@ forge design retry <project> <stage> --note <decision>   # the operator's answer
 
 | Phase | Output | Agent | What its check refuses |
 | --- | --- | --- | --- |
-| P2 Research | `research/positioning.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning |
+| P2 Research | `research/positioning.json`, `research/crux.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning; a content bucket with neither facts nor a stated gap; a fact whose source is not in `research/sources.json` |
 | P3 Approach | `design/direction.json`, `direction.md` | Design Manager | An approach the brief did not select; any of the 8 not analysed; a combination the methodology forbids; a philosophy copied word for word |
 | P4 Directions | `design/directions.json` | `forge directions`, operator at B2 | The existing design rules |
 | P5 Design system | `design/design-system.json` | Creative Director | Fonts or colours that differ from B2; fewer than 5 type levels; no separate mobile rules |
-| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids |
+| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids; a section with no funnel stage, a journey out of order, a page that does not end on an action |
 | P5 Motion | `design/motion-plan.json` | Creative Director | No hover; no pin where the approach requires one, a pin where it forbids one; a motion with no purpose or no section |
 | P5 Assets | `design/asset-plan.json` | Creative Director | Unused assets; licensed files with no licence or path |
 | P6 Copy | `content/copy.json` | Content & UX | Sections with no copy; label headlines; repeated headlines; stock phrases; thin pages. Passing writes the locked `content/pages/` |
@@ -31,6 +31,10 @@ forge design retry <project> <stage> --note <decision>   # the operator's answer
 | P9 Build | `site/` | Builder | See below |
 
 Each stage's rules live in `src/design/spec.mjs`, and its contract, which is the agent's brief, in `src/core/planner.mjs`.
+
+**The content buckets.** Research sorts every fact about the client into five buckets in `research/crux.json`: About (story, team, mission, values, promise, with what nobody else can claim first), What We Do, Our Work (case studies, proof, metrics), Resource Hub (tools, FAQs, guides) and Reach Us (calls to action and contact points). Each fact names a source from `research/sources.json` or says `assumption`. An empty bucket lists its gap as a question for the client, so the plan and copy stages work around it instead of inventing proof.
+
+**The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.
 
 ## The gate before development
 

@@ -24,7 +24,11 @@ forge qa <project> --repair --full-retest   # re-run every gate after every repa
   that found it, its evidence and a history;
 - appends a readable entry to `reports/qa-log.md`, and `gate_result` and `qa_review` entries to the
   ledger, all as `qa-verifier`;
-- rewrites `reports/qa-report.md`, the hand-over QA/QC report: what was tested, every defect with
+- rewrites `reports/qa-report.md`, the hand-over QA/QC report. It opens with the gates grouped under
+  five parameters: Usability (routes, forms, interactions, performance), Design (accessibility,
+  design fidelity), Creativity (the visual review, marked as a model's judgement rather than a
+  measurement), Content (content parity, claims, SEO) and Responsiveness (responsive), with the
+  release gates (licences, secrets, dependencies) on their own line. Then: what was tested, every defect with
   its evidence and the command that reproduces it, the advisories, and what could not be checked
   (a gate that errored or was skipped is a limitation, never a pass).
 

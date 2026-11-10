@@ -112,6 +112,43 @@ export async function deploy(project, { target = 'preview', ...opts } = {}) {
 }
 
 // forge report: reports/final-report.md, built from the ledger, the board and the evidence.
+// reports/gdd-roadmap.md: the site as the baseline for growth-driven design. Everything in it is
+// derived from the project's own records: what to measure comes from the interactive parts the plan
+// built, and the backlog from what is unfinished. Nothing is measured yet, and it says so.
+const INTERACTIVE = /finder|filter|accordion|faq|carousel|stories|tabs|toggle|calculator|estimator|quiz|switcher|form|game|scene|3d|map/i;
+export function writeGrowthRoadmap(project, opts = {}) {
+  const { dir } = assertProjectExists(project, opts);
+  const brief = readJson(join(dir, 'intake', 'brief.json'));
+  const plan = readJson(join(dir, 'design', 'section-plan.json'));
+  const crux = readJson(join(dir, 'research', 'crux.json'));
+  const defects = readJson(join(dir, 'reports', 'defects.json'));
+  const release = readJson(join(dir, 'reports', 'release-checks.json'));
+  const facts = readJson(join(dir, 'intake', 'facts.json'));
+  const lines = [`# Growth roadmap: ${brief?.client?.name ?? project}`, '', 'Growth-driven design treats the launched site as a baseline. This roadmap is generated at handoff from the project records; nothing in it has been measured yet.', ''];
+
+  lines.push('## What to measure', '');
+  const parts = [];
+  for (const page of plan?.pages ?? []) for (const s of page.sections) if (INTERACTIVE.test(`${s.id} ${s.pattern}`)) parts.push(`- \`${s.id}\` on ${page.slug} (${s.pattern})`);
+  for (const f of brief?.features?.forms ?? []) parts.push(`- Form \`${f.id}\`: ${f.purpose} (destination: ${f.destination})`);
+  lines.push(...(parts.length ? parts : ['- No interactive section was planned.']), '');
+  lines.push('No analytics is installed. Counting these needs an analytics plugin, a consent decision for visitors, and the operator\'s B5.', '');
+
+  lines.push('## Backlog from this build', '');
+  const backlog = [];
+  for (const d of (defects?.defects ?? []).filter((x) => x.status !== 'verified')) backlog.push(`- ${d.id} (${d.status}, ${d.gate}): ${String(d.message).replace(/\s+/g, ' ').slice(0, 160)}`);
+  for (const r of (release?.rows ?? []).filter((x) => x.outcome === 'blocked' || x.outcome === 'failed')) backlog.push(`- Release check ${r.gate} ${r.outcome}${r.reason ? `: ${r.reason}` : ''}`);
+  for (const [key, b] of Object.entries(crux?.buckets ?? {})) for (const g of b.gaps) backlog.push(`- Content gap (${key}): ${g}`);
+  for (const f of (facts?.facts ?? []).filter((x) => x.assumption)) backlog.push(`- Confirm with the client: \`${f.field}\` was assumed (${f.reason})`);
+  lines.push(...(backlog.length ? backlog : ['- Nothing open in the project records.']), '');
+
+  lines.push('## Month 2 and after', '');
+  lines.push('Once there are a few weeks of visits: test the home headline against one alternative, move proof closer to the first call to action where visitors drop off, and add real case studies and testimonials as they arrive. Each change is decided by the numbers above, not by taste.', '');
+  const file = join(dir, 'reports', 'gdd-roadmap.md');
+  mkdirSync(join(dir, 'reports'), { recursive: true });
+  writeFileSync(file, redactText(lines.join('\n'), opts.secrets ? { secrets: opts.secrets } : undefined));
+  return { file };
+}
+
 export function writeReport(project, opts = {}) {
   const { dir } = assertProjectExists(project, opts);
   const state = loadProject(project, opts);
@@ -163,6 +200,7 @@ export function writeReport(project, opts = {}) {
   mkdirSync(join(dir, 'reports'), { recursive: true });
   const text = redactText(lines.join('\n'), opts.secrets ? { secrets: opts.secrets } : undefined);
   writeFileSync(file, text);
-  ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'report', file: 'reports/final-report.md' } }, opts);
-  return { file, text };
+  const roadmap = writeGrowthRoadmap(project, opts).file;
+  ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'report', file: 'reports/final-report.md', roadmap: 'reports/gdd-roadmap.md' } }, opts);
+  return { file, text, roadmap };
 }

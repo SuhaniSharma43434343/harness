@@ -70,8 +70,8 @@ export async function cmdDeploy(root, args) {
 export function cmdReport(root, args) {
   const [project] = args;
   if (!project || project.startsWith('-')) return usage('forge report <project>');
-  const { file } = writeReport(project, { workspace: workspaceFor(root) });
-  console.log(`Wrote ${file}`);
+  const { file, roadmap } = writeReport(project, { workspace: workspaceFor(root) });
+  console.log(`Wrote ${file}\nWrote ${roadmap}`);
   return 0;
 }
 

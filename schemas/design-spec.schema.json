@@ -697,7 +697,9 @@
                     "transition": {
                       "type": "object",
                       "additionalProperties": false,
-                      "required": ["toNext"],
+                      "required": [
+                        "toNext"
+                      ],
                       "properties": {
                         "toNext": {
                           "type": "string"
@@ -706,6 +708,16 @@
                           "type": "string"
                         }
                       }
+                    },
+                    "funnel": {
+                      "enum": [
+                        "awareness",
+                        "interest",
+                        "desire",
+                        "action",
+                        "none"
+                      ],
+                      "description": "Where the section sits in the visitor journey (AIDA). \"none\" is for utility sections, such as legal text."
                     }
                   }
                 }
@@ -1174,6 +1186,83 @@
               }
             }
           }
+        }
+      }
+    },
+    "crux": {
+      "description": "The five content buckets: every fact about the client, sorted before any plan or copy is written. Each fact names its source id from research/sources.json, or \"assumption\".",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "buckets"
+      ],
+      "properties": {
+        "buckets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "about",
+            "whatWeDo",
+            "ourWork",
+            "resourceHub",
+            "reachUs"
+          ],
+          "properties": {
+            "about": {
+              "$ref": "#/definitions/cruxBucket"
+            },
+            "whatWeDo": {
+              "$ref": "#/definitions/cruxBucket"
+            },
+            "ourWork": {
+              "$ref": "#/definitions/cruxBucket"
+            },
+            "resourceHub": {
+              "$ref": "#/definitions/cruxBucket"
+            },
+            "reachUs": {
+              "$ref": "#/definitions/cruxBucket"
+            }
+          }
+        }
+      }
+    },
+    "cruxBucket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items",
+        "gaps"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "text",
+              "source"
+            ],
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "What is missing from this bucket, as a question for the client."
         }
       }
     }
