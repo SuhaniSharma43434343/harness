@@ -70,7 +70,10 @@
         "required": ["segment", "need"],
         "properties": {
           "segment": { "type": "string", "minLength": 1 },
-          "need": { "type": "string", "minLength": 1 }
+          "need": { "type": "string", "minLength": 1 },
+          "wants": { "type": "string", "minLength": 1, "description": "The question or wish that brings this visitor to the site." },
+          "proof": { "type": "string", "minLength": 1, "description": "What this visitor needs to see before they trust the business." },
+          "action": { "type": "string", "minLength": 1, "description": "The one conversion step this visitor should take." }
         }
       }
     },

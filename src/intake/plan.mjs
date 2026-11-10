@@ -14,7 +14,7 @@ export function renderPlan(brief, decision, estimate) {
     '',
     '## Audience',
     '',
-    ...brief.audience.map((a) => `- ${a.segment}: ${a.need}`),
+    ...brief.audience.map((a) => `- ${a.segment}: ${a.need}${[['wants', 'wants'], ['needs to see', 'proof'], ['should', 'action']].filter(([, k]) => a[k]).map(([l, k]) => `; ${l}: ${a[k]}`).join('')}`),
     '',
     '## Pages',
     '',
