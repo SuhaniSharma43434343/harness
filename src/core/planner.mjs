@@ -140,7 +140,7 @@ const STAGE_TASKS = {
       "A stock or licensed photo is never described as this client's own work: captions and alt text say what it shows, not which job it came from",
       'Write each section for its funnel stage in design/section-plan.json, using the facts sorted in research/crux.json. A gap stays a gap: no invented proof, testimonials or figures',
       'Where an audience in intake/brief.json names its action, the call to action that serves it uses that action in plain words',
-      ...(brief.contentRules?.length ? [`Follow the brief's content rules. ${brief.contentRules.map((r) => `${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.includes('*') ? 'every page' : r.pages.join(', ')}: "${r.text}"`).join('. ')}. The copy check refuses copy that breaks them; an "always" line may sit in the footer when it is on every page`] : []),
+      ...(brief.contentRules?.length ? [`Follow the brief's content rules. ${brief.contentRules.map((r) => `${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.includes('*') ? (r.rule === 'never' ? 'any page' : 'every page') : r.pages.join(', ')}: "${r.text}"`).join('. ')}. The copy check refuses copy that breaks them; an "always" line may sit in the footer when it is on every page`] : []),
       'State only facts found in the brief, client material or research. Every number, year, time, price, duration, process step, guarantee or award goes in content/claims.json as {"claims": [{"text", "source"}]}, with a source id from research/sources.json — quote the source line as you write, not afterwards. If a section needs a fact you do not have (an ingredient, a method, an opening day), write around it rather than inventing it',
       shape('siteCopy'),
     ],

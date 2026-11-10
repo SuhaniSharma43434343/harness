@@ -270,7 +270,7 @@ test('the plan shows the new fields, warns with fewer than three truths, and lis
     audience: [{ ...brief.audience[0], arrivesFrom: ['Instagram'], mood: 'wary' }],
     truths: [{ text: 'A' }, { text: 'B' }, { text: 'C', kind: 'number' }],
     jobs: ['Call'],
-    contentRules: [{ rule: 'never', text: 'Smith', pages: ['/'] }],
+    contentRules: [{ rule: 'never', text: 'Smith', pages: ['/'] }, { rule: 'never', text: 'Jones', pages: ['*'] }, { rule: 'always', text: 'Licence 1', pages: ['*'] }],
     access: { domain: { name: 'harbor-home.com', status: 'have-access' }, dns: 'have-access', assets: [{ item: 'photos', quality: 'unknown' }] },
   }, null, est);
   assert.match(plan, /arrives from: Instagram; mood: wary/);
@@ -278,6 +278,8 @@ test('the plan shows the new fields, warns with fewer than three truths, and lis
   assert.match(plan, /- C \(number\)/);
   assert.match(plan, /## One-tap jobs[\s\S]*- Call/);
   assert.match(plan, /- Never on `\/`: "Smith"/);
+  assert.match(plan, /- Never on any page: "Jones"/, '"never on every page" would read as "not on all pages"');
+  assert.match(plan, /- Always on every page: "Licence 1"/);
   assert.match(plan, /Ask the client for, now:\*\* the quality of the photos/);
 });
 
