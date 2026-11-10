@@ -105,6 +105,15 @@ export async function proposeDirections(brief, decision, { count = 3, catalog = 
   if (colours.length) palettes = [{ ...clientPalette(colours, palettes.find((p) => p.mode === 'light') ?? palettes[0]), key: 'client', score: 99 }, ...palettes];
 
   const pairs = rankPairs(catalog.fonts, w, brief);
+  // The client's own fonts lead the first direction when they are open fonts in the catalog: the
+  // first named is the display face, the next body face named is the body (else the best match).
+  // Any other font needs the client's licence and files, which the B1 plan asks for.
+  const own = (brief.brand.existingAssets?.fonts ?? []).map((n) => catalog.fonts.find((f) => f.family.toLowerCase() === n.trim().toLowerCase())).filter(Boolean);
+  if (own.length) {
+    const display = own[0];
+    const body = own.slice(1).find((f) => f.body) ?? (display.body ? display : (pairs.find((p) => p.display.family === display.family) ?? pairs[0]).body);
+    pairs.unshift({ display, body, key: `client:${display.family}/${body.family}`, score: 99, client: true });
+  }
   const layouts = Object.entries(LAYOUTS)
     .map(([layout, tags]) => ({ layout, key: layout, score: score(tags, w) }))
     .sort(byScore)
@@ -129,7 +138,7 @@ export async function proposeDirections(brief, decision, { count = 3, catalog = 
     const direction = {
       id,
       name: `${palette.name}, ${layout}`,
-      rationale: `${pair.display.family} with ${pair.body.family} and the ${palette.name.toLowerCase()} palette suit a ${brief.brand.tone.join(', ')} tone; a ${layout} layout${goal ? ` built around "${goal}"` : ''}.`,
+      rationale: `${pair.client ? "The client's own fonts, " : ''}${pair.display.family} with ${pair.body.family}${pair.client ? ',' : ''} and the ${palette.name.toLowerCase()} palette suit a ${brief.brand.tone.join(', ')} tone; a ${layout} layout${goal ? ` built around "${goal}"` : ''}.`,
       typography: { display: fontRef(pair.display), body: fontRef(pair.body), scaleRatio },
       colour: { mode: palette.mode, tokens: { ...palette.tokens }, contrast: [] },
       motionIntensity: motion,
