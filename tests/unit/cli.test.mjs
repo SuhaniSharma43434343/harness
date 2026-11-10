@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseVersion, runDoctor, versionAtLeast } from '../../src/cli/doctor.mjs';
+import { EXIT_GRACE_MS, exitWhenDone } from '../../src/cli/exit.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CLI = join(ROOT, 'src', 'cli', 'index.mjs');
@@ -36,6 +37,21 @@ test('forge doctor --json reports every check', () => {
     assert.ok(names.includes(n), `missing check ${n}`);
   }
   assert.equal(r.status, report.ok ? 0 : 1);
+});
+
+// Windows: process.exit right after a remote request crashes Node (0xC0000409), so the CLI sets
+// the exit code and lets Node exit, with an unref'd fallback that exits if something holds it open.
+test('the CLI sets its exit code and exits later, never at once', () => {
+  const proc = { exitCode: undefined, exited: [], exit(code) { this.exited.push(code); } };
+  const scheduled = [];
+  let unref = false;
+  exitWhenDone(3, { proc, schedule: (fn, ms) => (scheduled.push({ fn, ms }), { unref: () => { unref = true; } }) });
+  assert.equal(proc.exitCode, 3);
+  assert.deepEqual(proc.exited, [], 'process.exit is not called straight away');
+  assert.equal(scheduled[0].ms, EXIT_GRACE_MS);
+  assert.ok(unref, 'the fallback never keeps a finished process alive');
+  scheduled[0].fn();
+  assert.deepEqual(proc.exited, [3], 'the fallback exits with the same code');
 });
 
 test('missing Claude Code is a warning, not a failure', () => {
