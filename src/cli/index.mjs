@@ -6,6 +6,7 @@ import { ForgeError } from '../core/errors.mjs';
 import { cmdAgents } from './agents.mjs';
 import { cmdApproach } from './approach.mjs';
 import { printDoctor, runDoctor } from './doctor.mjs';
+import { exitWhenDone } from './exit.mjs';
 import { cmdPlugins, pluginDoctorChecks } from './plugins.mjs';
 import { cmdHooks, cmdScan } from './scan.mjs';
 import { cmdTask } from './task.mjs';
@@ -133,7 +134,7 @@ export async function main(argv) {
 const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   main(process.argv.slice(2))
-    .then((code) => process.exit(code))
+    .then((code) => exitWhenDone(code))
     .catch((err) => {
       if (err instanceof ForgeError) {
         console.error(`${err.code}: ${err.message}`);
@@ -141,6 +142,6 @@ if (invokedDirectly) {
       } else {
         console.error(err);
       }
-      process.exit(1);
+      exitWhenDone(1);
     });
 }
