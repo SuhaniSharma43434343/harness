@@ -35,7 +35,7 @@ Five playbooks say what each kind of business needs: the main action, the hero m
 |---|---|
 | `registry/craft/awwwards.md` (new) | Rules scored as Awwwards scores (Design 40, Usability 30, Creativity 20, Content 10) and the list of generic-looking tells |
 | `src/core/planner.mjs`, `src/qa/visual.mjs` | Every design stage and the visual review read it; reviewers score it, under 7 is blocking |
-| `src/design/spec.mjs` | New checks: home page 7+ sections (5 on small), inner pages 4+, a third of sections break the grid, no centred hero, 5+ motions of 3+ kinds with one scroll-linked |
+| `src/design/spec.mjs` | New checks: home page 7+ sections (5 on small), inner pages 4+ (legal pages, all funnel "none", exempt), a third of the non-legal sections break the grid, no centred hero, 5+ motions of 3+ kinds with one scroll-linked |
 
 ## 4. 3D and video (`src/media/`)
 

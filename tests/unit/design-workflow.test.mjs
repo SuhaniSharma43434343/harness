@@ -575,6 +575,34 @@ test('craft: sections that never break the grid are refused when the plan is lon
   assert.match(CHECKS['section-plan'](dir).join('\n'), /only 0 of 7 sections break the grid/);
 });
 
+test('craft: legal pages are as long as their text needs, and their plain sections do not count against the grid', () => {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  const home = plan.pages[0].sections;
+  while (home.length < 7) home.push({ ...structuredClone(home[0]), id: `extra-${home.length}`, pattern: home.length % 2 ? 'statement' : 'stats-band' });
+  // Exactly a third of the designed sections break the grid.
+  const designed = plan.pages.flatMap((p) => p.sections);
+  const third = Math.ceil(designed.length / 3);
+  designed.forEach((x, i) => { x.composition = i < third ? 'Oversized photograph bleeding off the right edge across seven columns, the headline overlapping it' : 'Heading on the left across six columns with a paragraph on the right across five columns, level and evenly spaced'; });
+  const text = 'Plain text in one readable column of eight columns, left aligned, with headings set in the body face and a rule between parts';
+  const page = (slug, n, funnel) => ({
+    slug,
+    sections: Array.from({ length: n }, (_, i) => ({ ...structuredClone(home[6]), id: `${slug.slice(1)}-text-${i}`, funnel, composition: text })),
+  });
+  const brief = (...slugs) => ({ ...BRIEF, pages: [...BRIEF.pages, ...slugs.map((slug) => ({ slug, title: slug.slice(1), purpose: 'Legal and practical text', cta: 'Get in touch' }))] });
+  plan.pages.push(page('/privacy', 2, 'none'), page('/terms', 2, 'none'));
+  assert.ok(Math.ceil((designed.length + 4) / 3) > third, 'counting the legal sections would fail the grid rule');
+  const { dir } = fullProject({ 'design/section-plan.json': plan, 'intake/brief.json': brief('/privacy', '/terms') });
+  const problems = CHECKS['section-plan'](dir).join('\n');
+  assert.doesNotMatch(problems, /must NOT have|must have|not a page in the brief/, 'the plan is valid, so the checks below ran');
+  assert.doesNotMatch(problems, /\/privacy has 2 sections|\/terms has 2 sections/);
+  assert.doesNotMatch(problems, /break the grid/, 'the four legal sections are left out of the count');
+  // A short page that is not legal text still needs its sections.
+  plan.pages.push(page('/services', 2, 'action'));
+  const { dir: d2 } = fullProject({ 'design/section-plan.json': plan, 'intake/brief.json': brief('/privacy', '/terms', '/services') });
+  assert.match(CHECKS['section-plan'](d2).join('\n'), /\/services has 2 sections; an inner page needs at least \d/);
+});
+
 test('craft: the guide is copied into the project and every design stage reads it', () => {
   const { project, opts, dir } = fullProject();
   setPhase(dir, 'UX_DESIGN_SYSTEM');

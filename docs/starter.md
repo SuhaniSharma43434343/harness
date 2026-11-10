@@ -46,6 +46,16 @@ The scaffold only uses text already in the brief, so it never invents a claim, a
 5. Keep JavaScript inside the section. Astro bundles a component's `<script>` only on pages that use it, so the APP-01 pages stay within budget. Heavy libraries (Three.js, GSAP) belong in a dynamic `import()` behind the approach's fallback.
 6. Add the approach to `approaches` in `src/site.json`.
 
+### One route per page, so each page loads only its own CSS
+
+Before every build, `scripts/sync-content.mjs` pulls in `content/pages/` and then writes a route for each page: `src/pages/<slug>.astro` (`index.astro` for `/`). The route imports only the sections that page's frontmatter names and renders them with `src/components/SectionList.astro`. Astro gives each page the CSS of the components its route imports, so a page loads its own sections' CSS and the layout's, not every section on the site. On hearwell-v2 that took each page from 125 KB of CSS to between 17 and 47 KB (before compression).
+
+- The generated routes start with `// forge:generated-route`. Each build deletes and rewrites them, so a page removed from the content loses its route. Do not edit them; edit the page content.
+- `src/generated-routes.json` lists the pages that got a route. The catch-all `src/pages/[...slug].astro` builds only the rest, through `Sections.astro`, which imports every section. After a normal `npm run build` that is no page.
+- A hand-written route of the same name wins: the prebuild leaves it alone and the page is not generated.
+- A page naming a section that does not exist fails the prebuild with the missing path, as before.
+- `astro dev` does not run the prebuild, so in development pages come from the catch-all route. The pages look the same; only the CSS bundling differs.
+
 ### Tokens
 
 `tokens.json` has colour (`bg`, `fg`, `primary`, `accent`, `muted`, `surface`, `border`, `onPrimary`, `onAccent`, `link`, plus any extras), the display and body fonts with their CSS stacks, the type scale (`base` in rem, `scaleRatio`, `lineHeight`, `measure`), `space`, `radius` and `motion.intensity` (0 to 3, from the brief). `src/lib/tokens.mjs` turns it into custom properties in the base layout.
@@ -62,5 +72,5 @@ APP-01 targets mobile LCP at most 2.5 s and base JavaScript at most 150 KB gzip.
 
 ## Tests
 
-- `tests/unit/site-tokens.test.mjs` and `tests/unit/site-content.test.mjs`: token derivation and contrast, the CSS output, the brief-to-pages plan for every sample brief, frontmatter quoting, and `scaffoldSite`.
-- `tests/build/starter-build.test.mjs`: every sample brief builds, with one route per page, one `h1`, a title, a description and its call to action on every page, working internal links and anchors, labelled form fields and JavaScript inside the budget. They need the starter's dependencies (`scripts/setup.sh` installs them) and are skipped, with the reason, without them.
+- `tests/unit/site-tokens.test.mjs` and `tests/unit/site-content.test.mjs`: token derivation and contrast, the CSS output, the brief-to-pages plan for every sample brief, frontmatter quoting, `scaffoldSite`, and the prebuild's per-page routes (each imports exactly its own sections, a removed page loses its route, a hand-written route wins, a missing section fails).
+- `tests/build/starter-build.test.mjs`: every sample brief builds, with one route per page, one `h1`, a title, a description and its call to action on every page, working internal links and anchors, labelled form fields and JavaScript inside the budget, and each page loading only its own sections' CSS. They need the starter's dependencies (`scripts/setup.sh` installs them) and are skipped, with the reason, without them.

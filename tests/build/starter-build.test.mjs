@@ -101,3 +101,24 @@ test('a starter build passes the SEO gate once the site URL is set', { skip }, a
   assert.equal(r.status, 'pass', JSON.stringify(r.findings, null, 2));
   assert.deepEqual(r.findings.filter((f) => f.id.startsWith('sitemap')), []);
 });
+
+// The CSS a built page loads: its linked stylesheets and its inline <style> blocks.
+function pageCss(dist, html) {
+  const linked = [...html.matchAll(/<link rel="stylesheet" href="(\/_astro\/[^"]+\.css)"/g)].map((m) => readFileSync(join(dist, m[1]), 'utf8'));
+  const inline = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+  return [...linked, ...inline].join('\n');
+}
+
+test('each page loads only the CSS of the sections it shows', { skip }, () => {
+  const brief = JSON.parse(readFileSync(new URL('business.json', SAMPLES), 'utf8'));
+  const { siteDir } = scaffold(brief);
+  const build = buildSite(siteDir);
+  assert.ok(build.ok, build.output.slice(-2000));
+  const css = (route) => pageCss(build.dist, readFileSync(routeFile(build.dist, route), 'utf8'));
+  // The projects page shows a gallery and the contact page does not; no page uses the testimonials.
+  assert.match(css('/projects'), /\.gallery\[data-astro-cid/);
+  assert.doesNotMatch(css('/contact'), /\.gallery\[data-astro-cid/);
+  for (const page of brief.pages) assert.doesNotMatch(css(page.slug), /\.quotes\[data-astro-cid/, `${page.slug} carries no unused section's CSS`);
+  // Every page still gets the layout's own CSS.
+  for (const page of brief.pages) assert.match(css(page.slug), /--color-bg/);
+});
