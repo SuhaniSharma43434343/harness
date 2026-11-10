@@ -65,7 +65,7 @@ export function renderPlan(brief, decision, estimate) {
     ...businessLines(brief),
     ...truthLines(brief),
     ...(brief.jobs?.length ? ['## One-tap jobs', '', 'Every page gives a visitor these in one tap:', '', ...brief.jobs.map((j) => `- ${j}`), ''] : []),
-    ...(brief.contentRules?.length ? ['## Content rules', '', 'The copy check refuses copy that breaks these.', '', ...brief.contentRules.map((r) => `- ${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.map((x) => (x === '*' ? 'every page' : `\`${x}\``)).join(', ')}: "${r.text}"${r.note ? ` (${r.note})` : ''}`), ''] : []),
+    ...(brief.contentRules?.length ? ['## Content rules', '', 'The copy check refuses copy that breaks these.', '', ...brief.contentRules.map((r) => `- ${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.map((x) => (x === '*' ? (r.rule === 'never' ? 'any page' : 'every page') : `\`${x}\``)).join(', ')}: "${r.text}"${r.note ? ` (${r.note})` : ''}`), ''] : []),
     ...accessLines(brief),
     '## Pages',
     '',
