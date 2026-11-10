@@ -304,15 +304,19 @@ export const CHECKS = {
     if (all.length && cards / all.length > 0.25) problems.push(`design/section-plan.json: ${cards} of ${all.length} sections are card or grid layouts; at most a quarter may be`);
     if (new Set(all.map((s) => s.pattern)).size < Math.min(4, all.length)) problems.push('design/section-plan.json: use at least four different layout patterns across the site');
     // Craft: a site that wins awards breaks its own grid, and a real business site is not a brochure.
-    if (all.length >= 6) {
-      const broken = all.filter((s) => BROKEN_GRID.test(s.composition)).length;
-      if (broken < Math.ceil(all.length / 3)) problems.push(`design/section-plan.json: only ${broken} of ${all.length} sections break the grid; say in the composition what overlaps, bleeds off the edge, is offset or is cropped, in at least a third of them`);
+    // Utility sections (funnel "none": legal text) are set plainly, so they do not count here.
+    const designed = all.filter((s) => s.funnel !== 'none');
+    if (designed.length >= 6) {
+      const broken = designed.filter((s) => BROKEN_GRID.test(s.composition)).length;
+      if (broken < Math.ceil(designed.length / 3)) problems.push(`design/section-plan.json: only ${broken} of ${designed.length} sections break the grid; say in the composition what overlaps, bleeds off the edge, is offset or is cropped, in at least a third of them`);
     }
     const homePlan = pagesOf(plan).find((p) => p.slug === '/');
     const minHome = brief?.tier === 'S' ? 5 : 7;
     if (brief && homePlan && homePlan.sections.length < minHome) problems.push(`design/section-plan.json: the home page has ${homePlan.sections.length} sections; a ${brief.tier ?? 'M'} site needs at least ${minHome}, so it tells the whole story`);
     const minInner = brief?.tier === 'S' ? 3 : 4;
-    for (const page of pagesOf(plan)) if (brief && page.slug !== '/' && page.sections.length < minInner) problems.push(`design/section-plan.json: ${page.slug} has ${page.sections.length} sections; an inner page needs at least ${minInner}`);
+    // A utility page (every section funnel "none", such as privacy or terms) is as long as its text needs.
+    const utility = (page) => page.sections.length > 0 && page.sections.every((s) => s.funnel === 'none');
+    for (const page of pagesOf(plan)) if (brief && page.slug !== '/' && !utility(page) && page.sections.length < minInner) problems.push(`design/section-plan.json: ${page.slug} has ${page.sections.length} sections; an inner page needs at least ${minInner}`);
     // The media the operator chose must be placed where the media step said, and a 3D object never in the hero.
     const t3 = brief?.media?.threeD;
     const vd = brief?.media?.video;
