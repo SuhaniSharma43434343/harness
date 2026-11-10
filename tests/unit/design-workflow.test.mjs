@@ -773,14 +773,14 @@ test('the contracts use the pre-build answers: truths, jobs, arrival and mood, c
     audience: [{ ...BRIEF.audience[0], arrivesFrom: ['Instagram'], mood: 'wary' }],
     truths: [{ text: 'Fitted three hundred crooked Portland kitchens' }],
     jobs: ['Book a visit', 'Call'],
-    contentRules: [{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }],
+    contentRules: [{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }, { rule: 'never', text: 'Casco', pages: ['*'] }],
   };
   const lines = (stage, b = brief) => specTask('demo', stage, b).acceptance;
   assert.ok(lines('research').some((a) => /"Fitted three hundred crooked Portland kitchens"/.test(a) && /only 1 of the three to six/.test(a) && /questions for the client/.test(a)));
   assert.ok(lines('direction').some((a) => /The concept rests on one of the facts only this business can claim/.test(a)));
   assert.ok(lines('section-plan').some((a) => /these jobs in one tap: "Book a visit", "Call"/.test(a)));
   assert.ok(lines('section-plan').some((a) => /arrives from or its mood/.test(a)));
-  assert.ok(lines('copy').some((a) => /content rules\. Always on every page: "Licensed and insured in Maine"/.test(a)));
+  assert.ok(lines('copy').some((a) => /content rules\. Always on every page: "Licensed and insured in Maine"\. Never on any page: "Casco"/.test(a)));
   // Without the new fields, only the research line about missing truths is added.
   assert.ok(lines('research', BRIEF).some((a) => /gives none of the three to six/.test(a)));
   for (const stage of ['direction', 'section-plan', 'copy']) assert.ok(!lines(stage, BRIEF).some((a) => /one tap|arrives from|content rules|rests on one of the facts/.test(a)), stage);
