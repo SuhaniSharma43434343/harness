@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as ledger from '../../src/core/ledger.mjs';
 import { check } from '../../src/core/schemas.mjs';
@@ -178,4 +179,53 @@ test('scaffoldSite uses the chosen direction from design/directions.json', () =>
   writeFileSync(join(opts.workspace, project, 'design/directions.json'), JSON.stringify(decision));
   const r = scaffoldSite(project, { brief, ...opts });
   assert.equal(r.tokens, decision.chosen);
+});
+
+// The prebuild script writes one route per page that imports only that page's sections, so each
+// page ships only its own sections' CSS. It needs no dependencies, so it is tested here directly.
+const syncContent = (siteDir) => spawnSync(process.execPath, [join(siteDir, 'scripts', 'sync-content.mjs')], { cwd: siteDir, encoding: 'utf8' });
+const routeOf = (siteDir, id) => join(siteDir, 'src', 'pages', `${id}.astro`);
+const usesOf = (md) => [...md.matchAll(/^\s*-\s+use:\s*"?(APP-0[1-8]\/[A-Za-z0-9]+)"?\s*$/gm)].map((m) => m[1]);
+
+test('the prebuild writes a route per page that imports only its own sections', () => {
+  const brief = sample('business');
+  const { project, opts } = newProject(brief.project);
+  const { siteDir } = scaffoldSite(project, { brief, ...opts });
+  const r = syncContent(siteDir);
+  assert.equal(r.status, 0, r.stderr);
+  const ids = JSON.parse(readFileSync(join(siteDir, 'src', 'generated-routes.json'), 'utf8'));
+  assert.deepEqual(ids, brief.pages.map((p) => (p.slug === '/' ? 'index' : p.slug.slice(1))).sort());
+  const all = readdirSync(join(siteDir, 'src', 'sections', 'APP-01')).map((f) => `APP-01/${f.replace('.astro', '')}`);
+  for (const id of ids) {
+    const route = readFileSync(routeOf(siteDir, id), 'utf8');
+    const own = [...new Set(usesOf(readFileSync(join(siteDir, 'src', 'content', 'pages', `${id}.md`), 'utf8')))];
+    const imported = [...route.matchAll(/sections\/(APP-0[1-8]\/[A-Za-z0-9]+)\.astro/g)].map((m) => m[1]);
+    assert.deepEqual(imported, own, `${id} imports exactly its own sections, in order`);
+    assert.ok(all.some((s) => !imported.includes(s)), `${id} leaves some starter sections out`);
+    assert.match(route, /forge:generated-route/);
+    assert.ok(route.includes(`getEntry('pages', "${id}")`), `${id} reads its own page`);
+    assert.doesNotMatch(route, /import\.meta\.glob/, 'a generated route never imports every section');
+  }
+});
+
+test('the prebuild replaces its own routes, leaves hand-written pages alone, and refuses a missing section', () => {
+  const brief = sample('business');
+  const { project, opts } = newProject(brief.project);
+  const { siteDir } = scaffoldSite(project, { brief, ...opts });
+  assert.equal(syncContent(siteDir).status, 0);
+  const pagesDir = join(siteDir, 'src', 'content', 'pages');
+  // A page removed from the content loses its route on the next build.
+  rmSync(join(pagesDir, 'projects.md'));
+  // A hand-written route of the same name wins over the generated one.
+  writeFileSync(routeOf(siteDir, 'services'), '---\n---\n<p>Hand-written</p>\n');
+  assert.equal(syncContent(siteDir).status, 0);
+  assert.ok(!existsSync(routeOf(siteDir, 'projects')));
+  assert.equal(readFileSync(routeOf(siteDir, 'services'), 'utf8'), '---\n---\n<p>Hand-written</p>\n');
+  assert.deepEqual(JSON.parse(readFileSync(join(siteDir, 'src', 'generated-routes.json'), 'utf8')), ['contact', 'index']);
+  // A page that names a section with no file fails the build, as the catch-all route did.
+  const contact = join(pagesDir, 'contact.md');
+  writeFileSync(contact, readFileSync(contact, 'utf8').replace(/use: "?APP-01\/Hero"?/, 'use: "APP-01/Missing"'));
+  const r = syncContent(siteDir);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /Page "contact" uses section "APP-01\/Missing", but src\/sections\/APP-01\/Missing\.astro does not exist/);
 });

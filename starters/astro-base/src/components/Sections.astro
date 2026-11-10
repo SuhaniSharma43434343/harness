@@ -1,24 +1,16 @@
 ---
 // Renders a page's sections in order. `use: "APP-0N/Name"` resolves to
 // src/sections/APP-0N/Name.astro; an unknown section fails the build instead of rendering nothing.
+// This imports every section, so a page rendered through it carries every section's CSS. The build
+// avoids that: scripts/sync-content.mjs writes a route per page that imports only its own sections
+// (see SectionList.astro), and only pages without one fall back to this.
+import SectionList from './SectionList.astro';
+
 const modules = import.meta.glob('../sections/*/*.astro', { eager: true });
+const components = Object.fromEntries(
+  Object.entries(modules).map(([path, mod]) => [path.replace('../sections/', '').replace(/\.astro$/, ''), mod.default]),
+);
 
 const { page, Content } = Astro.props;
-const sections = page.data.sections.map(({ use, ...props }, index) => {
-  const mod = modules[`../sections/${use}.astro`];
-  if (!mod) {
-    throw new Error(`Page "${page.id}" uses section "${use}", but src/sections/${use}.astro does not exist.`);
-  }
-  return { Component: mod.default, props, index };
-});
 ---
-{sections.map(({ Component, props, index }) =>
-  // A section with an id is one the design plan names; visual QA finds it by this wrapper.
-  props.id ? (
-    <div data-section={props.id}>
-      <Component {...props} page={page} Content={Content} index={index} />
-    </div>
-  ) : (
-    <Component {...props} page={page} Content={Content} index={index} />
-  ),
-)}
+<SectionList page={page} Content={Content} components={components} />

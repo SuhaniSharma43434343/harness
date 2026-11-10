@@ -1,0 +1,23 @@
+---
+// Renders a page's sections in order from the components it is given, keyed by "APP-0N/Name".
+// It imports no sections itself: the route that uses it imports only its own page's sections,
+// so each page ships only the CSS of the sections it shows.
+const { page, Content, components } = Astro.props;
+const sections = page.data.sections.map(({ use, ...props }, index) => {
+  const Component = components[use];
+  if (!Component) {
+    throw new Error(`Page "${page.id}" uses section "${use}", but src/sections/${use}.astro does not exist.`);
+  }
+  return { Component, props, index };
+});
+---
+{sections.map(({ Component, props, index }) =>
+  // A section with an id is one the design plan names; visual QA finds it by this wrapper.
+  props.id ? (
+    <div data-section={props.id}>
+      <Component {...props} page={page} Content={Content} index={index} />
+    </div>
+  ) : (
+    <Component {...props} page={page} Content={Content} index={index} />
+  ),
+)}
