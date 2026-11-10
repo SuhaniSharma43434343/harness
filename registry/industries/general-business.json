@@ -21,12 +21,13 @@
     "reason": "The usual two jobs of a business website."
   },
   "audience": {
-    "prompt": "Who are your best customers, and what do they need to know before they contact you?",
+    "prompt": "Who are your best customers, and what do they need to know before they contact you? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
     "why": "The pages answer the questions this person has, in the order they ask them.",
     "recommendation": [
       {
         "segment": "People looking for what the business offers nearby or online",
-        "need": "Understand the offer, see proof, and know how to get started"
+        "need": "Understand the offer, see proof, and know how to get started",
+        "action": "Send an enquiry"
       }
     ],
     "reason": "A safe starting audience; research in P2 refines it."

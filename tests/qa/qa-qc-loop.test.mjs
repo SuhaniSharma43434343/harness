@@ -88,6 +88,10 @@ test('every review rewrites reports/qa-report.md: defects, reproduction, verific
   assert.match(first, new RegExp(`- Reproduce: \`forge gates ${p.name} --gate seo\``));
   assert.match(first, /- Found in review 1; evidence: evidence\/qa\/review-1\/seo\.json/);
   assert.match(first, /\| claims \| pass \| 0 \|/);
+  assert.match(first, /## By parameter/);
+  assert.match(first, /\| Content \| fails \(seo\); not checked: content-parity \|/);
+  assert.match(first, /\| Creativity \| not checked in this review \| visual-review \| A model reviewing screenshots: judgement, not measurement \|/);
+  assert.match(first, /\| Usability \| not checked in this review \|/);
   assert.match(first, /This review ran 2 of the \d+ default gates\. Not in scope, so not covered here: .*interactions/);
 });
 

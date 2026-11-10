@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { check } from '../core/schemas.mjs';
 import { ROOT } from '../core/workspace.mjs';
@@ -68,22 +68,67 @@ function pruneUnreferenced(dir, pub) {
   }
 }
 
-// buildFromSpec(dir) => problems. Builds the site, then renders it against the specification. The
-// builder has no shell, so this output is how it learns what failed.
-export async function buildFromSpec(dir) {
-  syncContent(dir);
-  const site = join(dir, 'site');
-  if (!existsSync(join(site, 'package.json'))) return ['site/ does not exist'];
-  const b = buildSite(site);
-  if (!b.ok) return [`The site does not build:\n${b.output.trim().split('\n').slice(-25).join('\n')}`];
-  const { runGate } = await import('../gates/index.mjs');
-  const problems = [];
-  for (const gate of ['content-parity', 'design-fidelity']) {
-    const r = await runGate(gate, site, { projectDir: dir });
-    if (r.status === 'error') problems.push(`The ${gate} check could not run: ${r.error?.message ?? ''}`);
-    problems.push(...r.findings.filter((f) => BLOCKING.has(f.severity)).map((f) => `${f.id}${f.location ? ` [${f.location}]` : ''}: ${f.message}`));
+// One build of a site at a time. Page tasks run in parallel, and each one's check builds the same
+// site/ and reads the same site/dist, so the sync, build and render hold a lock: a directory, which
+// is created atomically. A lock older than LOCK_STALE_MS is left by a crash and is taken over.
+const LOCK_STALE_MS = 15 * 60 * 1000;
+export async function withSiteLock(dir, fn, { pollMs = 500, now = () => Date.now() } = {}) {
+  const lock = join(dir, 'locks', 'site-build');
+  mkdirSync(join(dir, 'locks'), { recursive: true });
+  for (;;) {
+    try {
+      mkdirSync(lock);
+      break;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      let age = 0;
+      try { age = now() - statSync(lock).mtimeMs; } catch { continue; }
+      if (age > LOCK_STALE_MS) rmSync(lock, { recursive: true, force: true });
+      else await new Promise((r) => setTimeout(r, pollMs));
+    }
   }
-  return problems;
+  try {
+    return await fn();
+  } finally {
+    rmSync(lock, { recursive: true, force: true });
+  }
+}
+
+// A finding belongs to a page when its location is that page's route.
+const onPage = (location, page) => {
+  const route = String(location ?? '').split(' @ ')[0].split(' (')[0].trim();
+  return route === page;
+};
+
+// buildFromSpec(dir, { page }) => problems. Builds the site, then renders it against the
+// specification. The builder has no shell, so this output is how it learns what failed. With page,
+// only that page is rendered and judged; the build itself must still succeed for the whole site.
+export async function buildFromSpec(dir, { page } = {}) {
+  return withSiteLock(dir, async () => {
+    syncContent(dir);
+    const site = join(dir, 'site');
+    if (!existsSync(join(site, 'package.json'))) return ['site/ does not exist'];
+    const b = buildSite(site);
+    if (!b.ok) return [`The site does not build:\n${b.output.trim().split('\n').slice(-25).join('\n')}`];
+    const { runGate } = await import('../gates/index.mjs');
+    const problems = [];
+    for (const gate of ['content-parity', 'design-fidelity']) {
+      const r = await runGate(gate, site, { projectDir: dir, ...(page ? { page } : {}) });
+      if (r.status === 'error') problems.push(`The ${gate} check could not run: ${r.error?.message ?? ''}`);
+      const blocking = r.findings.filter((f) => BLOCKING.has(f.severity) && (!page || onPage(f.location, page)));
+      problems.push(...blocking.map((f) => `${f.id}${f.location ? ` [${f.location}]` : ''}: ${f.message}`));
+    }
+    if (!page) problems.push(...stubsLeft(dir).map((f) => `${f} is still a placeholder: its page task has not built it`));
+    return problems;
+  });
+}
+
+// Placeholder section components, written before parallel page builds so the site always builds.
+export const STUB_MARK = 'data-forge-stub';
+export function stubsLeft(dir) {
+  const root = join(dir, 'site', 'src', 'sections');
+  if (!existsSync(root)) return [];
+  return readdirSync(root, { recursive: true }).map(String).filter((f) => f.endsWith('.astro') && readFileSync(join(root, f), 'utf8').includes(STUB_MARK)).map((f) => `site/src/sections/${f.replaceAll('\\', '/')}`);
 }
 
 export function checkVisualReview(dir) {

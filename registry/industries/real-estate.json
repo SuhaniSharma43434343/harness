@@ -42,16 +42,18 @@
     "reason": "The two actions that turn a property enquiry into a sale conversation."
   },
   "audience": {
-    "prompt": "Who buys or rents from you, and what do they need to see before they will visit?",
+    "prompt": "Who buys or rents from you, and what do they need to see before they will visit? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
     "why": "A first-time home buyer, an investor and an NRI need different proof and different pages.",
     "recommendation": [
       {
         "segment": "Families buying their first or next home",
-        "need": "Prices, floor plans, location and possession date, then a visit"
+        "need": "Prices, floor plans, location and possession date, then a visit",
+        "action": "Book a site visit"
       },
       {
         "segment": "Investors",
-        "need": "Appreciation, rental yield, builder track record and legal clarity"
+        "need": "Appreciation, rental yield, builder track record and legal clarity",
+        "action": "Book a site visit"
       }
     ],
     "reason": "The two groups most property sites serve; research in P2 refines them."

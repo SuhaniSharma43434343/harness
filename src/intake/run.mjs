@@ -95,7 +95,7 @@ function writeText(file, text) {
 // intake/brief.json, facts.json, estimate.json and plan.md, and logs each step in the ledger.
 // It stops before B1 and never records an approval.
 export async function runIntake(project, opts = {}) {
-  const { ask, worker, verifier, maxRounds = 3, registry = loadRegistry(), now, ...ctx } = opts;
+  const { ask, worker, verifier, maxRounds = 4, registry = loadRegistry(), now, ...ctx } = opts;
   if (typeof ask !== 'function') throw new TypeError('runIntake needs an ask(questions) function');
   const state = loadProject(project, ctx);
   if (state.phase === 'CREATED') advancePhase(project, 'INTAKE', { actor: 'project-manager', ...ctx });

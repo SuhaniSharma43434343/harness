@@ -4,7 +4,7 @@ import { ConfigInvalid } from './errors.mjs';
 import { assertValid } from './schemas.mjs';
 
 export const DEFAULT_CONFIG = Object.freeze({
-  concurrency: 2,
+  concurrency: 3,
   workspaceDir: 'workspace',
   taskTimeoutMinutes: 30,
   heartbeatStaleMinutes: 10,

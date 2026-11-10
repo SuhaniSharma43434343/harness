@@ -3,31 +3,6 @@
   "bankVersion": "0.1.0",
   "questions": [
     {
-      "id": "q-unique-facts",
-      "fills": [
-        "business.uniqueFacts"
-      ],
-      "prompt": "What is true about this business that no competitor can claim? Give three to six facts, separated by semicolons: the place, the people, the history, the method, a number.",
-      "why": "The design direction and the headline copy rest on these facts. Without them every site in the industry looks the same.",
-      "kind": "text",
-      "appliesTo": {
-        "projectTypes": "all",
-        "tiers": [
-          "S",
-          "M",
-          "L"
-        ]
-      },
-      "weight": 9,
-      "recommendation": {
-        "value": [
-          "(not provided by the client)"
-        ],
-        "reason": "Only the owner knows these; the copy is written around the gap and never invents them."
-      },
-      "round": 2
-    },
-    {
       "id": "q-visitor-sources",
       "fills": [
         "business.visitorSources"
@@ -117,91 +92,6 @@
       "recommendation": {
         "value": "phone-mostly",
         "reason": "Most visitors to a local business use a phone."
-      },
-      "round": 2
-    },
-    {
-      "id": "q-legal-lines",
-      "fills": [
-        "business.legalLines"
-      ],
-      "prompt": "Are there legal lines the site must carry or never say? For example licence numbers, registration numbers, consent wording or disclaimers.",
-      "why": "Copy checks block anything that breaks these rules.",
-      "kind": "text",
-      "appliesTo": {
-        "projectTypes": "all",
-        "tiers": [
-          "S",
-          "M",
-          "L"
-        ]
-      },
-      "weight": 5,
-      "recommendation": {
-        "value": [
-          "(none named)"
-        ],
-        "reason": "No legal line was named; the industry rules still apply."
-      },
-      "round": 2
-    },
-    {
-      "id": "q-domain",
-      "fills": [
-        "business.domainAccess"
-      ],
-      "prompt": "Do you have a domain name (like yourbusiness.com) and access to its settings?",
-      "why": "A finished site has sat unlaunched because nobody had the domain login. Asking early avoids it.",
-      "kind": "single",
-      "appliesTo": {
-        "projectTypes": "all",
-        "tiers": [
-          "S",
-          "M",
-          "L"
-        ]
-      },
-      "weight": 4,
-      "options": [
-        {
-          "value": "has-domain",
-          "label": "Yes, and I can change its settings"
-        },
-        {
-          "value": "needs-help",
-          "label": "I have one but need help with it"
-        },
-        {
-          "value": "no-domain",
-          "label": "No domain yet"
-        }
-      ],
-      "recommendation": {
-        "value": "needs-help",
-        "reason": "Assumed the domain still needs sorting out."
-      },
-      "round": 2
-    },
-    {
-      "id": "q-deadline",
-      "fills": [
-        "business.deadline"
-      ],
-      "prompt": "Is there a date the site must be live by?",
-      "why": "It decides how much is built first.",
-      "kind": "text",
-      "appliesTo": {
-        "projectTypes": "all",
-        "tiers": [
-          "S",
-          "M",
-          "L"
-        ]
-      },
-      "weight": 3,
-      "recommendation": {
-        "value": "(none named)",
-        "reason": "No deadline was named."
       },
       "round": 2
     }

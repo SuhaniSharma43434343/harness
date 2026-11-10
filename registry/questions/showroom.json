@@ -36,7 +36,7 @@
       "fills": [
         "audience"
       ],
-      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "prompt": "Who visits, and what do they need? One per line. If known, add what brings them, proof they need, the one action, where they arrive from and their mood, e.g. \"Homeowners: a builder they trust | wants: a fixed quote | proof: finished jobs nearby | action: book a visit | from: Instagram | mood: wary\".",
       "kind": "text",
       "appliesTo": {
         "projectTypes": [
@@ -53,7 +53,8 @@
         "value": [
           {
             "segment": "Buyers comparing products",
-            "need": "Inspect details and find where to buy"
+            "need": "Inspect details and find where to buy",
+            "action": "Find where to buy"
           }
         ],
         "reason": "The usual main audience for a showroom site; research in P2 refines it."

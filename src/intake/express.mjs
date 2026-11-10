@@ -21,7 +21,7 @@ const SMALL = /\b(small|simple|single[- ]page|one[- ]page|landing page|basic|qui
 export const ESSENTIAL_FIELDS = ['client.name', 'client.industry'];
 // Asked once at a terminal because the whole design rests on the answer; Enter skips it and the
 // recommendation is used. Without a terminal it is never asked.
-export const KEY_FIELDS = ['business.uniqueFacts'];
+export const KEY_FIELDS = ['truths'];
 
 const clean = (s) => s.replace(/\s+/g, ' ').replace(/^[\s,.;:–-]+|[\s,.;:–-]+$/g, '').trim();
 

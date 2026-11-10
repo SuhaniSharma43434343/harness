@@ -42,7 +42,7 @@ test('a prompt with no name asks the operator for the name, then once for what i
     designRun: async () => ({ reason: 'reached', spentUsd: 0 }),
     repair: async () => ({ outcome: 'passed', loops: 0, report: { defects: [] } }),
   });
-  assert.deepEqual(asked, ['q-client-name', 'q-unique-facts']);
+  assert.deepEqual(asked, ['q-client-name', 'q-truths']);
   assert.equal(r.status, 'ready');
   const brief = JSON.parse(readFileSync(join(ws, 'nameless', 'intake', 'brief.json'), 'utf8'));
   assert.equal(brief.client.name, 'Smile Dental');
@@ -151,7 +151,7 @@ test('the summary names the primary action, the pages and the assumptions', () =
   assert.match(lines.join('\n'), /2 assumption/);
 });
 
-test('what the owner says is unique reaches the brief and the design stages; the other story questions are assumptions', async () => {
+test('what the owner says is unique (truths) reaches the design stages; the visitor questions are assumptions', async () => {
   const ws = workspace();
   const r = await runGo('story', {
     workspace: ws,
@@ -162,7 +162,7 @@ test('what the owner says is unique reaches the brief and the design stages; the
   });
   assert.equal(r.status, 'ready');
   const b = JSON.parse(readFileSync(join(ws, 'story', 'intake', 'brief.json'), 'utf8'));
-  assert.deepEqual(b.business.uniqueFacts, ['Only builder in Waghodia with a RERA-registered project', '12 years', 'Hand-picked Italian marble']);
+  assert.deepEqual(b.truths.map((x) => x.text), ['Only builder in Waghodia with a RERA-registered project', '12 years', 'Hand-picked Italian marble']);
   assert.deepEqual(b.business.visitorSources, ['google-search', 'instagram']);
   assert.equal(b.business.visitorDevice, 'phone-mostly');
   assert.ok(b.assumptions.includes('business.visitorDevice'));
@@ -170,6 +170,6 @@ test('what the owner says is unique reaches the brief and the design stages; the
   assert.match(businessAcceptance(b, 'direction').join(' '), /concept must rest on one of these facts/);
   assert.match(businessAcceptance(b, 'copy').join(' '), /register each as a claim/);
   assert.match(businessAcceptance(b, 'section-plan').join(' '), /Visitors arrive from: google-search, instagram/);
-  const none = { ...b, business: { ...b.business, uniqueFacts: ['(not provided by the client)'] } };
+  const none = { ...b, truths: [] };
   assert.ok(!businessAcceptance(none, 'direction').join(' ').includes('no competitor can claim'), 'an unknown is never presented as a fact');
 });

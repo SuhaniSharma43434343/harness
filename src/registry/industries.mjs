@@ -233,7 +233,7 @@ export function resolveBusiness(pb, view = {}) {
 // brief's business section), whether or not a playbook applies. Pure.
 export function storyOf(view = {}) {
   const out = {};
-  for (const key of ['uniqueFacts', 'visitorSources', 'visitorDevice', 'legalLines', 'domainAccess', 'deadline']) {
+  for (const key of ['visitorSources', 'visitorDevice']) {
     const v = getField(view, `business.${key}`);
     if (v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) out[key] = v;
   }

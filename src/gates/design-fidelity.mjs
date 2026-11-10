@@ -183,6 +183,10 @@ export default {
     const evidence = [];
     const add = (id, severity, message, location) => findings.push({ id, severity, message, ...(location ? { location } : {}) });
 
+    // With opts.page, only that page is rendered and judged, and the site-wide checks (the approach
+    // as a whole, card share, visual share) wait for the full render.
+    const only = ctx.opts.page;
+    const pages = only ? plan.pages.filter((p) => p.slug === only) : plan.pages;
     return withSite(ctx, async ({ browser, base }) => {
       let total = 0;
       let cardSections = 0;
@@ -195,7 +199,7 @@ export default {
           Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
           Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
         });
-        for (const pagePlan of plan.pages) {
+        for (const pagePlan of pages) {
           const route = pagePlan.slug;
           const where = `${route} @ ${vp.name}`;
           const page = await context.newPage();
@@ -292,7 +296,7 @@ export default {
       // Reduced motion must not hide content.
       const calm = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
       const calmPage = await calm.newPage();
-      for (const pagePlan of plan.pages) {
+      for (const pagePlan of pages) {
         await calmPage.goto(base + pagePlan.slug, { waitUntil: 'load' });
         await calmPage.waitForTimeout(400);
         const hidden = await calmPage.evaluate(() => [...document.querySelectorAll('[data-section] h1, [data-section] h2, [data-section] p')].filter((n) => {
@@ -303,6 +307,7 @@ export default {
       }
       await calm.close();
 
+      if (only) return { findings, evidence, metrics: { sections: total, page: only } };
       // The approach as a whole, across the site.
       for (const s of required) if (!seenSignals[s]) add('approach-missing', 'serious', `${method.id} ${method.name} needs ${s}, and the site has none`);
       for (const s of forbidden) if (seenSignals[s]) add('approach-mixed', 'serious', `${method.id} ${method.name} does not use ${s}, but the site does, with no approved combination`);

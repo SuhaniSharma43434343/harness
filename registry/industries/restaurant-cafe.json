@@ -43,16 +43,18 @@
     "reason": "The two results every food business wants."
   },
   "audience": {
-    "prompt": "Who comes to you, and what do they want from a visit or an order?",
+    "prompt": "Who comes to you, and what do they want from a visit or an order? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
     "why": "Students, office workers, families and tourists want different things at different hours.",
     "recommendation": [
       {
         "segment": "Regulars and people nearby",
-        "need": "See the menu, check the hours, and order or reserve quickly"
+        "need": "See the menu, check the hours, and order or reserve quickly",
+        "action": "Reserve a table"
       },
       {
         "segment": "New visitors who found you on Google or Instagram",
-        "need": "Judge the food and the place from photographs, then find the way in"
+        "need": "Judge the food and the place from photographs, then find the way in",
+        "action": "See the menu"
       }
     ],
     "reason": "The two groups every food site serves; research in P2 refines them."

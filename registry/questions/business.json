@@ -37,7 +37,7 @@
       "fills": [
         "audience"
       ],
-      "prompt": "Who are the main visitors, and what do they need from the site?",
+      "prompt": "Who visits, and what do they need? One per line. If known, add what brings them, proof they need, the one action, where they arrive from and their mood, e.g. \"Homeowners: a builder they trust | wants: a fixed quote | proof: finished jobs nearby | action: book a visit | from: Instagram | mood: wary\".",
       "kind": "text",
       "appliesTo": {
         "projectTypes": [
@@ -54,7 +54,8 @@
         "value": [
           {
             "segment": "Local customers",
-            "need": "Find out what the business offers and get in touch"
+            "need": "Find out what the business offers and get in touch",
+            "action": "Get in touch"
           }
         ],
         "reason": "The usual main audience for a business site; research in P2 refines it."

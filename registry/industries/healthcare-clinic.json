@@ -47,16 +47,18 @@
     "reason": "The two things that bring a new patient through the door."
   },
   "audience": {
-    "prompt": "Who are your patients, and what are they worried about when they search for you?",
+    "prompt": "Who are your patients, and what are they worried about when they search for you? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
     "why": "A parent booking for a child, an older adult and someone in pain look for different things.",
     "recommendation": [
       {
         "segment": "Patients and families in the neighbourhood",
-        "need": "Know you treat their problem, trust the doctor and book a time"
+        "need": "Know you treat their problem, trust the doctor and book a time",
+        "action": "Book an appointment"
       },
       {
         "segment": "Patients looking for a second opinion",
-        "need": "See qualifications, experience and clear next steps"
+        "need": "See qualifications, experience and clear next steps",
+        "action": "Book an appointment"
       }
     ],
     "reason": "The two groups most clinics serve; research in P2 refines them."

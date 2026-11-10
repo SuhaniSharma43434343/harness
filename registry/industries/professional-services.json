@@ -48,12 +48,13 @@
     "reason": "The two jobs of a professional-services site."
   },
   "audience": {
-    "prompt": "Who is your ideal client, and what problem is pushing them to look for help now?",
+    "prompt": "Who is your ideal client, and what problem is pushing them to look for help now? One per line; add if known: wants: ... | proof: ... | action: ... | from: ... | mood: ...",
     "why": "The site speaks to that person's problem first and the firm's credentials second.",
     "recommendation": [
       {
         "segment": "Business owners and individuals with a specific problem to solve",
-        "need": "Know the firm handles it, see proof, and understand the first step and the cost"
+        "need": "Know the firm handles it, see proof, and understand the first step and the cost",
+        "action": "Book a consultation"
       }
     ],
     "reason": "A safe starting audience; research in P2 refines it."

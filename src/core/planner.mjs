@@ -1,11 +1,12 @@
-import { cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { addTask, listTasks } from './board.mjs';
 import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { loadProject } from './project.mjs';
 import { ROOT, assertProjectExists } from './workspace.mjs';
-import { FILES, readiness, stageById } from '../design/spec.mjs';
+import { FILES, readiness, sectionUse, stageById } from '../design/spec.mjs';
+import { STUB_MARK } from '../qa/visual.mjs';
 import app03 from '../approaches/app03.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
 
@@ -29,7 +30,7 @@ const shape = (name) => `The file must match the "${name}" definition in ${SCHEM
 export const CRAFT = 'design/reference/craft/**';
 const CRAFT_FILE = 'design/reference/craft/awwwards.md';
 
-const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/summary.md', SCHEMA];
+const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/crux.json', 'research/summary.md', SCHEMA];
 const SPEC = ['design/direction.json', 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/motion-plan.json', 'design/asset-plan.json'];
 
 // What this business needs from its site, as acceptance lines for the stages that decide the look
@@ -37,16 +38,13 @@ const SPEC = ['design/direction.json', 'design/direction.md', 'design/design-sys
 export function businessAcceptance(brief, stage) {
   const b = brief.business;
   const lines = [];
-  const known = (b?.uniqueFacts ?? []).filter((f) => !/^\(not provided/.test(f));
-  if (known.length && ['research', 'direction', 'section-plan', 'copy'].includes(stage)) {
-    const use = stage === 'direction' ? 'The concept must rest on one of these facts' : stage === 'copy' ? 'Use them in the headlines and proof lines, and register each as a claim with the owner as its source' : 'Build on them';
-    lines.push(`What is true here that no competitor can claim, from the owner: ${known.join('; ')}. ${use}`);
+  const truths = (brief.truths ?? []).map((t) => t.text);
+  if (truths.length && ['direction', 'copy'].includes(stage)) {
+    lines.push(`What is true here that no competitor can claim, from the owner: ${truths.join('; ')}. ${stage === 'direction' ? 'The concept must rest on one of these facts' : 'Use them in the headlines and proof lines, and register each as a claim with the owner as its source'}`);
   }
   if ((b?.visitorSources?.length || b?.visitorDevice) && ['direction', 'section-plan'].includes(stage)) {
     lines.push(`Visitors arrive from: ${(b.visitorSources ?? []).join(', ') || 'unknown'}; device: ${b.visitorDevice ?? 'unknown'}. Design the first screen for that arrival`);
   }
-  const legal = (b?.legalLines ?? []).filter((l) => !/^\(none/.test(l));
-  if (legal.length && stage === 'copy') lines.push(`Legal lines the copy must carry or respect: ${legal.join('; ')}`);
   if (!b?.primaryConversion) return lines;
   const label = b.primaryConversion.label;
   if (stage === 'research') {
@@ -126,16 +124,20 @@ const STAGE_TASKS = {
   research: (brief) => ({
     budget: { minutes: 25, retries: 1 },
     inputs: ['intake/brief.json', 'intake/facts.json', 'intake/material/**', SCHEMA],
-    owns_files: ['research/summary.md', 'research/sources.json', 'research/positioning.json'],
+    owns_files: ['research/summary.md', 'research/sources.json', 'research/positioning.json', 'research/crux.json'],
     must_not_touch: ['intake/**', 'content/**', 'site/**'],
     acceptance: [
       `research/summary.md describes ${brief.client.name}'s business, audience and goals, and what the site must do for them, in plain prose of at least a few paragraphs`,
       'Every claim in the summary names a source id from research/sources.json, or is marked "(assumption)"',
       'research/sources.json is {"sources": [{"id", "title", "kind", "ref"}]}; the brief and intake facts count as sources (kind "client", ref their path)',
       `research/positioning.json states the business, audience insights, objectives and this business's unique positioning. ${shape('positioning')}`,
+      'research/crux.json sorts every fact about the business into five buckets: about (story, team, mission, values, promise; put first what nobody else can claim), whatWeDo (services, capabilities, process), ourWork (case studies, proof, metrics, client logos), resourceHub (tools, FAQs, guides, downloads) and reachUs (calls to action, contact points). Each item names its source id from research/sources.json, or "assumption"',
+      'A bucket with nothing real in it stays empty and lists in "gaps" what is missing, as a question for the client. Never fill a bucket by inventing proof, people or figures',
+      shape('crux'),
       'Use WebSearch and WebFetch to study at least two real competitors and three real, well-designed sites worth learning from. For each, say what specifically to learn: a layout, a type treatment, a way of telling the story. If the web is unavailable, say so in researchLimits and do not invent URLs',
       'Do not state a fact about the business that is not in the brief or client material',
       ...businessAcceptance(brief, 'research'),
+      truthsLine(brief),
     ],
   }),
 
@@ -150,6 +152,7 @@ const STAGE_TASKS = {
       'Read all eight methodologies. Pick exactly one primaryApproach from those design/approach-decision.json selects, and in "rejected" say why each of the others does not fit this brief',
       'Treat the approach as a complete method: interpret every one of its dimensions for this business, without importing techniques from another approach. "combination" stays empty unless the methodology\'s compatibleWith allows it and you can argue the story needs it',
       'Write a "concept": one sentence, specific to this business, that could not describe a competitor. Everything else must serve it',
+      ...(brief?.truths?.length ? [`The concept rests on one of the facts only this business can claim (intake/brief.json truths): ${brief.truths.map((t) => `"${t.text}"`).join(', ')}. Say in whyThisApproach which one, and why`] : []),
       'design/direction.md is the same direction as prose for the other agents: the concept, the personality, what the site must feel like, and what it must never do',
       ...businessAcceptance(brief, 'direction'),
       shape('direction'),
@@ -186,6 +189,11 @@ const STAGE_TASKS = {
       'Do not default to cards. At most a quarter of sections may be card or grid layouts; no three neighbours may share a pattern; use at least four patterns',
       'Give each section (except a page\'s last) a transition: toNext says how it hands over to the section after it (a tone change, an overlap, a rule, a motion), and device notes any mobile difference',
       'Never state an operational fact the client did not give: no clock times, prices, durations or process steps beyond the client notes. Any you do use must already be a row in content/claims.json',
+      'Give every section a funnel stage, so each page takes its visitor from awareness (the hook) through interest (how it works, the benefits) and desire (proof) to action (a low-friction call to action). The home page opens with awareness; every page with a journey ends on an action; a stage steps back only after a call to action. Use "none" for utility sections such as legal text',
+      'Build each page from research/crux.json: a section draws on a bucket that has real facts. Where a bucket is empty, plan around its gap instead of a section that would need invented content',
+      'Plan for each audience in intake/brief.json, not a generic visitor. Where an audience gives wants, proof and action, the pages it lands on answer what it wants, show the proof it needs, and end on its action. When audiences want different things, give each its own view: a dedicated page or path from the home page, or a section that switches between them',
+      ...(brief.jobs?.length ? [`Every page gives a visitor these jobs in one tap: ${brief.jobs.map((j) => `"${j}"`).join(', ')}. Say on each page where each one sits: the header, a call to action that stays in view, or the footer`] : []),
+      ...(brief.audience.some((a) => a.arrivesFrom?.length || a.mood) ? ['Where an audience says where it arrives from or its mood, plan the first screen it lands on for that: arriving from a social post or a QR code means a phone and a cold start; a worried visitor needs reassurance before a sales pitch'] : []),
       'Asset and motion ids you name here are defined next in design/asset-plan.json and design/motion-plan.json',
       ...businessAcceptance(brief, 'section-plan'),
       shape('sectionPlan'),
@@ -231,6 +239,9 @@ const STAGE_TASKS = {
       `Each brief page has its title, a description and its call to action: ${brief.pages.map((p) => `${p.slug} "${p.cta}"`).join(', ')}`,
       'A headline says something, in this business\'s own voice; "Our services" fails. Write the way a good copywriter writes for this approach (see the direction). Use specifics from the brief and client material. Avoid stock phrases and do not open headlines the same way',
       "A stock or licensed photo is never described as this client's own work: captions and alt text say what it shows, not which job it came from",
+      'Write each section for its funnel stage in design/section-plan.json, using the facts sorted in research/crux.json. A gap stays a gap: no invented proof, testimonials or figures',
+      'Where an audience in intake/brief.json names its action, the call to action that serves it uses that action in plain words',
+      ...(brief.contentRules?.length ? [`Follow the brief's content rules. ${brief.contentRules.map((r) => `${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.includes('*') ? 'every page' : r.pages.join(', ')}: "${r.text}"`).join('. ')}. The copy check refuses copy that breaks them; an "always" line may sit in the footer when it is on every page`] : []),
       'State only facts found in the brief, client material or research. Every number, year, time, price, duration, process step, guarantee or award goes in content/claims.json as {"claims": [{"text", "source"}]}, with a source id from research/sources.json — quote the source line as you write, not afterwards. If a section needs a fact you do not have (an ingredient, a method, an opening day), write around it rather than inventing it',
       ...craftLines('copy'),
       ...mediaAcceptance(brief, 'copy'),
@@ -239,6 +250,14 @@ const STAGE_TASKS = {
     ],
   }),
 };
+
+// The facts only this business can claim. The design rests on one of them; with fewer than three,
+// research looks for more in the client material and lists the rest as questions for the client.
+function truthsLine(brief) {
+  const truths = brief.truths ?? [];
+  const given = truths.length ? `The brief names what only this business can claim: ${truths.map((t) => `"${t.text}"`).join(', ')}. Put them first in the about bucket, with source "brief", and say in research/positioning.json which one the site rests on. ` : '';
+  return truths.length >= 3 ? given.trim() : `${given}The brief gives ${truths.length ? `only ${truths.length}` : 'none'} of the three to six facts only this business can claim (about the place, people, material, history, method or a number). Find more in the client material; for what is still missing, add questions for the client to the about bucket's gaps`;
+}
 
 // specTask(project, stage, brief, { fix?, problems? }) => the contract for one specification stage,
 // or its fix task: the same contract with the Design Manager's findings to resolve.
@@ -292,6 +311,28 @@ function placeMedia(dir, brief) {
 
 const stageTask = (stage) => (project, brief) => [specTask(project, stage, brief)];
 
+// The licence register needs only the asset plan, which is finished before the copy, so it runs
+// alongside the copy task and while the operator reviews the copy at B3. The asset phase then
+// has nothing left to wait for.
+const assetRegister = (project) => (
+    {
+      ...base(project, 'asset-register'),
+      id: 'asset-register',
+      agent: 'asset-rights',
+      inputs: ['intake/brief.json', 'design/directions.json', 'design/asset-plan.json', 'assets/public/**', 'assets/unsplash-photos.json'],
+      owns_files: ['assets/register.json', 'assets/evidence/**'],
+      must_not_touch: ['site/**', 'content/**', 'design/**', 'assets/public/**'],
+      acceptance: [
+        'assets/register.json is {"assets": [...]} with one row per image, font or file the site uses: {"file", "licence", "source", "evidence", "status"}',
+        'Each client or licensed asset in design/asset-plan.json has a row. The site serves files under assets/public/ from its root, so "images/x.jpg" is the row\'s file. Authored inline SVG and CSS art needs no row',
+        'Fonts from the chosen design direction are listed with their licence (they come from Fontsource under OFL-1.1 or Apache-2.0); a site with no other assets still has the fonts. The build ships them as site/dist/_astro/<family>-<subset>-<weight>-normal.<hash>.woff and .woff2, so give each font one row whose file is a glob such as "_astro/work-sans-*.{woff,woff2}" (lowercase family, spaces as dashes)',
+        'favicon.svg is the harness starter\'s own mark: {"file": "favicon.svg", "licence": "harness (own work)", "source": "starters/astro-base", "evidence": "starters/astro-base/public/favicon.svg", "status": "cleared"}',
+        'status is "cleared" only when the licence allows the use; anything else is "uncertain". Package rows already in the register keep their status: only the operator clears a licence the harness cannot verify',
+      ],
+      verify: verify('assets'),
+    }
+);
+
 const PLANS = {
   RESEARCH: stageTask('research'),
   APPROACH_SELECTION: stageTask('direction'),
@@ -304,26 +345,9 @@ const PLANS = {
     return tasks;
   },
 
-  CONTENT: stageTask('copy'),
+  CONTENT: (project, brief) => [specTask(project, 'copy', brief), assetRegister(project)],
 
-  ASSETS_LICENSING: (project) => [
-    {
-      ...base(project, 'asset-register'),
-      id: 'asset-register',
-      agent: 'asset-rights',
-      inputs: ['intake/brief.json', 'content/copy.json', 'design/directions.json', 'design/asset-plan.json', 'assets/public/**', 'assets/unsplash-photos.json'],
-      owns_files: ['assets/register.json', 'assets/evidence/**'],
-      must_not_touch: ['site/**', 'content/**', 'design/**', 'assets/public/**'],
-      acceptance: [
-        'assets/register.json is {"assets": [...]} with one row per image, font or file the site uses: {"file", "licence", "source", "evidence", "status"}',
-        'Each client or licensed asset in design/asset-plan.json has a row. The site serves files under assets/public/ from its root, so "images/x.jpg" is the row\'s file. Authored inline SVG and CSS art needs no row',
-        'Fonts from the chosen design direction are listed with their licence (they come from Fontsource under OFL-1.1 or Apache-2.0); a site with no other assets still has the fonts. The build ships them as site/dist/_astro/<family>-<subset>-<weight>-normal.<hash>.woff and .woff2, so give each font one row whose file is a glob such as "_astro/work-sans-*.{woff,woff2}" (lowercase family, spaces as dashes)',
-        'favicon.svg is the harness starter\'s own mark: {"file": "favicon.svg", "licence": "harness (own work)", "source": "starters/astro-base", "evidence": "starters/astro-base/public/favicon.svg", "status": "cleared"}',
-        'status is "cleared" only when the licence allows the use; anything else is "uncertain". Package rows already in the register keep their status: only the operator clears a licence the harness cannot verify',
-      ],
-      verify: verify('assets'),
-    },
-  ],
+  ASSETS_LICENSING: (project) => [assetRegister(project)],
 
   // The specification review: a fresh task after each return, because the file it judges changed.
   TECHNICAL_PLAN: (project, brief, { dir, opts }) => {
@@ -368,6 +392,10 @@ const PLANS = {
     const approaches = [direction.primaryApproach, ...direction.combination.map((c) => c.approach)];
     copyReference(dir, direction.primaryApproach);
     const specInputs = [...SPEC, FILES.review, 'design/reference/methodologies/**', 'design/reference/skill/**', CRAFT, 'content/copy.json'];
+    const plan = readJson(join(dir, FILES.sectionPlan));
+    writeStubs(dir, direction.primaryApproach, plan);
+    const siteFile = join(dir, 'site', 'src', 'site.json');
+    const siteForms = Object.entries((existsSync(siteFile) ? readJson(siteFile) : null)?.forms ?? {});
     const never = ['content/**', 'design/**', 'intake/**', 'research/**', 'site/src/content/**', 'site/dist/**', 'site/node_modules/**'];
     return [
       {
@@ -376,30 +404,37 @@ const PLANS = {
         agent: 'builder',
         approach_modules: approaches,
         budget: { minutes: 30, retries: 1 },
-        inputs: [...specInputs, 'site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**'],
-        owns_files: ['site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**'],
+        inputs: [...specInputs, 'site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**', 'assets/public/**', 'assets/unsplash-photos.json'],
+        owns_files: ['site/src/layouts/**', 'site/src/components/**', 'site/src/styles/**', 'site/src/lib/**', 'site/public/**', 'site/package.json'],
         must_not_touch: never,
         acceptance: [
           'Turn design/design-system.json into the site\'s foundation: site/src/styles/ holds the system as custom properties and base type (secondary colour, hierarchy, spacing, grid, surfaces). tokens.json stays as it is',
           'Rewrite the Header and Footer to the direction, reading their text from site/src/copy.json (a copy of content/copy.json): nav, navCta, footer. The header behaves as the motion plan\'s navigation says, and the footer is a designed part of the site, not a copyright line',
           'Add site/src/lib/motion.js: the motion plan\'s shared behaviour for this approach, wired from data-motion attributes. Reduced motion shows every word, fully visible. Use the approach\'s recipes in site/src/lib/ when they fit',
-          'Keep the starter\'s page routes and the skip link. Do not write page sections yet',
+          'Keep the starter\'s page routes and the skip link. Do not write page sections: each page is built next, in parallel, by its own task, and none of them may edit these shared files, so put everything the pages share here',
+          'Prepare site/public for every page: only the files design/asset-plan.json lists, and any image rendered under 300 px wide gets its own small file (a -thumb variant or sized copy). Add the packages the approaches need to site/package.json',
         ],
         verify: verify('foundation'),
       },
-      {
-        ...base(project, 'build-sections'),
-        id: 'build-sections',
-        agent: 'builder',
-        approach_modules: approaches,
-        depends_on: ['build-foundation'],
-        budget: { minutes: 60, retries: 2 },
-        inputs: [...specInputs, 'site/src/content/pages/**', 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/public/**'],
-        owns_files: ['site/src/sections/**', 'site/public/**', 'site/package.json'],
-        must_not_touch: never,
-        acceptance: [
-          `For each section in design/section-plan.json, write its own component at site/src/sections/${direction.primaryApproach}/<PascalCaseOfTheSectionId>.astro. Pages already list them under use. Each component receives its copy as props (eyebrow, headline, subheadline, body, items, cta, note), plus page`,
-          'design/review.json holds the Design Manager\'s notes on how to settle small gaps: follow them',
+      // A section component used on several pages belongs to the first page that uses it, so no two
+      // page tasks own the same file.
+      ...plan.pages.map((pagePlan, i) => {
+        const fileOf = (x) => `site/src/sections/${sectionUse(direction.primaryApproach, x.id)}.astro`;
+        const earlier = new Set(plan.pages.slice(0, i).flatMap((p) => p.sections.map(fileOf)));
+        const files = [...new Set(pagePlan.sections.map(fileOf))].filter((f) => !earlier.has(f));
+        return {
+          ...base(project, pageTaskId(pagePlan.slug)),
+          id: pageTaskId(pagePlan.slug),
+          agent: 'builder',
+          approach_modules: approaches,
+          depends_on: ['build-foundation'],
+          budget: { minutes: 45, retries: 2 },
+          inputs: [...specInputs, 'site/src/content/pages/**', 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/public/**'],
+          owns_files: files,
+          must_not_touch: [...never, 'site/src/styles/**', 'site/src/components/**', 'site/src/lib/**', 'site/src/layouts/**', 'site/public/**', 'site/package.json'],
+          acceptance: [
+            `Build only the page ${pagePlan.slug}. Other pages are built at the same time by other tasks, so change no file outside these: ${files.join(', ')}`,
+            `Each of those files is a placeholder now. Replace it with the real component for its section in design/section-plan.json. Each component receives its copy as props (headline, subheadline, body, items, cta, eyebrow, note, as in site/src/copy.json)`,
           'Implement the composition exactly as specified: the placement, overlap, scale, background and typography it names, at desktop, tablet and mobile. Use bespoke layout for each section, and use the design system\'s properties, never hard-coded colours or fonts',
           'Render every string of copy exactly as given, unbroken in the HTML, so it can be verified. Line-splitting for animation happens at runtime, in JavaScript',
           'Assets: client or licensed images come from /<file> under site/public/. Authored assets are made here as detailed inline SVG or CSS, as the plan describes; they must look finished. Give each planned asset\'s outermost element data-asset="<asset id>"',
@@ -407,15 +442,46 @@ const PLANS = {
           'Keep to the primary approach. Do not import libraries from any other approach (the operator-chosen 3D accent below is the one exception: it uses the Scene3D section the harness already added)',
           ...mediaAcceptance(brief, 'build'),
           'Keep it fast: the largest image in the first screen loads eagerly with fetchpriority="high" and the others lazily, every image has width and height, and JavaScript for motion loads after the first paint. The performance gate fails over 2.5 s LCP',
-          'Ship only what the pages reference: never copy the whole asset folder into site/public. Any image rendered under 300 px wide gets its own small file (a -thumb variant or sized copy), not the full-size original. Every file you add to site/public needs a row in assets/register.json',
           'Hero images stay small: aim under 60 KB for the first-screen image; prefer a tighter crop or stronger compression over a heavier file',
           'The verify command builds the site and renders it. Its output lists exactly what failed; fix that on the next attempt',
-        ],
-        verify: verify('site-build'),
-      },
+            'If the shared foundation (styles, components, lib, site/public) lacks something this page needs, build what you can inside these files and say what is missing in your evidence; do not edit shared files',
+            ...formContract(siteForms),
+          ],
+          verify: `${verify('site-build')} --page ${q(pagePlan.slug)}`,
+        };
+      }),
     ];
   },
 };
+
+// How to build a form, for every page of a site that has forms. The page a form sits on is the
+// section plan's call (site.json's page is only the starter's first guess), so each page task
+// gets the contract and applies it to any section that collects input. The address is never
+// invented: it is site.json's action, or the form plugin's endpoint (installed at deploy; the
+// forms gate tests the form against a stand-in for it). A form never claims what it did not send.
+export const formAction = (id) => `/api/form?form=${encodeURIComponent(id)}`;
+function formContract(forms) {
+  if (!forms.length) return [];
+  const list = forms.map(([id, f]) => `"${id}" (${f.purpose}; action ${f.action ? `"${f.action}"` : `"${formAction(id)}", the form plugin's endpoint, because the brief has no destination yet`})`).join(', ');
+  return [`Forms: a section on this page that collects input is one of the site's forms in site/src/site.json: ${list}. Build it from its entry there, keeping data-forge-form="<its id>", its fields, required marks and a .form-status element (site/src/sections/APP-01/Form.astro shows the behaviour). Use exactly that action; never invent another address or post to the page's own URL. Submit with fetch POST: an empty required field is stopped before sending, a 2xx answer shows the success state, anything else shows the error state. Never show success without sending`];
+}
+
+// One build task per page, so pages are built in parallel.
+export const pageTaskId = (slug) => `build-page-${slug === '/' ? 'home' : slug.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase()}`;
+
+// A placeholder for every planned section that has no component yet, written by the harness at no
+// model cost, so the whole site builds while page tasks are still running. The full build check
+// refuses any placeholder that remains.
+export function writeStubs(dir, approach, plan) {
+  for (const page of plan?.pages ?? []) {
+    for (const x of page.sections) {
+      const file = join(dir, 'site', 'src', 'sections', `${sectionUse(approach, x.id)}.astro`);
+      if (existsSync(file)) continue;
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, `---\nconst { headline = '' } = Astro.props;\n---\n<section ${STUB_MARK}="${x.id}"><h2>{headline}</h2></section>\n`);
+    }
+  }
+}
 
 // planPhase(project, phase?) => the tasks added (none when the phase is already planned or has
 // no agent work).

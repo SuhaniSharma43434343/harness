@@ -1,5 +1,5 @@
 {
-  "concurrency": 2,
+  "concurrency": 3,
   "workspaceDir": "workspace",
   "taskTimeoutMinutes": 30,
   "heartbeatStaleMinutes": 10,

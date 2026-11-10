@@ -70,7 +70,12 @@
         "required": ["segment", "need"],
         "properties": {
           "segment": { "type": "string", "minLength": 1 },
-          "need": { "type": "string", "minLength": 1 }
+          "need": { "type": "string", "minLength": 1 },
+          "wants": { "type": "string", "minLength": 1, "description": "The question or wish that brings this visitor to the site." },
+          "proof": { "type": "string", "minLength": 1, "description": "What this visitor needs to see before they trust the business." },
+          "action": { "type": "string", "minLength": 1, "description": "The one conversion step this visitor should take." },
+          "arrivesFrom": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true, "description": "Where this visitor comes from: Instagram, WhatsApp, search, a QR code, a referral." },
+          "mood": { "type": "string", "minLength": 1, "description": "The state this visitor arrives in, such as worried, curious or in a hurry." }
         }
       }
     },
@@ -162,12 +167,8 @@
         "contentNeeds": { "type": "array", "items": { "type": "string", "minLength": 3 } },
         "requiredSections": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 5 } } },
         "compliance": { "type": "array", "items": { "type": "string", "minLength": 10 } },
-        "uniqueFacts": { "type": "array", "items": { "type": "string", "minLength": 3 }, "description": "What is true here that no competitor can claim, from the owner. The direction and the headline rest on one of these." },
         "visitorSources": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/definitions/slug" } },
         "visitorDevice": { "$ref": "common.schema.json#/definitions/slug" },
-        "legalLines": { "type": "array", "items": { "type": "string", "minLength": 3 } },
-        "domainAccess": { "$ref": "common.schema.json#/definitions/slug" },
-        "deadline": { "type": "string", "minLength": 3 },
         "details": { "type": "object", "description": "The owner's answers to the industry questions, one key per question." }
       }
     },
@@ -280,6 +281,77 @@
       "description": "Plugin ids the brief needs. Enabling them still needs B5."
     },
     "outOfScope": { "type": "array", "items": { "type": "string" } },
+    "truths": {
+      "type": "array",
+      "maxItems": 6,
+      "description": "What is true here that nobody else can claim. The design rests on one of them. With fewer than three, the first deliverable is questions for the client.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "enum": ["place", "people", "material", "history", "method", "number", "other"] }
+        }
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "What a visitor must be able to do in one tap from anywhere on the site."
+    },
+    "contentRules": {
+      "type": "array",
+      "description": "Text that must never appear on given pages (names, dates, numbers, venues), and text that must always appear (legal lines such as licence numbers or consent).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "text", "pages"],
+        "properties": {
+          "rule": { "type": "string", "enum": ["never", "always"] },
+          "text": { "type": "string", "minLength": 1 },
+          "pages": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^(\\*|/|(/[a-z0-9][a-z0-9-]*)+)$" },
+            "description": "Page slugs, or \"*\" for every page."
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Asked for on day one: the domain, DNS and the client's existing material, with an honest note of how good each piece is.",
+      "properties": {
+        "domain": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$" },
+            "status": { "type": "string", "enum": ["have-access", "client-will-give", "to-buy", "unknown"] }
+          }
+        },
+        "dns": { "type": "string", "enum": ["have-access", "client-will-change", "unknown"] },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["item", "quality"],
+            "properties": {
+              "item": { "type": "string", "minLength": 1, "description": "A logo, photos, video, copy, menus, the current site, a social feed." },
+              "where": { "type": "string", "minLength": 1 },
+              "quality": { "type": "string", "enum": ["good", "usable", "poor", "unknown"] }
+            }
+          }
+        }
+      }
+    },
     "assumptions": {
       "type": "array",
       "items": { "$ref": "condition.schema.json#/definitions/fieldPath" },

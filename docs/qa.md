@@ -15,7 +15,12 @@ forge qa <project> --repair --full-retest   # re-run every gate after every repa
 
 ## A review
 
-`qaReview(project, opts)` runs the gates (`docs/gates.md`) on `site/` and:
+`qaReview(project, opts)` runs the gates (`docs/gates.md`) on `site/`. The order is part
+sequential, part parallel: the design-fidelity render runs first, because the visual review needs
+its screenshots. The model's visual review then runs while the other gates run, and the render is
+not repeated. Then the `visual-review` gate runs, and `performance` runs last and alone, because
+Lighthouse numbers are wrong on a busy machine. Results are reported in the usual gate order.
+The review then:
 
 - writes every gate result to `evidence/qa/review-N/<gate>.json`, a new folder per review, so a
   verification never reuses old evidence;
@@ -24,7 +29,11 @@ forge qa <project> --repair --full-retest   # re-run every gate after every repa
   that found it, its evidence and a history;
 - appends a readable entry to `reports/qa-log.md`, and `gate_result` and `qa_review` entries to the
   ledger, all as `qa-verifier`;
-- rewrites `reports/qa-report.md`, the hand-over QA/QC report: what was tested, every defect with
+- rewrites `reports/qa-report.md`, the hand-over QA/QC report. It opens with the gates grouped under
+  five parameters: Usability (routes, forms, interactions, performance), Design (accessibility,
+  design fidelity), Creativity (the visual review, marked as a model's judgement rather than a
+  measurement), Content (content parity, claims, SEO) and Responsiveness (responsive), with the
+  release gates (licences, secrets, dependencies) on their own line. Then: what was tested, every defect with
   its evidence and the command that reproduces it, the advisories, and what could not be checked
   (a gate that errored or was skipped is a limitation, never a pass).
 

@@ -1,6 +1,6 @@
 # What changed from the main repo
 
-Branch `fix-windows-shim-main`, compared with `main` (46 files, +5,335 / -43 lines). Nothing was deleted. Nothing is committed yet. Run `npm test` before you commit; the last full run passed (a browser timing test sometimes fails once and passes on rerun).
+Branch `forge-go-playbooks-craft-media`, merged with the latest `main` (including the thesis, parallel build and pre-build question merges). Nothing was deleted. Run `npm test` before you commit; the last full run passed (a browser timing test sometimes fails once and passes on rerun).
 
 ## 1. New command: `forge go` (one prompt to a built site)
 
@@ -24,7 +24,7 @@ Five playbooks say what each kind of business needs: the main action, the hero m
 | `src/registry/industries.mjs` (new), `src/registry/load.mjs` | Load, detect and compile the playbooks into questions |
 | `schemas/industry-playbook.schema.json` (new), `src/core/schemas.mjs` | Playbook schema |
 | `schemas/brief.schema.json` | New optional `business` and `media` sections (frozen interface: needs a PR approved by both owners) |
-| `registry/questions/business.json`, `story.json` (new) | Generic questions moved to round 2; six story questions (unique facts, visitor sources and device, legal lines, domain, deadline) |
+| `registry/questions/business.json`, `story.json` (new) | Generic questions moved to round 2; two visitor questions (sources, device); the owner's unique facts, legal lines, domain and deadline use main's `truths`, `contentRules`, `access` and `constraints.deadline` |
 | `src/intake/run.mjs`, `plan.mjs`, `src/site/content.mjs` | Put the primary action in the brief, the plan and the home page |
 | `src/core/planner.mjs`, `src/design/spec.mjs` | The home hero must carry the primary action; checks fail otherwise |
 | `docs/industry-playbooks.md` (new) | How playbooks work |
@@ -56,16 +56,19 @@ Flags: `--3d yes|no|<file.glb>`, `--pick <id>`, `--video <file>`, `--video-role`
 | File | Change |
 |---|---|
 | `src/workers/claude-code.mjs`, `tests/unit/claude-code.test.mjs` | Start Claude Code on Windows when it is an npm `.cmd` shim |
-| `src/gates/forms.mjs` | Forms gate no longer crashes on forms without a marker; reports a form that cannot be wired |
 | `plugins/vercel/index.mjs` | Each file upload is retried on a dropped connection |
 | `agents/project-manager.md` and generated `AGENTS.md`, `CLAUDE.md`, `.claude/agents/`, `.cursor/rules/` | Project Manager role mentions `forge go` |
 | `CHANGELOG.md` | One entry per change above |
 
-## 6. Tests
+## 6. Merged with main
+
+Conflicts in `planner.mjs`, `intake/plan.mjs` and `design-workflow.test.mjs` were resolved by keeping both sides. Main's `forms.mjs` replaces the earlier local fix. Industry audience questions now follow main's audience-view format (wants, proof, action, from, mood). Intake now runs up to 4 rounds, so the added playbook questions do not crowd out main's pre-build questions.
+
+## 7. Tests
 
 New: `tests/intake/go.test.mjs`, `tests/intake/industry-playbooks.test.mjs`, `tests/unit/media.test.mjs`. Updated: `run-intake.test.mjs`, `design-workflow.test.mjs` (fixtures now meet the length and motion rules).
 
-## 7. Not in the repo's tracked files
+## 8. Not in the repo's tracked files
 
 `Forge-Harness-Overview.pdf` and `Forge-3D-and-Video-Workflows-Proposal.pdf` sit in the root (untracked). Projects you built live in `workspace/` (chaibistro to chaibistro-9, skyline-1, skyline-2) and are not part of the harness.
 

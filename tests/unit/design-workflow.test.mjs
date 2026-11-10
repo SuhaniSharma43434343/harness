@@ -3,19 +3,22 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
-import { listTasks, transitionTask } from '../../src/core/board.mjs';
+import { listTasks, saveTask, transitionTask } from '../../src/core/board.mjs';
 import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { businessAcceptance, planPhase, specTask } from '../../src/core/planner.mjs';
+import { businessAcceptance, formAction, pageTaskId, planPhase, specTask, writeStubs } from '../../src/core/planner.mjs';
+import { actionFor } from '../../plugins/form-function/index.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
-import { MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
-import { CHECKS, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
+import { buildTargets, MAX_STAGE_RETURNS, retryBuildTask, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
+import { CHECKS, contentRuleProblems, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
-import { newProject } from './helpers.mjs';
+import { STUB_MARK, stubsLeft, withSiteLock } from '../../src/qa/visual.mjs';
+import { addTasks, newProject, task } from './helpers.mjs';
+import { agentsForPhase } from '../../src/core/agents.mjs';
 
 const BRIEF = {
   schemaVersion: '0.1.0', status: 'ready', project: 'demo', projectType: 'business', tier: 'S',
@@ -80,7 +83,14 @@ function spec() {
       surfaces: { borders: 'One hairline rule', shadows: 'None', radius: 'Square corners', treatments: 'Paper surfaces' },
       responsive: { desktop: 'Twelve columns', tablet: 'Eight columns', mobile: 'Four columns with the rule on top' },
     },
-    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count', 'settle', 'drift'] }), section('quote-rule', 'editorial-split'), section('old-houses', 'asymmetric', { assets: [] }), section('process', 'list-editorial', { assets: [] }), section('proof', 'quote-feature', { assets: [] })] }] },
+    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count', 'settle', 'drift'], funnel: 'awareness' }), section('quote-rule', 'editorial-split', { funnel: 'interest' }), section('old-houses', 'asymmetric', { assets: [], funnel: 'interest' }), section('process', 'list-editorial', { assets: [], funnel: 'desire' }), section('proof', 'quote-feature', { assets: [], funnel: 'action' })] }] },
+    'research/crux.json': { buckets: {
+      about: { items: [{ text: 'A family firm that fits old Portland houses', source: 'brief' }], gaps: [] },
+      whatWeDo: { items: [{ text: 'Kitchens, bathrooms and whole-house renovations', source: 'brief' }], gaps: [] },
+      ourWork: { items: [], gaps: ['Which finished jobs can we show, with the owners\' permission?'] },
+      resourceHub: { items: [], gaps: ['Is there a guide or a checklist the firm would share?'] },
+      reachUs: { items: [{ text: 'Book a home visit', source: 'assumption' }], gaps: [] },
+    } },
     'design/motion-plan.json': {
       concept: 'Things settle into place', loading: 'Text first, then images', navigation: 'Header stays put', pageTransitions: 'A short crossfade', reducedMotion: 'Everything shows, nothing moves',
       motions: [
@@ -259,6 +269,35 @@ test('a copy return also syncs the section plan, so later reviews never judge ag
   assert.equal(sync.agent, 'creative-director');
   assert.ok(sync.acceptance.some((a) => /match the corrected copy/.test(a)));
   assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_plan_synced'));
+});
+
+test('research sorts the facts into five buckets, each traceable, with gaps as client questions', () => {
+  const s = spec();
+  assert.deepEqual(CHECKS.research(fullProject().dir), []);
+  const crux = structuredClone(s['research/crux.json']);
+  crux.buckets.ourWork.gaps = [];
+  crux.buckets.about.items.push({ text: 'Forty years of trade experience', source: 'website' });
+  const problems = CHECKS.research(fullProject({ 'research/crux.json': crux }).dir);
+  assert.ok(problems.some((p) => /Our Work is empty/.test(p)), JSON.stringify(problems));
+  assert.ok(problems.some((p) => /cites website, which is not in research\/sources.json/.test(p)), JSON.stringify(problems));
+  const { dir } = fullProject();
+  rmSync(join(dir, 'research/crux.json'));
+  assert.ok(CHECKS.research(dir).some((p) => /research\/crux.json is missing/.test(p)));
+});
+
+test('sections follow the visitor journey: awareness to action, stepping back only after an action', () => {
+  const page = (slug, stages) => ({ slug, sections: stages.map((f, i) => ({ id: `s${i}`, ...(f ? { funnel: f } : {}) })) });
+  assert.deepEqual(funnelProblems(page('/', ['awareness', 'interest', 'desire', 'action'])), []);
+  assert.deepEqual(funnelProblems(page('/', ['awareness', 'action', 'interest', 'desire', 'action'])), [], 'a mid-page call to action starts the next loop');
+  assert.deepEqual(funnelProblems(page('/privacy', ['none', 'none'])), [], 'utility pages sit outside the journey');
+  assert.deepEqual(funnelProblems(page('/contact', ['action'])), []);
+  assert.ok(funnelProblems(page('/', ['awareness', 'desire', 'interest', 'action']))[0].includes('only steps back after a call to action'));
+  assert.ok(funnelProblems(page('/services', ['interest', 'desire'])).some((p) => /ends on "desire"/.test(p)));
+  assert.ok(funnelProblems(page('/', ['interest', 'action'])).some((p) => /open with awareness/.test(p)));
+  assert.ok(funnelProblems(page('/', ['awareness', null, 'action']))[0].includes('give every section a funnel stage'));
+  const plan = structuredClone(spec()['design/section-plan.json']);
+  plan.pages[0].sections[4].funnel = 'desire';
+  assert.ok(CHECKS['section-plan'](fullProject({ 'design/section-plan.json': plan }).dir).some((p) => /ends on "desire"/.test(p)));
 });
 
 test('a section plan cannot invent operational facts, and a registered claim covers real ones', () => {
@@ -576,4 +615,212 @@ test('media: the chosen 3D object and video must be placed where the media step 
   ({ dir } = fullProject({ 'intake/brief.json': { ...BRIEF, media }, 'design/section-plan.json': plan }));
   plans = CHECKS['section-plan'](dir).join('\n');
   assert.doesNotMatch(plans, /must list the asset|is in the home hero|belongs in the first section/);
+});
+
+// Two pages: the home page, and /about with two sections of its own.
+function twoPages() {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  const home = plan.pages[0];
+  plan.pages.push({ slug: '/about', sections: [
+    { ...structuredClone(home.sections[1]), id: 'story', pattern: 'editorial-split', funnel: 'awareness' },
+    { ...structuredClone(home.sections[2]), id: 'method', pattern: 'asymmetric', funnel: 'interest' },
+    { ...structuredClone(home.sections[4]), id: 'visit', funnel: 'action' },
+  ] });
+  const copy = structuredClone(s['content/copy.json']);
+  const homeCopy = copy.pages[0];
+  copy.pages.push({
+    ...structuredClone(homeCopy), slug: '/about', title: 'About', description: 'Who Harbor Home is, and the old Portland houses the firm has fitted.',
+    sections: [
+      { ...structuredClone(homeCopy.sections[1]), id: 'story', headline: 'A ship carpenter who came ashore in Portland' },
+      { ...structuredClone(homeCopy.sections[2]), id: 'method', headline: 'Every beam fitted to what is really there' },
+      { ...structuredClone(homeCopy.sections[4]), id: 'visit', headline: 'Walk us round the house that worries you' },
+    ],
+  });
+  copy.nav.push({ label: 'About', href: '/about' });
+  const brief = { ...BRIEF, pages: [...BRIEF.pages, { slug: '/about', title: 'About', purpose: 'Earn trust', cta: 'Book a visit' }] };
+  const p = fullProject({ 'design/section-plan.json': plan, 'content/copy.json': copy });
+  write(p.dir, 'intake/brief.json', brief);
+  return p;
+}
+
+test('the build is planned as a shared foundation, then one task per page with its own files', () => {
+  const { project, opts, dir } = twoPages();
+  assert.deepEqual(readiness(dir).stages.flatMap((s) => s.problems), [], 'the two-page fixture is a complete specification');
+  write(dir, 'site/package.json', '{}');
+  write(dir, 'site/src/site.json', { forms: { visit: { purpose: 'Book a home visit', destination: 'none-yet', action: null, page: '/about', fields: [] } } });
+  setPhase(dir, 'BUILD');
+  const tasks = planPhase(project, opts);
+  assert.deepEqual(tasks.map((t) => t.id), ['build-foundation', 'build-page-home', 'build-page-about']);
+  const [foundation, home, about] = tasks;
+  for (const t of [home, about]) assert.deepEqual(t.depends_on, ['build-foundation']);
+  const file = (id) => `site/src/sections/${sectionUse('APP-01', id)}.astro`;
+  assert.deepEqual(home.owns_files, ['promise', 'quote-rule', 'old-houses', 'process', 'proof'].map(file));
+  assert.deepEqual(about.owns_files, ['story', 'method', 'visit'].map(file));
+  assert.ok(foundation.owns_files.includes('site/public/**') && foundation.owns_files.includes('site/package.json'));
+  for (const t of [home, about]) {
+    assert.ok(!t.owns_files.some((f) => foundation.owns_files.some((g) => f.startsWith(g.replace('**', '')))), 'no page owns a shared file');
+    assert.ok(t.must_not_touch.includes('site/src/styles/**') && t.must_not_touch.includes('site/public/**'));
+  }
+  assert.match(home.verify, /site-build --page ['"]?\/['"]?$/);
+  assert.match(about.verify, /site-build --page ['"]?\/about['"]?$/);
+  // site.json's page for a form is only a guess; the section plan decides, so every page is told.
+  for (const t of [home, about]) {
+    const form = t.acceptance.find((a) => a.startsWith('Forms: '));
+    assert.ok(form, `${t.id} is told how to build a form`);
+    assert.ok(form.includes('"visit"') && form.includes(`"${formAction('visit')}"`) && /never invent another address/.test(form) && /Never show success without sending/.test(form));
+  }
+  assert.equal(formAction('visit'), actionFor('visit'), "the address is the form plugin's own endpoint");
+  for (const id of ['promise', 'quote-rule', 'old-houses', 'process', 'proof', 'story', 'method', 'visit']) {
+    assert.match(readFileSync(join(dir, file(id)), 'utf8'), new RegExp(`${STUB_MARK}="${id}"`), `${id} has a placeholder, so the site builds`);
+  }
+  assert.equal(stubsLeft(dir).length, 8);
+});
+
+test('placeholders never overwrite a built section, and the build phase cannot end with one left', () => {
+  const { project, opts, dir } = fullProject();
+  const built = `site/src/sections/${sectionUse('APP-01', 'promise')}.astro`;
+  write(dir, built, '<section class="promise">Built</section>\n');
+  writeStubs(dir, 'APP-01', spec()['design/section-plan.json']);
+  assert.equal(readFileSync(join(dir, built), 'utf8'), '<section class="promise">Built</section>\n');
+  assert.equal(stubsLeft(dir).length, 4);
+  setPhase(dir, 'BUILD');
+  write(dir, 'site/dist/index.html', '<html></html>');
+  assert.ok(exitBlockers(project, opts).some((b) => /4 still a placeholder/.test(b)));
+  for (const f of stubsLeft(dir)) write(dir, f, '<section>Built</section>\n');
+  assert.ok(!exitBlockers(project, opts).some((b) => /placeholder/.test(b)));
+});
+
+test('an integration failure goes back only to the task that can fix it, with only its findings', () => {
+  const ids = ['build-foundation', 'build-page-home', 'build-page-about', 'build-page-about-fix-1', 'build-page-services'];
+  const about = '- routes.missing [/about]: no page';
+  assert.deepEqual(buildTargets(ids, [about]), [{ id: 'build-page-about-fix-1', findings: [about] }], 'the page named, at its latest attempt');
+  const home = '- parity.text [/ @ 375px]: text differs';
+  const form = '- form-unusable [/services (contact)]: the submit button could not be clicked';
+  assert.deepEqual(buildTargets(ids, [home, form]), [{ id: 'build-page-home', findings: [home] }, { id: 'build-page-services', findings: [form] }]);
+  const shared = '- forms.endpoint: no endpoint';
+  assert.deepEqual(buildTargets(ids, [shared, about]), [{ id: 'build-foundation', findings: [shared] }, { id: 'build-page-about-fix-1', findings: [about] }], 'a finding with no page goes to the foundation, not to every page');
+  assert.deepEqual(buildTargets(ids, ['- x [/gone]: y']), [{ id: 'build-foundation', findings: ['- x [/gone]: y'] }], 'a route with no page task is shared work too');
+  assert.deepEqual(buildTargets(ids, []), [], 'a gate that could not run sends nothing back: the operator decides');
+  assert.deepEqual(buildTargets(['build-foundation', 'build-sections', 'build-sections-fix-1'], ['- x [/]: y']), [{ id: 'build-sections-fix-1', findings: ['- x [/]: y'] }], 'a project planned before per-page builds');
+  assert.equal(pageTaskId('/'), 'build-page-home');
+  assert.equal(pageTaskId('/Our Work/'), 'build-page-our-work');
+});
+
+test('calls running at the same time share what is left, so together they never pass the limit', async () => {
+  const { dir } = fullProject();
+  const budgets = [createBudget({ file: join(dir, 'reports', 'spend.json'), limitUsd: 2 })];
+  const given = [];
+  const release = [];
+  const worker = limitedWorker((job) => new Promise((resolve) => {
+    given.push(job.maxBudgetUsd);
+    release.push(() => resolve({ evidence: ['x'], costUsd: 0.8 }));
+  }), budgets, { parallel: 2 });
+  const a = worker({});
+  const b = worker({});
+  assert.deepEqual(given, [1, 1], 'each running call holds its share');
+  await assert.rejects(worker({}), /spending limit/, 'nothing is left that no running call holds');
+  assert.equal(given.length, 2, 'the refused call never started');
+  release.splice(0).forEach((r) => r());
+  await Promise.all([a, b]);
+  assert.equal(budgets[0].spent(), 1.6);
+  const c = worker({});
+  assert.equal(given.at(-1), 0.25, 'half of $0.40 is too small to use, so one call gets the smallest useful amount');
+  await assert.rejects(worker({}), /spending limit/, 'and a second call at the same time is refused');
+  release.splice(0).forEach((r) => r());
+  await c;
+});
+
+test('one build of the site at a time: a second waits, and a lock left by a crash is taken over', async () => {
+  const { dir } = fullProject();
+  const events = [];
+  const job = (name) => withSiteLock(dir, async () => {
+    events.push(`${name} start`);
+    await new Promise((r) => setTimeout(r, 30));
+    events.push(`${name} end`);
+    return name;
+  }, { pollMs: 5 });
+  assert.deepEqual(await Promise.all([job('a'), job('b')]), ['a', 'b']);
+  assert.deepEqual(events, ['a start', 'a end', 'b start', 'b end']);
+  mkdirSync(join(dir, 'locks', 'site-build'), { recursive: true });
+  const later = Date.now() + 16 * 60 * 1000;
+  assert.equal(await withSiteLock(dir, async () => 'ran', { pollMs: 5, now: () => later }), 'ran');
+  assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'the lock is released');
+  await assert.rejects(withSiteLock(dir, async () => { throw new Error('boom'); }), /boom/);
+  assert.equal(existsSync(join(dir, 'locks', 'site-build')), false, 'and released when the build fails');
+});
+
+test('the copy check refuses copy that breaks the brief content rules', () => {
+  const { dir } = fullProject();
+  const rules = (contentRules) => write(dir, 'intake/brief.json', { ...BRIEF, contentRules });
+  rules([{ rule: 'never', text: 'ITEMISED  quote', pages: ['/'] }]);
+  const copyText = JSON.stringify(spec()['content/copy.json']).toLowerCase();
+  assert.ok(copyText.includes('itemised'), 'the fixture copy says "itemised quote"');
+  assert.ok(CHECKS.copy(dir).some((p) => /"ITEMISED {2}quote" must never appear on this page/.test(p)), 'case and spacing do not hide it');
+  rules([{ rule: 'always', text: 'Licence 12345', pages: ['*'] }]);
+  assert.ok(CHECKS.copy(dir).some((p) => /\/: "Licence 12345" must appear on this page/.test(p)));
+  rules([{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }]);
+  assert.ok(!CHECKS.copy(dir).some((p) => /content rule/.test(p)), 'a line in the footer is on every page');
+  rules([{ rule: 'never', text: 'Smith', pages: ['/gone'] }]);
+  assert.ok(CHECKS.copy(dir).some((p) => /names \/gone, which has no copy/.test(p)));
+  rules([]);
+  assert.deepEqual(contentRuleProblems(spec()['content/copy.json'], []), []);
+});
+
+test('the contracts use the pre-build answers: truths, jobs, arrival and mood, content rules', () => {
+  const brief = {
+    ...BRIEF,
+    audience: [{ ...BRIEF.audience[0], arrivesFrom: ['Instagram'], mood: 'wary' }],
+    truths: [{ text: 'Fitted three hundred crooked Portland kitchens' }],
+    jobs: ['Book a visit', 'Call'],
+    contentRules: [{ rule: 'always', text: 'Licensed and insured in Maine', pages: ['*'] }],
+  };
+  const lines = (stage, b = brief) => specTask('demo', stage, b).acceptance;
+  assert.ok(lines('research').some((a) => /"Fitted three hundred crooked Portland kitchens"/.test(a) && /only 1 of the three to six/.test(a) && /questions for the client/.test(a)));
+  assert.ok(lines('direction').some((a) => /The concept rests on one of the facts only this business can claim/.test(a)));
+  assert.ok(lines('section-plan').some((a) => /these jobs in one tap: "Book a visit", "Call"/.test(a)));
+  assert.ok(lines('section-plan').some((a) => /arrives from or its mood/.test(a)));
+  assert.ok(lines('copy').some((a) => /content rules\. Always on every page: "Licensed and insured in Maine"/.test(a)));
+  // Without the new fields, only the research line about missing truths is added.
+  assert.ok(lines('research', BRIEF).some((a) => /gives none of the three to six/.test(a)));
+  for (const stage of ['direction', 'section-plan', 'copy']) assert.ok(!lines(stage, BRIEF).some((a) => /one tap|arrives from|content rules|rests on one of the facts/.test(a)), stage);
+});
+
+test('the operator can give a build task out of retries one more attempt, with its own findings', () => {
+  const { project, opts, dir } = fullProject();
+  for (const id of ['build-foundation', 'build-page-home', 'build-page-contact', 'build-page-contact-fix-1', 'build-page-contact-fix-2']) {
+    addTasks(project, opts, task(id));
+    saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['evidence/x.log'] }, opts);
+  }
+  write(dir, 'evidence/gates/forms.json', { gate: 'forms', status: 'fail', findings: [
+    { id: 'not-sent', severity: 'critical', message: '/contact (contact) showed success without sending anything', location: '/contact (contact)' },
+    { id: 'x', severity: 'serious', message: 'on home', location: '/' },
+  ] });
+  setPhase(dir, 'INTEGRATION_TESTS');
+  assert.throws(() => retryBuildTask(project, 'build-page-contact', { ...opts }), /reason as its note/);
+  assert.throws(() => retryBuildTask(project, 'build-page-nowhere', { note: 'n', ...opts }), /no build task build-page-nowhere/);
+  const { task: id } = retryBuildTask(project, 'build-page-contact', { note: 'Post to the form endpoint and show the real result', ...opts });
+  assert.equal(id, 'build-page-contact-fix-3', 'past the usual limit of 2');
+  const fix = listTasks(project, opts).find((t) => t.id === id);
+  assert.equal(fix.status, 'pending');
+  assert.ok(fix.acceptance.includes('Fix: operator: Post to the form endpoint and show the real result'));
+  assert.ok(fix.acceptance.some((a) => /not-sent \[\/contact \(contact\)\]/.test(a)), 'the findings for this page');
+  assert.ok(!fix.acceptance.some((a) => /on home/.test(a)), 'and not another page\'s');
+  assert.equal(loadProject(project, opts).phase, 'BUILD', 'back to the build to do it');
+  assert.ok(ledger.read(project, opts).some((e) => e.actor === 'operator' && e.data?.event === 'build_retry_authorized' && e.data.task === 'build-page-contact'));
+  assert.throws(() => retryBuildTask(project, 'build-page-contact', { note: 'again', ...opts }), /is pending/, 'not while an attempt is waiting');
+});
+
+test('the licence register is written alongside the copy, so the asset phase has nothing to wait for', () => {
+  const { project, opts, dir } = fullProject();
+  assert.ok(agentsForPhase('CONTENT').includes('asset-rights'));
+  setPhase(dir, 'CONTENT');
+  const planned = planPhase(project, opts);
+  const register = planned.find((t) => t.id === 'asset-register');
+  assert.ok(register && planned.some((t) => t.agent === 'content-ux'), 'both tasks are planned in the copy phase');
+  assert.ok(!register.inputs.includes('content/copy.json'), 'the register does not wait for the copy');
+  assert.deepEqual(register.depends_on, []);
+  assert.ok(!register.owns_files.some((f) => planned.find((t) => t.agent === 'content-ux').owns_files.includes(f)), 'no shared files, so they run at the same time');
+  setPhase(dir, 'ASSETS_LICENSING');
+  assert.deepEqual(planPhase(project, opts), [], 'nothing new to do after B3');
 });

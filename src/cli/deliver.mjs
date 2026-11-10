@@ -70,8 +70,8 @@ export async function cmdDeploy(root, args) {
 export function cmdReport(root, args) {
   const [project] = args;
   if (!project || project.startsWith('-')) return usage('forge report <project>');
-  const { file } = writeReport(project, { workspace: workspaceFor(root) });
-  console.log(`Wrote ${file}`);
+  const { file, roadmap } = writeReport(project, { workspace: workspaceFor(root) });
+  console.log(`Wrote ${file}\nWrote ${roadmap}`);
   return 0;
 }
 
@@ -154,7 +154,8 @@ export async function cmdCheck(root, args) {
   const [name] = args;
   if (!name) return usage('forge check <stage>, for example research, direction, section-plan, copy, assets, site-build');
   const { runCheck } = await import('../core/checks.mjs');
-  const problems = await runCheck(name, process.cwd());
+  const page = args.includes('--page') ? args[args.indexOf('--page') + 1] : undefined;
+  const problems = await runCheck(name, process.cwd(), page ? { page } : {});
   for (const p of problems) console.log(`- ${p}`);
   console.log(problems.length ? `${name}: ${problems.length} problem(s)` : `${name}: ok`);
   return problems.length ? 1 : 0;

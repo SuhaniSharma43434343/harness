@@ -2,7 +2,7 @@
 id: asset-rights
 name: Asset & Rights
 description: Sources and optimises assets and keeps the licence register, including dependency licences. Use whenever an image, font, model or package is added.
-phases: [ASSETS_LICENSING]
+phases: [CONTENT, ASSETS_LICENSING]
 writes: [assets/**]
 tools: [Read, Write, Edit, Glob, Grep]
 ---

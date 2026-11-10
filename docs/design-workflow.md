@@ -9,7 +9,7 @@ forge design qa <project> [--model m]              # render, review, repair, up 
 forge design choose <project> <direction id>       # the operator's B2
 forge design release <project>                     # every gate: passed, failed, blocked, not applicable
 forge design accept-licence <project> <package> --note <decision>   # the operator's licence decision, recorded in the ledger
-forge design retry <project> <stage> --note <decision>   # the operator's answer to an escalation, recorded in the ledger
+forge design retry <project> <stage or build task> --note <decision>   # the operator's answer to an escalation, recorded in the ledger
 ```
 
 `forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
@@ -18,19 +18,23 @@ forge design retry <project> <stage> --note <decision>   # the operator's answer
 
 | Phase | Output | Agent | What its check refuses |
 | --- | --- | --- | --- |
-| P2 Research | `research/positioning.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning |
+| P2 Research | `research/positioning.json`, `research/crux.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning; a content bucket with neither facts nor a stated gap; a fact whose source is not in `research/sources.json` |
 | P3 Approach | `design/direction.json`, `direction.md` | Design Manager | An approach the brief did not select; any of the 8 not analysed; a combination the methodology forbids; a philosophy copied word for word |
 | P4 Directions | `design/directions.json` | `forge directions`, operator at B2 | The existing design rules |
 | P5 Design system | `design/design-system.json` | Creative Director | Fonts or colours that differ from B2; fewer than 5 type levels; no separate mobile rules |
-| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids |
+| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids; a section with no funnel stage, a journey out of order, a page that does not end on an action |
 | P5 Motion | `design/motion-plan.json` | Creative Director | No hover; no pin where the approach requires one, a pin where it forbids one; a motion with no purpose or no section |
 | P5 Assets | `design/asset-plan.json` | Creative Director | Unused assets; licensed files with no licence or path |
 | P6 Copy | `content/copy.json` | Content & UX | Sections with no copy; label headlines; repeated headlines; stock phrases; thin pages. Passing writes the locked `content/pages/` |
-| P7 Assets | `assets/register.json` | Asset Rights | Uncleared licences; planned files that are not on hand |
+| P7 Assets | `assets/register.json` | Asset Rights, alongside the copy in P6 (it needs only the asset plan), so P7 has nothing left to wait for after B3 | Uncleared licences; planned files that are not on hand |
 | P8 Review | `design/review.json` | Design Manager | Its own judgement of the whole specification |
 | P9 Build | `site/` | Builder | See below |
 
 Each stage's rules live in `src/design/spec.mjs`, and its contract, which is the agent's brief, in `src/core/planner.mjs`.
+
+**The content buckets.** Research sorts every fact about the client into five buckets in `research/crux.json`: About (story, team, mission, values, promise, with what nobody else can claim first), What We Do, Our Work (case studies, proof, metrics), Resource Hub (tools, FAQs, guides) and Reach Us (calls to action and contact points). Each fact names a source from `research/sources.json` or says `assumption`. An empty bucket lists its gap as a question for the client, so the plan and copy stages work around it instead of inventing proof.
+
+**The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.
 
 ## The gate before development
 
@@ -49,16 +53,24 @@ Each stage may be sent back twice. The third time it escalates to the operator.
 
 An escalation is the operator's to answer. `forge design retry <project> <stage> --note <decision>` records the decision, stops the stage's blocked tasks counting, and gives the stage a fresh fix task and a fresh limit of returns. Reaching the spending limit stops the workflow without using up any returns.
 
+A build task that has used its two retries stops the workflow too. `forge design retry <project> build-page-<page> --note <decision>` (or `build-foundation`) gives it one more fix task, past the limit. The task gets the operator's note and the integration findings for that page, and a blocked attempt stops counting. The project goes back to the build if it was in integration tests. The ledger records the decision as the operator's.
+
 ## One approach
 
 `design/direction.json` names one `primaryApproach`. The rule table in `registry/` only says which approaches a brief allows; it no longer puts several on a site. A combination needs a reason, must be listed in the methodology's `compatibleWith`, and is shown at B2. `forge site` applies only the direction's approaches. The render check fails an approach's forbidden signal (for example pinning in APP-01), a missing required one, or a section from an approach the direction does not include.
 
 ## The build
 
-The Builder gets two tasks:
+The Builder gets a shared foundation first, then one task per page. The page tasks run in parallel, up to `concurrency` in `forge.config.json` at a time (3 by default). Running more at once finishes sooner but costs more: on HEARWELL, building per page took 25% less time and 80% more money than one build task, because each page task reads the specification again.
 
-- **`build-foundation`:** the design system as CSS, the header and footer from the site copy, and the motion runtime.
-- **`build-sections`:** one bespoke component per planned section, at `site/src/sections/<approach>/<PascalCaseId>.astro`.
+- **`build-foundation`:** the design system as CSS, the header and footer from the site copy, the motion runtime, and `site/public/` and `site/package.json` for every page.
+- **`build-page-<page>`** (`build-page-home` for `/`): one bespoke component per section planned for that page, at `site/src/sections/<approach>/<PascalCaseId>.astro`. Each task owns only its own page's section files and may not touch the shared folders, so no two tasks change the same file.
+
+Before the page tasks start, the harness writes a placeholder (marked `data-forge-stub`) for every planned section that has no component yet. That way the whole site builds while other pages are still being built. Each page task checks its work with `forge check site-build --page <slug>`. That builds the whole site but renders and judges only that page. The builds hold a lock (`locks/site-build`), because every page shares `site/` and `site/dist/`. A lock older than 15 minutes was left by a crash and is taken over. The full check (without `--page`) and the BUILD exit both refuse any placeholder that is left.
+
+When an integration gate fails, each finding goes back only to the task that can fix it, at its latest attempt, with only its own findings. A finding that names a page goes to that page's task. A finding that names no page is about what the pages share, so it goes to `build-foundation`. A gate that could not run, with no findings, sends nothing back: a builder cannot fix that, so the workflow stops for the operator. Projects planned before this change keep their single `build-sections` task.
+
+On a site with forms, every page task is told how to build one. The section plan decides which page a form goes on; the page in `site/src/site.json` is only the starter's first guess, and on HEARWELL the two differed. The form keeps its `data-forge-form` id, fields and status element. Its address is the one in `site/src/site.json`, or the form plugin's endpoint (`/api/form?form=<id>`) when the brief has no destination yet. The plugin installs that endpoint at deploy, and the forms gate tests the form against a stand-in for it. A builder never invents an address, posts to the page's own URL, or shows success without sending.
 
 Sections mark their planned assets with `data-asset` and motion with `data-motion`. The page wraps each one in `data-section`. Workers have no shell, so the verify command builds and renders the site, and a failed attempt's output goes into the next attempt's prompt.
 
@@ -81,4 +93,4 @@ Findings become defects in `reports/defects.json`, then one builder repair task 
 
 `scripts/design-e2e.mjs` uses the hard limit described here. `forge design run --max-usd` does not: it is checked only between tasks, so a run can go over it, and `forge design qa` takes no limit.
 
-`createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped at what remains with `claude --max-budget-usd`. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.
+`createBudget` and `limitedWorker` (`src/core/spend.mjs`) hold a limit in a file, so it survives restarts and can be shared between sites. No model call starts without money left, and each call is capped with `claude --max-budget-usd`. When tasks run in parallel, each running call holds its share: the money no other running call holds, split across the free task slots, and at least the smallest useful call ($0.25) when that much is free. So calls running together can never spend past the limit. Failed attempts count too. The workflow and the QA loop stop with `reason: budget` or `outcome: budget`.

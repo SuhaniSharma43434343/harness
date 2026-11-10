@@ -29,8 +29,27 @@ export async function qaReview(project, opts = {}) {
   const number = (previous?.review ?? 0) + 1;
   const evidenceDir = `evidence/qa/review-${number}`;
   const required = opts.gates ?? GATE_ORDER;
-  if (opts.visualWorker && required.includes('visual-review') && !opts.budgetExhausted?.()) await lookAtTheSite(project, paths.dir, number, opts);
-  const results = await runGates(join(paths.dir, 'site'), { ...rest, project, projectDir: paths.dir, gates: required.filter((g) => GATES.has(g)), write: false, now });
+  const site = join(paths.dir, 'site');
+  const gateOpts = { ...rest, project, projectDir: paths.dir, write: false, now };
+  const wanted = required.filter((g) => GATES.has(g));
+  // Hybrid order: the render the review needs comes first; then the model's review runs alongside
+  // every gate that does not depend on it; then the review's own gate and, last and alone, speed,
+  // because a busy machine makes Lighthouse numbers wrong. design-fidelity is not rendered twice.
+  let fidelity = null;
+  let looking = null;
+  if (opts.visualWorker && required.includes('visual-review') && !opts.budgetExhausted?.()) ({ fidelity, looking } = await lookAtTheSite(project, paths.dir, number, opts, gateOpts));
+  const LAST = ['visual-review', 'performance'];
+  const alongside = wanted.filter((g) => !LAST.includes(g) && !(fidelity && g === 'design-fidelity'));
+  const middle = await runGates(site, { ...gateOpts, gates: alongside });
+  if (looking) {
+    const failed = await looking;
+    if (failed) throw failed;
+  }
+  const tail = [];
+  for (const g of LAST.filter((x) => wanted.includes(x))) tail.push(...(await runGates(site, { ...gateOpts, gates: [g] })));
+  const byGate = new Map([...middle, ...(fidelity && wanted.includes('design-fidelity') ? [fidelity] : []), ...tail].map((r) => [r.gate, r]));
+  const order = [...GATE_ORDER.filter((g) => wanted.includes(g)), ...wanted.filter((g) => !GATE_ORDER.includes(g))];
+  const results = order.map((g) => byGate.get(g)).filter(Boolean);
 
   mkdirSync(join(paths.dir, evidenceDir), { recursive: true });
   const written = new Map();
@@ -53,13 +72,20 @@ export async function qaReview(project, opts = {}) {
   return { report, results, floor, evidenceDir };
 }
 
-// Renders the current build, then has the QA Verifier open the screenshots and write its review.
-async function lookAtTheSite(project, dir, number, opts) {
+// Renders the current build, then starts the QA Verifier's look at the screenshots. Returns the
+// render's gate result, so the review does not render again, and the running look, to wait for:
+// it settles to null, or to the error, so a failure waits until the other gates finish. The render
+// takes the review's gate options and, as before, writes its evidence.
+async function lookAtTheSite(project, dir, number, opts, gateOpts) {
   const { visualWorker, verifier, ...rest } = opts;
-  await runGate('design-fidelity', join(dir, 'site'), { project, projectDir: dir, browser: rest.browser, adapters: rest.adapters });
+  const { write, ...renderOpts } = gateOpts;
+  const fidelity = await runGate('design-fidelity', join(dir, 'site'), renderOpts);
   const task = addTask(project, visualReviewTask(project, dir, number), rest);
-  const result = await runTask(project, task.id, { ...rest, worker: visualWorker, ...(verifier ? { verifier } : {}), actor: 'qa-verifier' });
-  ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'visual_review', task: task.id, status: result.status } }, rest);
+  const looking = runTask(project, task.id, { ...rest, worker: visualWorker, ...(verifier ? { verifier } : {}), actor: 'qa-verifier' }).then((result) => {
+    ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'visual_review', task: task.id, status: result.status } }, rest);
+    return null;
+  }, (err) => err);
+  return { fidelity, looking };
 }
 
 function appendLog(dir, report, results, verified, at, required = GATE_ORDER) {

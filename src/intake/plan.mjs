@@ -17,6 +17,33 @@ function businessLines(brief) {
   return lines;
 }
 
+// What only this business can claim. With fewer than three, the first deliverable is questions
+// for the client, not a design, and the plan says so.
+function truthLines(brief) {
+  const truths = brief.truths ?? [];
+  const lines = ['## What only this business can claim', ''];
+  if (truths.length) lines.push(...truths.map((t) => `- ${t.text}${t.kind ? ` (${t.kind})` : ''}`), '');
+  if (truths.length < 3) lines.push(`**${truths.length ? `Only ${truths.length}` : 'None'} given.** The design rests on one of these facts, so with fewer than three the first deliverable is questions for the client, not a design.`, '');
+  return lines;
+}
+
+// Day-one access: what is in hand, and what to ask the client for now.
+function accessLines(brief) {
+  const a = brief.access ?? {};
+  const ask = [];
+  if (!a.domain?.name) ask.push('the domain name');
+  if (!a.domain?.status || a.domain.status === 'unknown') ask.push('who controls the domain');
+  if (!a.dns || a.dns === 'unknown') ask.push('DNS access');
+  for (const x of a.assets ?? []) if (x.quality === 'unknown') ask.push(`the quality of the ${x.item}`);
+  if (!(a.assets ?? []).length) ask.push('what material exists (logo, photos, video, copy, menus, current site, social feeds) and how good each is');
+  const lines = ['## Day-one access', ''];
+  if (a.domain?.name || a.domain?.status) lines.push(`- Domain: ${a.domain.name ?? 'not named'}${a.domain.status ? ` (${a.domain.status})` : ''}`);
+  if (a.dns) lines.push(`- DNS: ${a.dns}`);
+  for (const x of a.assets ?? []) lines.push(`- ${x.item}: ${x.quality}${x.where ? `, ${x.where}` : ''}`);
+  if (ask.length) lines.push(...(lines.length > 2 ? [''] : []), `**Ask the client for, now:** ${ask.join('; ')}.`);
+  return [...lines, ''];
+}
+
 // renderPlan(brief, decision, estimate) => string: intake/plan.md, shown to the operator at B1.
 // Built only from the files it is given, so it never says more than they do.
 export function renderPlan(brief, decision, estimate) {
@@ -33,9 +60,13 @@ export function renderPlan(brief, decision, estimate) {
     '',
     '## Audience',
     '',
-    ...brief.audience.map((a) => `- ${a.segment}: ${a.need}`),
+    ...brief.audience.map((a) => `- ${a.segment}: ${a.need}${[['wants', 'wants'], ['needs to see', 'proof'], ['should', 'action'], ['arrives from', 'arrivesFrom'], ['mood', 'mood']].filter(([, k]) => a[k]?.length).map(([l, k]) => `; ${l}: ${[a[k]].flat().join(', ')}`).join('')}`),
     '',
     ...businessLines(brief),
+    ...truthLines(brief),
+    ...(brief.jobs?.length ? ['## One-tap jobs', '', 'Every page gives a visitor these in one tap:', '', ...brief.jobs.map((j) => `- ${j}`), ''] : []),
+    ...(brief.contentRules?.length ? ['## Content rules', '', 'The copy check refuses copy that breaks these.', '', ...brief.contentRules.map((r) => `- ${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.map((x) => (x === '*' ? 'every page' : `\`${x}\``)).join(', ')}: "${r.text}"${r.note ? ` (${r.note})` : ''}`), ''] : []),
+    ...accessLines(brief),
     '## Pages',
     '',
     `${brief.pages.length} pages.`,

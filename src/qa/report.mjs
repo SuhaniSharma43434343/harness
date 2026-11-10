@@ -9,6 +9,32 @@ import { GATE_ORDER } from '../gates/index.mjs';
 // that errored or was skipped is listed as a limitation, not a pass.
 
 const FINAL = { verified: 'Verified fixed', open: 'Open', escalated: 'Escalated to the operator' };
+
+// The five evaluation parameters, and the gates that evidence each. Creativity rests on a model's
+// review of screenshots, which is judgement, not measurement, so the report says so. The release
+// gates (licences, secrets, dependencies) protect the release rather than answer a parameter.
+export const PARAMETERS = [
+  { name: 'Usability', gates: ['routes', 'forms', 'interactions', 'performance'], basis: 'measured' },
+  { name: 'Design', gates: ['accessibility', 'design-fidelity'], basis: 'measured' },
+  { name: 'Creativity', gates: ['visual-review'], basis: 'judgement' },
+  { name: 'Content', gates: ['content-parity', 'claims', 'seo'], basis: 'measured' },
+  { name: 'Responsiveness', gates: ['responsive'], basis: 'measured' },
+];
+export const RELEASE_GATES = ['licences', 'secrets', 'dependencies'];
+
+function parameterRows(results) {
+  const by = new Map(results.map((r) => [r.gate, r]));
+  const verdict = (gates) => {
+    const ran = gates.map((g) => by.get(g)).filter(Boolean);
+    if (!ran.length) return 'not checked in this review';
+    if (ran.some((r) => r.status === 'error' || r.status === 'skipped')) return 'incomplete: a gate did not run';
+    const failing = ran.filter((r) => r.status === 'fail').map((r) => r.gate);
+    const unrun = gates.filter((g) => !by.has(g));
+    const base = failing.length ? `fails (${failing.join(', ')})` : 'passes';
+    return unrun.length ? `${base}; not checked: ${unrun.join(', ')}` : base;
+  };
+  return [...PARAMETERS, { name: 'Release safety', gates: RELEASE_GATES, basis: 'measured' }].map((p) => `| ${p.name} | ${verdict(p.gates)} | ${p.gates.join(', ')} | ${p.basis === 'judgement' ? 'A model reviewing screenshots: judgement, not measurement' : 'Automated gates'} |`);
+}
 // Page text reaches defect messages (console errors, headings); one line each, no table breaks.
 const clean = (t) => String(t).replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim();
 
@@ -21,6 +47,9 @@ export function writeQaReport(dir, project, report, results, at = new Date()) {
   lines.push(`# QA/QC report: ${project}`, '');
   lines.push(`Review ${report.review}, ${at.toISOString()}. ${floorLabel}: ${floor.met ? 'met' : `**not met** (${floor.failing.join(', ')})`}.`, '');
   lines.push('Written by the QA Verifier from gate evidence. A defect is closed only when a later review, with fresh evidence, no longer finds it; nothing here rests on a builder\'s own report.', '');
+
+  lines.push('## By parameter', '');
+  lines.push('| Parameter | Result | Gates | Basis |', '| --- | --- | --- | --- |', ...parameterRows(results), '');
 
   lines.push('## What was tested', '');
   lines.push('| Gate | Status | Findings | Evidence |', '| --- | --- | --- | --- |');
