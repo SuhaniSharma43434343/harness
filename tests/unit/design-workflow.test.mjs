@@ -541,11 +541,13 @@ test('the build is planned as a shared foundation, then one task per page with i
   }
   assert.match(home.verify, /site-build --page ['"]?\/['"]?$/);
   assert.match(about.verify, /site-build --page ['"]?\/about['"]?$/);
-  const form = about.acceptance.find((a) => a.startsWith('Form "visit"'));
-  assert.ok(form, 'the page with the form is told how to build it');
-  assert.ok(form.includes(`"${formAction('visit')}"`) && /never invent another address/.test(form) && /Never show success without sending/.test(form));
+  // site.json's page for a form is only a guess; the section plan decides, so every page is told.
+  for (const t of [home, about]) {
+    const form = t.acceptance.find((a) => a.startsWith('Forms: '));
+    assert.ok(form, `${t.id} is told how to build a form`);
+    assert.ok(form.includes('"visit"') && form.includes(`"${formAction('visit')}"`) && /never invent another address/.test(form) && /Never show success without sending/.test(form));
+  }
   assert.equal(formAction('visit'), actionFor('visit'), "the address is the form plugin's own endpoint");
-  assert.ok(!home.acceptance.some((a) => a.startsWith('Form ')), 'a page without a form gets no form contract');
   for (const id of ['promise', 'quote-rule', 'old-houses', 'proof', 'story', 'visit']) {
     assert.match(readFileSync(join(dir, file(id)), 'utf8'), new RegExp(`${STUB_MARK}="${id}"`), `${id} has a placeholder, so the site builds`);
   }

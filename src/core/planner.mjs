@@ -302,7 +302,7 @@ const PLANS = {
           'Hero images stay small: aim under 60 KB for the first-screen image; prefer a tighter crop or stronger compression over a heavier file',
           'The verify command builds the site and renders it. Its output lists exactly what failed; fix that on the next attempt',
             'If the shared foundation (styles, components, lib, site/public) lacks something this page needs, build what you can inside these files and say what is missing in your evidence; do not edit shared files',
-            ...formContract(siteForms.filter(([, f]) => f.page === pagePlan.slug)),
+            ...formContract(siteForms),
           ],
           verify: `${verify('site-build')} --page ${q(pagePlan.slug)}`,
         };
@@ -311,12 +311,16 @@ const PLANS = {
   },
 };
 
-// The forms a page carries, as the builder must make them. The address is never invented: it is
-// site.json's action, or the form plugin's endpoint (installed at deploy; the forms gate tests the
-// form against a stand-in for it). A form never claims to have sent what it did not send.
+// How to build a form, for every page of a site that has forms. The page a form sits on is the
+// section plan's call (site.json's page is only the starter's first guess), so each page task
+// gets the contract and applies it to any section that collects input. The address is never
+// invented: it is site.json's action, or the form plugin's endpoint (installed at deploy; the
+// forms gate tests the form against a stand-in for it). A form never claims what it did not send.
 export const formAction = (id) => `/api/form?form=${encodeURIComponent(id)}`;
 function formContract(forms) {
-  return forms.map(([id, f]) => `Form "${id}" (${f.purpose}): build it from site/src/site.json forms.${id}, keeping data-forge-form="${id}", its fields, required marks and a .form-status element (site/src/sections/APP-01/Form.astro shows the behaviour). Its action is ${f.action ? `"${f.action}"` : `"${formAction(id)}", the form plugin's endpoint, because the brief has no destination yet`}; never invent another address or post to the page's own URL. Submit with fetch POST: an empty required field is stopped before sending, a 2xx answer shows the success state, anything else shows the error state. Never show success without sending`);
+  if (!forms.length) return [];
+  const list = forms.map(([id, f]) => `"${id}" (${f.purpose}; action ${f.action ? `"${f.action}"` : `"${formAction(id)}", the form plugin's endpoint, because the brief has no destination yet`})`).join(', ');
+  return [`Forms: a section on this page that collects input is one of the site's forms in site/src/site.json: ${list}. Build it from its entry there, keeping data-forge-form="<its id>", its fields, required marks and a .form-status element (site/src/sections/APP-01/Form.astro shows the behaviour). Use exactly that action; never invent another address or post to the page's own URL. Submit with fetch POST: an empty required field is stopped before sending, a 2xx answer shows the success state, anything else shows the error state. Never show success without sending`];
 }
 
 // One build task per page, so pages are built in parallel.
