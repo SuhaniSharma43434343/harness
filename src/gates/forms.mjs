@@ -44,11 +44,17 @@ export default {
         for (let i = 0; i < forms.length; i++) {
           count++;
           const name = forms[i].getAttribute('data-forge-form') ?? `form ${i + 1}`;
-          const selector = forms[i].getAttribute('data-forge-form') ? `form[data-forge-form="${name}"]` : `form >> nth=${i}`;
+          const selector = forms[i].getAttribute('data-forge-form') ? `form[data-forge-form="${name}"]` : `:nth-match(form, ${i + 1})`;
           const at = `${route} (${name})`;
           const action = forms[i].getAttribute('action');
           if (!action) {
             add('no-endpoint', 'critical', `${at} has no action, so nothing is sent`, at);
+            continue;
+          }
+          // A form that posts to its own page cannot be wired to the form function, which finds forms
+          // by data-forge-form. Report it as a finding the builder can fix, not a crashed gate.
+          if (new URL(action, base + route).pathname.replace(/\/$/, '') === route.replace(/\/$/, '') || !forms[i].getAttribute('data-forge-form')) {
+            add('form-not-wireable', 'critical', `${at} posts to its own page or has no data-forge-form="<form id>" attribute, so the form function cannot connect it: mark the form with the id from site.json (for example data-forge-form="order-ahead") and keep its .form-status element`, at);
             continue;
           }
           if (!forms[i].querySelector('.form-status')) add('no-status', 'serious', `${at} has no .form-status element to show the result`, at);

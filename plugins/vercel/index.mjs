@@ -66,12 +66,22 @@ export function create(ctx, { pollMs = POLL_MS, readyTimeoutMs = READY_TIMEOUT_M
     if (!files.some((f) => f.file === 'index.html')) {
       throw new ConfigMissing(`There is no built site in ${dir}`, { hint: 'Build the site first; the deploy uploads its output folder.' });
     }
+    // A dropped connection on one file should not lose the whole deploy: each upload is retried.
     for (const f of files) {
-      await call('/v2/files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/octet-stream', 'x-vercel-digest': f.sha, 'Content-Length': String(f.size) },
-        body: f.data,
-      });
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await call('/v2/files', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/octet-stream', 'x-vercel-digest': f.sha, 'Content-Length': String(f.size) },
+            body: f.data,
+          });
+          break;
+        } catch (err) {
+          const network = err instanceof TypeError || /fetch failed/i.test(err?.message ?? '');
+          if (!network || attempt >= 4) throw err;
+          await sleep(1000 * attempt);
+        }
+      }
     }
     const project = ctx.env.VERCEL_PROJECT ?? name ?? ctx.project;
     if (!project) throw new ConfigMissing('No Vercel project name', { hint: 'Set VERCEL_PROJECT in .env or deploy for a Forge project.' });

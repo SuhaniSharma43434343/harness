@@ -114,7 +114,11 @@ test('with a worker, the client material is read into facts through a runner tas
   assert.equal(r.status, 'ready');
   assert.equal(r.brief.client.name, 'Harbor Home');
   assert.ok(!asked.includes('q-client-name'));
-  assert.ok(asked.includes('q-business-goals'));
+  // The business has no specific playbook, so the general business playbook asks the goals question
+  // in the place of the generic one (it is deeper, and it records the primary action).
+  assert.ok(asked.includes('q-general-business-goals'));
+  assert.ok(!asked.includes('q-business-goals'));
+  assert.equal(r.brief.business.industryId, 'general-business');
 });
 
 test('intake refuses to run outside P1 and needs an ask function', async () => {

@@ -6,7 +6,7 @@ import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
 import { listTasks, transitionTask } from '../../src/core/board.mjs';
 import { PermissionDenied } from '../../src/core/errors.mjs';
 import * as ledger from '../../src/core/ledger.mjs';
-import { planPhase } from '../../src/core/planner.mjs';
+import { businessAcceptance, planPhase, specTask } from '../../src/core/planner.mjs';
 import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../src/core/project.mjs';
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
@@ -80,12 +80,14 @@ function spec() {
       surfaces: { borders: 'One hairline rule', shadows: 'None', radius: 'Square corners', treatments: 'Paper surfaces' },
       responsive: { desktop: 'Twelve columns', tablet: 'Eight columns', mobile: 'Four columns with the rule on top' },
     },
-    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count'] }), section('quote-rule', 'editorial-split'), section('old-houses', 'asymmetric', { assets: [] }), section('proof', 'quote-feature', { assets: [] })] }] },
+    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count', 'settle', 'drift'] }), section('quote-rule', 'editorial-split'), section('old-houses', 'asymmetric', { assets: [] }), section('process', 'list-editorial', { assets: [] }), section('proof', 'quote-feature', { assets: [] })] }] },
     'design/motion-plan.json': {
       concept: 'Things settle into place', loading: 'Text first, then images', navigation: 'Header stays put', pageTransitions: 'A short crossfade', reducedMotion: 'Everything shows, nothing moves',
       motions: [
         { id: 'rise', kind: 'scroll', trigger: 'On entering view', behaviour: 'Rises 12px and settles', purpose: 'Marks each promise as a new point' },
         { id: 'cta-rule', kind: 'hover', trigger: 'Hover on a call to action', behaviour: 'A rule slides under the label', purpose: 'Confirms the link is live and ready' },
+        { id: 'settle', kind: 'transition', trigger: 'On leaving a page', behaviour: 'The page settles out in 300ms', purpose: 'Shows the visitor moved to a new place' },
+        { id: 'drift', kind: 'ambient', trigger: 'Always on', behaviour: 'The ruled margin drifts a pixel', purpose: 'Keeps the page feeling alive and measured' },
         { id: 'count', kind: 'micro', trigger: 'On entering view', behaviour: 'The number ticks once', purpose: 'Draws the eye to the guarantee length' },
       ],
     },
@@ -96,8 +98,8 @@ function spec() {
       footer: { tagline: 'Fitted to what is really there', contact: ['(207) 555-0142'], columns: [], legal: 'Licensed and insured in Maine' },
       pages: [{
         slug: '/', title: 'Home', description: 'Harbor Home renovates old Portland houses to a fixed, itemised quote.', cta: { label: 'Book a visit', href: 'tel:2075550142' },
-        sections: ['promise', 'quote-rule', 'old-houses', 'proof'].map((id, i) => ({
-          id, headline: ['The price we quote is the price you pay', 'If we priced it wrong, that is our problem', 'Nothing in your house is square. We expected that', 'They told us what it would cost'][i],
+        sections: ['promise', 'quote-rule', 'old-houses', 'process', 'proof'].map((id, i) => ({
+          id, headline: ['The price we quote is the price you pay', 'If we priced it wrong, that is our problem', 'Nothing in your house is square. We expected that', 'A visit, a drawing, then a quote', 'They told us what it would cost'][i],
           body: ['Every job starts with a free home visit and an itemised written quote from Harbor Home, and it changes only if you change the plan. Every line says what it pays for, so you can see where the money goes before anyone lifts a tool.'],
         })),
       }],
@@ -455,4 +457,123 @@ test('phases still advance in order once the design evidence is there', () => {
   setPhase(dir, 'UX_DESIGN_SYSTEM');
   assert.deepEqual(advanceProject(project, opts), { from: 'UX_DESIGN_SYSTEM', to: 'CONTENT' });
   assert.ok(PHASES.some((p) => p.name === 'CONTENT'));
+});
+
+const BUSINESS = {
+  industryId: 'real-estate',
+  primaryConversion: { id: 'book-visit', label: 'Book a site visit', kind: 'book' },
+  secondaryConversions: [{ id: 'brochure', label: 'Download brochure', kind: 'download', hero: true }],
+  heroMustHave: ['The primary action "Book a site visit" as the first and most prominent button'],
+  requiredSections: { '/': ['hero with the project headline and the primary action', 'buyer testimonials'] },
+  compliance: ['Never promise returns the client has not given as facts with a source'],
+};
+
+test('the home hero must carry the business\'s primary action, in the plan and in the copy', () => {
+  const s = spec();
+  // The good specification never mentions the action, so both checks name it.
+  const none = fullProject({ 'intake/brief.json': { ...BRIEF, business: BUSINESS } });
+  const planProblems = CHECKS['section-plan'](none.dir);
+  assert.ok(planProblems.some((p) => /home hero must carry the primary action "Book a site visit"/.test(p)));
+  assert.ok(planProblems.some((p) => /also carry "Download brochure"/.test(p)));
+  assert.ok(CHECKS.copy(none.dir).some((p) => /home hero \(promise\) must offer the primary action "Book a site visit"/.test(p)));
+
+  // A brief with no business section is not held to any of this.
+  const plain = fullProject();
+  assert.ok(!CHECKS['section-plan'](plain.dir).some((p) => /primary action/.test(p)));
+  assert.ok(!CHECKS.copy(plain.dir).some((p) => /primary action/.test(p)));
+
+  // Name the action in the first section and in the hero copy, and both checks pass.
+  const plan = structuredClone(s['design/section-plan.json']);
+  plan.pages[0].sections[0].hierarchy = 'The "Book a site visit" button first with "Download brochure" beside it, then the photograph';
+  const copy = structuredClone(s['content/copy.json']);
+  copy.pages[0].sections[0].body[0] += ' Book a site visit with Harbor Home today.';
+  const ok = fullProject({ 'intake/brief.json': { ...BRIEF, business: BUSINESS }, 'design/section-plan.json': plan, 'content/copy.json': copy });
+  assert.ok(!CHECKS['section-plan'](ok.dir).some((p) => /primary action|also carry/.test(p)));
+  assert.ok(!CHECKS.copy(ok.dir).some((p) => /primary action/.test(p)));
+});
+
+test('the stages that decide the look and the words are told what the business exists to do', () => {
+  const brief = { ...BRIEF, business: BUSINESS };
+  const plan = businessAcceptance(brief, 'section-plan').join(' | ');
+  assert.match(plan, /exists to make one thing happen: "Book a site visit"/);
+  assert.match(plan, /first section of the home page is the hero/);
+  assert.match(plan, /hero with the project headline/);
+  assert.match(businessAcceptance(brief, 'copy').join(' | '), /call to action label is exactly "Book a site visit"/);
+  assert.match(businessAcceptance(brief, 'copy').join(' | '), /\(not provided by the client\)/);
+  assert.match(businessAcceptance(brief, 'copy').join(' | '), /Never promise returns/);
+  assert.match(businessAcceptance(brief, 'review').join(' | '), /blocking finding against the section plan/);
+  assert.match(businessAcceptance(brief, 'research').join(' | '), /real-estate business/);
+  assert.deepEqual(businessAcceptance(BRIEF, 'copy'), []);
+  // The contract the agent receives carries them.
+  assert.ok(specTask('demo', 'section-plan', brief).acceptance.some((a) => /Book a site visit/.test(a)));
+  assert.ok(!specTask('demo', 'section-plan', BRIEF).acceptance.some((a) => /Book a site visit/.test(a)));
+});
+
+test('craft: a short, flat, centred site is refused before anything is built', () => {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  plan.pages[0].sections = plan.pages[0].sections.slice(0, 3);
+  for (const x of plan.pages[0].sections) x.composition = 'A centred headline over a photograph with two buttons under it, all sitting level in one tidy column';
+  const motion = structuredClone(s['design/motion-plan.json']);
+  motion.motions = motion.motions.slice(0, 3).map((m) => ({ ...m, kind: 'hover' }));
+  const { dir } = fullProject({ 'design/section-plan.json': plan, 'design/motion-plan.json': motion });
+  const plans = CHECKS['section-plan'](dir).join('\n');
+  assert.match(plans, /the home page has 3 sections/);
+  assert.match(plans, /home hero is a centred layout/);
+  const motions = CHECKS['motion-plan'](dir).join('\n');
+  assert.match(motions, /3 motions; define at least 5/);
+  assert.match(motions, /at least three kinds/);
+  assert.match(motions, /scroll-linked/);
+});
+
+test('craft: sections that never break the grid are refused when the plan is long enough to need it', () => {
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  const more = plan.pages[0].sections;
+  while (more.length < 7) more.push({ ...structuredClone(more[0]), id: `extra-${more.length}`, pattern: more.length % 2 ? 'statement' : 'stats-band' });
+  for (const x of more) x.composition = 'Heading on the left across six columns with a paragraph on the right across five columns, level and evenly spaced';
+  const { dir } = fullProject({ 'design/section-plan.json': plan });
+  assert.match(CHECKS['section-plan'](dir).join('\n'), /only 0 of 7 sections break the grid/);
+});
+
+test('craft: the guide is copied into the project and every design stage reads it', () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'UX_DESIGN_SYSTEM');
+  planPhase(project, opts);
+  assert.ok(existsSync(join(dir, 'design', 'reference', 'craft', 'awwwards.md')));
+  for (const stage of ['direction', 'design-system', 'section-plan', 'motion-plan', 'copy']) {
+    const t = specTask(project, stage, BRIEF);
+    assert.ok(t.inputs.includes('design/reference/craft/**'), `${stage} reads the craft guide`);
+    assert.match(t.acceptance.join(' '), /awwwards\.md/, `${stage} is told to follow it`);
+  }
+});
+
+test('media: the chosen 3D object and video must be placed where the media step said, and listed in the asset plan', () => {
+  const media = {
+    threeD: { decision: 'chosen', id: 'tea_set_01', title: 'Tea Set 01', creator: 'Other', licence: 'CC0', file: 'models/tea_set_01.glb', concept: 'a teapot', position: 'below the hero' },
+    video: { decision: 'chosen', id: 'loop1', role: 'hero-loop', page: '/', section: 'hero', mp4: 'video/loop1.mp4', webm: 'video/loop1.webm', poster: 'video/loop1-poster.webp', source: 'Supplied by the client', licence: 'Supplied by the client' },
+  };
+  // Nothing placed: both are refused.
+  let { dir } = fullProject({ 'intake/brief.json': { ...BRIEF, media } });
+  let plans = CHECKS['section-plan'](dir).join('\n');
+  assert.match(plans, /one section must list the asset "model-tea-set-01"/);
+  assert.match(plans, /one section must list the asset "video-loop1"/);
+  assert.match(CHECKS['asset-plan'](dir).join('\n'), /needs the asset "model-tea-set-01"/);
+
+  // The 3D object in the hero is refused; a hero loop outside the hero is refused.
+  const s = spec();
+  const plan = structuredClone(s['design/section-plan.json']);
+  plan.pages[0].sections[0].assets = ['kitchen', 'model-tea-set-01'];
+  plan.pages[0].sections[1].assets = ['kitchen', 'video-loop1'];
+  ({ dir } = fullProject({ 'intake/brief.json': { ...BRIEF, media }, 'design/section-plan.json': plan }));
+  plans = CHECKS['section-plan'](dir).join('\n');
+  assert.match(plans, /3D object "model-tea-set-01" is in the home hero/);
+  assert.match(plans, /hero loop and belongs in the first section/);
+
+  // Placed correctly: the media problems go away.
+  plan.pages[0].sections[0].assets = ['kitchen', 'video-loop1'];
+  plan.pages[0].sections[1].assets = ['kitchen', 'model-tea-set-01'];
+  ({ dir } = fullProject({ 'intake/brief.json': { ...BRIEF, media }, 'design/section-plan.json': plan }));
+  plans = CHECKS['section-plan'](dir).join('\n');
+  assert.doesNotMatch(plans, /must list the asset|is in the home hero|belongs in the first section/);
 });

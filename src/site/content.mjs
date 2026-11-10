@@ -88,7 +88,8 @@ export function planSite(brief, { approaches = [] } = {}) {
     const pageForms = Object.entries(forms).filter(([, f]) => f.page === p.slug);
     const onFormPage = pageForms.length > 0;
     const isHome = p.slug === '/';
-    const cta = { label: p.cta, href: onFormPage ? `#${pageForms[0][0]}` : target === p.slug ? '#main' : target };
+    // The home page leads to the one action the business exists for.
+    const cta = { label: isHome && brief.business?.primaryConversion ? brief.business.primaryConversion.label : p.cta, href: onFormPage ? `#${pageForms[0][0]}` : target === p.slug ? '#main' : target };
     const asked = (p.sections ?? []).join(' ');
     // The other pages, as cards or story steps: titles and purposes straight from the brief.
     const tour = brief.pages

@@ -29,6 +29,8 @@ const SHAPES = {
       cta: 'Get in touch',
     })),
   'brand.avoid': items,
+  'business.uniqueFacts': items,
+  'business.legalLines': items,
   'features.forms': (t) =>
     items(t).map((purpose) => ({ id: slugify(purpose), purpose, fields: ['name', 'email', 'message'], destination: 'none-yet' })),
 };

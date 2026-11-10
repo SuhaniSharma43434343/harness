@@ -8,12 +8,13 @@ import { runTask } from '../core/runner.mjs';
 import { assertValid } from '../core/schemas.mjs';
 import { ROOT, projectPaths, readJson, writeJsonAtomic } from '../core/workspace.mjs';
 import { getField } from '../registry/condition.mjs';
+import { deriveIndustry, resolveBusiness, storyOf } from '../registry/industries.mjs';
 import { loadRegistry } from '../registry/load.mjs';
 import { selectApproaches } from '../registry/select.mjs';
 import { draftBrief, validateBrief } from './brief.mjs';
 import { estimateScope } from './estimate.mjs';
 import { renderPlan } from './plan.mjs';
-import { recordAnswer, selectQuestions } from './questions.mjs';
+import { intakeView, recordAnswer, selectQuestions } from './questions.mjs';
 
 const SCHEMA_VERSION = '0.1.0';
 const FACTS_TASK = 'intake-facts';
@@ -110,7 +111,12 @@ export async function runIntake(project, opts = {}) {
   const previous = existsSync(join(paths.dir, 'intake', 'brief.json')) ? readJson(join(paths.dir, 'intake', 'brief.json')) : {};
   const { status: _s, approval: _a, assumptions: _x, ...base } = previous;
 
+  const industries = registry.industries ?? [];
   for (let round = 1; round <= maxRounds; round++) {
+    // Once the owner has described the business, its industry playbook decides the next questions.
+    const before = facts;
+    facts = deriveIndustry(facts, industries, stamp);
+    if (facts !== before) note({ event: 'industry_detected', industry: getField(intakeView({}, facts), 'business.industryId') });
     const questions = selectQuestions({ ...base, project }, facts, registry.questions, { round });
     if (!questions.length) continue;
     note({ event: 'intake_round', round, asked: questions.map((q) => q.id) });
@@ -127,7 +133,22 @@ export async function runIntake(project, opts = {}) {
     if (!recorded) break;
   }
 
-  const brief = draftBrief(facts, { project, base: { ...base, schemaVersion: SCHEMA_VERSION } });
+  facts = deriveIndustry(facts, industries, stamp);
+  // What this kind of business needs: the primary action, what the hero must show, the sections each
+  // page needs. It comes from the playbook and the owner's answers, so the brief says it in one place.
+  const view = intakeView({}, facts);
+  const playbook = industries.find((p) => p.id === getField(view, 'business.industryId'));
+  const resolved = resolveBusiness(playbook, view);
+  const story = storyOf(view);
+  const business = resolved || Object.keys(story).length ? { ...resolved, ...story } : undefined;
+  const brief = draftBrief(facts, {
+    project,
+    base: { ...base, ...(business && { business: { ...(base.business ?? {}), ...business } }), schemaVersion: SCHEMA_VERSION },
+  });
+  // If the owner chose a different primary action than the playbook's pages assume, the home
+  // page leads to the one they chose.
+  const homePage = brief.pages?.find((p) => p.slug === '/');
+  if (business?.primaryConversion && homePage) homePage.cta = business.primaryConversion.label;
   const result = validateBrief(brief, facts);
   const ready = result.valid && result.missing.length === 0;
   if (ready) brief.status = 'ready';

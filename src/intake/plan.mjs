@@ -1,3 +1,22 @@
+// What the site is built to make happen for this kind of business, in the operator's words.
+function businessLines(brief) {
+  const b = brief.business;
+  if (!b?.primaryConversion) return [];
+  const lines = [
+    '## What the site is built to do',
+    '',
+    `Industry playbook: **${b.industryId}**. The whole site leads to one action: **${b.primaryConversion.label}**.`,
+    '',
+    'The home hero must show:',
+    '',
+    ...(b.heroMustHave ?? []).map((h) => `- ${h}`),
+    '',
+  ];
+  if (b.contentNeeds?.length) lines.push('Material the client should supply:', '', ...b.contentNeeds.map((c) => `- ${c}`), '');
+  if (b.compliance?.length) lines.push('Rules for the copy in this industry:', '', ...b.compliance.map((c) => `- ${c}`), '');
+  return lines;
+}
+
 // renderPlan(brief, decision, estimate) => string: intake/plan.md, shown to the operator at B1.
 // Built only from the files it is given, so it never says more than they do.
 export function renderPlan(brief, decision, estimate) {
@@ -16,7 +35,10 @@ export function renderPlan(brief, decision, estimate) {
     '',
     ...brief.audience.map((a) => `- ${a.segment}: ${a.need}`),
     '',
+    ...businessLines(brief),
     '## Pages',
+    '',
+    `${brief.pages.length} pages.`,
     '',
     '| Page | Purpose | Call to action |',
     '| --- | --- | --- |',

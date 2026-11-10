@@ -1,0 +1,209 @@
+{
+  "schemaVersion": "0.1.0",
+  "bankVersion": "0.1.0",
+  "questions": [
+    {
+      "id": "q-unique-facts",
+      "fills": [
+        "business.uniqueFacts"
+      ],
+      "prompt": "What is true about this business that no competitor can claim? Give three to six facts, separated by semicolons: the place, the people, the history, the method, a number.",
+      "why": "The design direction and the headline copy rest on these facts. Without them every site in the industry looks the same.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 9,
+      "recommendation": {
+        "value": [
+          "(not provided by the client)"
+        ],
+        "reason": "Only the owner knows these; the copy is written around the gap and never invents them."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-visitor-sources",
+      "fills": [
+        "business.visitorSources"
+      ],
+      "prompt": "Where do visitors come from before they open the site? Pick all that apply.",
+      "why": "The first screen is designed for the way people arrive, for example an Instagram visitor on a phone wants the next step at once.",
+      "kind": "multi",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "options": [
+        {
+          "value": "google-search",
+          "label": "Google search"
+        },
+        {
+          "value": "google-maps",
+          "label": "Google Maps"
+        },
+        {
+          "value": "instagram",
+          "label": "Instagram"
+        },
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp shares"
+        },
+        {
+          "value": "qr-offline",
+          "label": "QR codes and printed material"
+        },
+        {
+          "value": "paid-ads",
+          "label": "Paid ads"
+        },
+        {
+          "value": "word-of-mouth",
+          "label": "Word of mouth"
+        }
+      ],
+      "recommendation": {
+        "value": [
+          "google-search",
+          "instagram"
+        ],
+        "reason": "The usual routes for a local business."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-visitor-device",
+      "fills": [
+        "business.visitorDevice"
+      ],
+      "prompt": "Which device do most visitors use?",
+      "why": "The phone is designed first when most visitors are on phones.",
+      "kind": "single",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 6,
+      "options": [
+        {
+          "value": "phone-mostly",
+          "label": "Mostly phones"
+        },
+        {
+          "value": "mixed",
+          "label": "Phones and computers about equally"
+        },
+        {
+          "value": "desktop-mostly",
+          "label": "Mostly computers"
+        }
+      ],
+      "recommendation": {
+        "value": "phone-mostly",
+        "reason": "Most visitors to a local business use a phone."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-legal-lines",
+      "fills": [
+        "business.legalLines"
+      ],
+      "prompt": "Are there legal lines the site must carry or never say? For example licence numbers, registration numbers, consent wording or disclaimers.",
+      "why": "Copy checks block anything that breaks these rules.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 5,
+      "recommendation": {
+        "value": [
+          "(none named)"
+        ],
+        "reason": "No legal line was named; the industry rules still apply."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-domain",
+      "fills": [
+        "business.domainAccess"
+      ],
+      "prompt": "Do you have a domain name (like yourbusiness.com) and access to its settings?",
+      "why": "A finished site has sat unlaunched because nobody had the domain login. Asking early avoids it.",
+      "kind": "single",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 4,
+      "options": [
+        {
+          "value": "has-domain",
+          "label": "Yes, and I can change its settings"
+        },
+        {
+          "value": "needs-help",
+          "label": "I have one but need help with it"
+        },
+        {
+          "value": "no-domain",
+          "label": "No domain yet"
+        }
+      ],
+      "recommendation": {
+        "value": "needs-help",
+        "reason": "Assumed the domain still needs sorting out."
+      },
+      "round": 2
+    },
+    {
+      "id": "q-deadline",
+      "fills": [
+        "business.deadline"
+      ],
+      "prompt": "Is there a date the site must be live by?",
+      "why": "It decides how much is built first.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 3,
+      "recommendation": {
+        "value": "(none named)",
+        "reason": "No deadline was named."
+      },
+      "round": 2
+    }
+  ]
+}

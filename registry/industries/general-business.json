@@ -1,0 +1,424 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "general-business",
+  "name": "General business",
+  "description": "The fallback for any business with no specific playbook. It still asks about the offer, the proof and the one action that brings customers, and it builds a full site, not four pages.",
+  "keywords": [],
+  "goals": {
+    "prompt": "What should the website do for your business? Name the one or two results that matter most.",
+    "why": "Every page and call to action is planned around these results.",
+    "recommendation": [
+      {
+        "id": "enquiries",
+        "statement": "Turn visitors into qualified enquiries",
+        "metric": "enquiries per month"
+      },
+      {
+        "id": "trust",
+        "statement": "Show proof that makes a stranger trust the business enough to get in touch"
+      }
+    ],
+    "reason": "The usual two jobs of a business website."
+  },
+  "audience": {
+    "prompt": "Who are your best customers, and what do they need to know before they contact you?",
+    "why": "The pages answer the questions this person has, in the order they ask them.",
+    "recommendation": [
+      {
+        "segment": "People looking for what the business offers nearby or online",
+        "need": "Understand the offer, see proof, and know how to get started"
+      }
+    ],
+    "reason": "A safe starting audience; research in P2 refines it."
+  },
+  "conversions": [
+    {
+      "id": "enquire",
+      "label": "Send an enquiry",
+      "kind": "enquiry",
+      "hero": true
+    },
+    {
+      "id": "quote",
+      "label": "Get a free quote",
+      "kind": "enquiry",
+      "hero": true
+    },
+    {
+      "id": "call",
+      "label": "Call us",
+      "kind": "call",
+      "hero": true
+    },
+    {
+      "id": "whatsapp",
+      "label": "WhatsApp us",
+      "kind": "message",
+      "hero": false
+    },
+    {
+      "id": "book",
+      "label": "Book a time",
+      "kind": "book",
+      "hero": false
+    },
+    {
+      "id": "download",
+      "label": "Download our brochure",
+      "kind": "download",
+      "hero": false
+    }
+  ],
+  "primaryDefault": "enquire",
+  "secondaryDefault": [
+    "call"
+  ],
+  "trustSignals": [
+    {
+      "id": "years",
+      "label": "Years in business"
+    },
+    {
+      "id": "clients",
+      "label": "Customers served"
+    },
+    {
+      "id": "reviews",
+      "label": "Customer reviews and testimonials"
+    },
+    {
+      "id": "certifications",
+      "label": "Certifications or licences"
+    },
+    {
+      "id": "awards",
+      "label": "Awards and recognitions"
+    },
+    {
+      "id": "guarantee",
+      "label": "A guarantee you can stand behind"
+    }
+  ],
+  "trustDefault": [
+    "years",
+    "reviews"
+  ],
+  "heroMustHave": [
+    "A headline that says what the business does and for whom, not its name alone",
+    "A real image of the business at work or its product, never generic stock"
+  ],
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Home",
+      "purpose": "Say what the business does and for whom, show proof, and lead the visitor to the main action",
+      "cta": "Send an enquiry",
+      "level": "S",
+      "sections": [
+        "testimonials",
+        "faq"
+      ]
+    },
+    {
+      "slug": "/services",
+      "title": "Services",
+      "purpose": "Explain each service in plain words with who it is for and what the customer gets",
+      "cta": "Get a free quote",
+      "level": "S"
+    },
+    {
+      "slug": "/about",
+      "title": "About",
+      "purpose": "Show who is behind the business and why customers can trust them",
+      "cta": "Talk to us",
+      "level": "S",
+      "sections": [
+        "stats"
+      ]
+    },
+    {
+      "slug": "/work",
+      "title": "Our Work",
+      "purpose": "Show real results with photographs and short case studies",
+      "cta": "Get a free quote",
+      "level": "S",
+      "sections": [
+        "gallery"
+      ]
+    },
+    {
+      "slug": "/contact",
+      "title": "Contact",
+      "purpose": "Make contacting the business effortless, with the form, phone, address and hours",
+      "cta": "Send an enquiry",
+      "level": "S"
+    },
+    {
+      "slug": "/how-it-works",
+      "title": "How It Works",
+      "purpose": "Take away the fear of starting by showing each step from first call to finished job",
+      "cta": "Get a free quote",
+      "level": "M",
+      "sections": [
+        "steps"
+      ]
+    },
+    {
+      "slug": "/reviews",
+      "title": "Customer Reviews",
+      "purpose": "Let customers speak, with names and details where they agree",
+      "cta": "Send an enquiry",
+      "level": "M",
+      "sections": [
+        "testimonials"
+      ]
+    },
+    {
+      "slug": "/faq",
+      "title": "Questions Answered",
+      "purpose": "Answer the questions that stop people from contacting the business",
+      "cta": "Send an enquiry",
+      "level": "M",
+      "sections": [
+        "faq"
+      ]
+    },
+    {
+      "slug": "/pricing",
+      "title": "Pricing",
+      "purpose": "Set expectations on cost with honest ranges and what changes the price",
+      "cta": "Get a free quote",
+      "level": "M"
+    },
+    {
+      "slug": "/team",
+      "title": "Our Team",
+      "purpose": "Put faces and credentials to the people who will do the work",
+      "cta": "Talk to us",
+      "level": "M"
+    },
+    {
+      "slug": "/insights",
+      "title": "Insights",
+      "purpose": "Publish useful guidance that brings in people searching before they are ready to buy",
+      "cta": "Send an enquiry",
+      "level": "L"
+    },
+    {
+      "slug": "/careers",
+      "title": "Careers",
+      "purpose": "Attract good people with the culture, the roles and a way to apply",
+      "cta": "See open roles",
+      "level": "L"
+    },
+    {
+      "slug": "/service-areas",
+      "title": "Service Areas",
+      "purpose": "Show where the business works, so local searchers know they are covered",
+      "cta": "Get a free quote",
+      "level": "L"
+    }
+  ],
+  "forms": [
+    {
+      "id": "enquiry",
+      "purpose": "Send an enquiry",
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "message"
+      ],
+      "destination": "form-function"
+    }
+  ],
+  "questions": [
+    {
+      "key": "offering",
+      "prompt": "List what you sell or the services you provide, most important first.",
+      "why": "Each main offer gets its own section and the first one leads the home page.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "Cannot be guessed; the site is built around it.",
+      "weight": 10,
+      "round": 2
+    },
+    {
+      "key": "differentiator",
+      "prompt": "In one sentence, why should a customer choose you over the competition?",
+      "why": "This becomes the home hero promise.",
+      "kind": "text",
+      "recommendation": "(not provided by the client)",
+      "reason": "A real differentiator cannot be guessed.",
+      "weight": 9,
+      "round": 2
+    },
+    {
+      "key": "serviceArea",
+      "prompt": "Where do you serve customers: one location, a city, a region or online?",
+      "why": "It decides whether the site leads with a local promise and a map.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "one-location",
+          "label": "One shop or office"
+        },
+        {
+          "value": "city",
+          "label": "A city or nearby areas"
+        },
+        {
+          "value": "region",
+          "label": "A region or the whole country"
+        },
+        {
+          "value": "online",
+          "label": "Online only"
+        }
+      ],
+      "recommendation": "city",
+      "reason": "Most small businesses serve a local area.",
+      "weight": 7,
+      "round": 2
+    },
+    {
+      "key": "pricing",
+      "prompt": "How should the site talk about price?",
+      "why": "Hiding price loses some customers; showing it loses others.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "show",
+          "label": "Show prices or clear ranges"
+        },
+        {
+          "value": "from",
+          "label": "Show a starting price"
+        },
+        {
+          "value": "quote",
+          "label": "Ask them to request a quote"
+        }
+      ],
+      "recommendation": "quote",
+      "reason": "The safe default when the price depends on the job.",
+      "weight": 6,
+      "round": 2
+    },
+    {
+      "key": "assetsOnHand",
+      "prompt": "Which of these do you already have?",
+      "why": "Real photographs and proof make the site credible; the missing ones are made or sourced.",
+      "kind": "multi",
+      "options": [
+        {
+          "value": "logo",
+          "label": "A logo file"
+        },
+        {
+          "value": "photos",
+          "label": "Photographs of the business, product or work"
+        },
+        {
+          "value": "videos",
+          "label": "Videos of the business or work"
+        },
+        {
+          "value": "testimonials",
+          "label": "Customer testimonials"
+        },
+        {
+          "value": "brochure",
+          "label": "A brochure or price list"
+        }
+      ],
+      "recommendation": [
+        "logo",
+        "photos"
+      ],
+      "reason": "The minimum a credible site needs.",
+      "weight": 7,
+      "round": 3
+    },
+    {
+      "key": "leadChannel",
+      "prompt": "Where should enquiries go, and who follows them up?",
+      "why": "The main form and the call to action are wired to this.",
+      "kind": "single",
+      "options": [
+        {
+          "value": "whatsapp",
+          "label": "WhatsApp"
+        },
+        {
+          "value": "phone",
+          "label": "A phone call"
+        },
+        {
+          "value": "email",
+          "label": "Email"
+        },
+        {
+          "value": "crm",
+          "label": "Our CRM"
+        }
+      ],
+      "recommendation": "email",
+      "reason": "The most common starting point.",
+      "weight": 7,
+      "round": 3
+    },
+    {
+      "key": "competitors",
+      "prompt": "Name two or three competitors or sites you admire.",
+      "why": "Research studies them so the site is better where it counts.",
+      "kind": "text",
+      "recommendation": "(none named)",
+      "reason": "Research will identify likely competitors.",
+      "weight": 5,
+      "round": 3
+    }
+  ],
+  "requiredSections": {
+    "/": [
+      "hero with a clear promise, the primary action and one real image",
+      "the main services in plain words",
+      "proof: reviews, years in business or results",
+      "how it works in three steps",
+      "frequently asked questions",
+      "a closing call to action"
+    ],
+    "/contact": [
+      "the enquiry form",
+      "phone, address and hours",
+      "a map when there is a location"
+    ]
+  },
+  "contentNeeds": [
+    "Logo file",
+    "Photographs of the business or work",
+    "List of services with a short description of each",
+    "Customer reviews",
+    "Phone number, address and opening hours"
+  ],
+  "compliance": [
+    "Every number, year, guarantee or award must come from the client with a source"
+  ],
+  "extras": [
+    {
+      "id": "gallery",
+      "fit": "strong",
+      "note": "Real photographs of the work are the strongest proof a small business has."
+    },
+    {
+      "id": "video-loop",
+      "fit": "possible",
+      "note": "A short loop of the business at work adds life if the audience has decent connections."
+    },
+    {
+      "id": "3d-object",
+      "fit": "weak",
+      "note": "Only worth adding when the business sells one recognisable physical object."
+    }
+  ]
+}
