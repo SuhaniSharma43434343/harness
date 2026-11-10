@@ -509,6 +509,52 @@
       }
     },
     {
+      "id": "q-brand-colours",
+      "fills": [
+        "brand.existingAssets.colours"
+      ],
+      "prompt": "Does the brand have its own colours? Give hex codes, main colour first, e.g. #1F4E79, #F2A65A. Say none if it has no set colours.",
+      "why": "The first design direction is built from the client's own colours.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 4,
+      "round": 2,
+      "recommendation": {
+        "value": [],
+        "reason": "No set colours, so the directions use palettes chosen for the tone."
+      }
+    },
+    {
+      "id": "q-brand-fonts",
+      "fills": [
+        "brand.existingAssets.fonts"
+      ],
+      "prompt": "Does the brand use particular fonts? Name them, headings first, e.g. Playfair Display, Inter. Say none if it has no set fonts.",
+      "why": "Open fonts lead the first direction; any other font needs the client's licence and files.",
+      "kind": "text",
+      "appliesTo": {
+        "projectTypes": "all",
+        "tiers": [
+          "S",
+          "M",
+          "L"
+        ]
+      },
+      "weight": 3,
+      "round": 2,
+      "recommendation": {
+        "value": [],
+        "reason": "No set fonts, so the directions pair open fonts chosen for the tone."
+      }
+    },
+    {
       "id": "q-hosting",
       "fills": [
         "constraints.hosting"

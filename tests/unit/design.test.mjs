@@ -52,6 +52,28 @@ test('client colours lead the first direction, darkened only as far as contrast 
   assert.match(first.colour.tokens.accent, /^#[0-9a-f]{6}$/i);
 });
 
+test('client fonts lead the first direction when they are open; any other font is left for the B1 plan to ask about', async () => {
+  const brief = sample('business');
+  brief.brand.existingAssets = { fonts: ['Playfair Display', 'Inter'] };
+  const record = await proposeDirections(brief);
+  const [first, ...rest] = record.directions;
+  assert.equal(first.typography.display.family, 'Playfair Display');
+  assert.equal(first.typography.body.family, 'Inter');
+  assert.equal(first.typography.display.source, 'fontsource');
+  assert.match(first.rationale, /^The client's own fonts, Playfair Display with Inter,/);
+  assert.ok(rest.every((d) => d.typography.display.family !== 'Playfair Display'), 'the other directions offer different type');
+  assert.deepEqual(checkDesignRules(record, brief), []);
+  // A display face alone gets the best body face for it; a font outside the catalog is never used.
+  brief.brand.existingAssets = { fonts: ['Gotham', 'fraunces'] };
+  const next = (await proposeDirections(brief)).directions[0];
+  assert.equal(next.typography.display.family, 'Fraunces');
+  assert.notEqual(next.typography.body.family, 'Gotham');
+  brief.brand.existingAssets = { fonts: ['Gotham'] };
+  const none = await proposeDirections(brief);
+  assert.doesNotMatch(none.directions[0].rationale, /client's own fonts/);
+  assert.ok(none.directions.every((d) => d.typography.display.family !== 'Gotham' && d.typography.body.family !== 'Gotham'));
+});
+
 test('the avoid list removes dark palettes and named fonts', async () => {
   const brief = sample('flagship');
   brief.brand.avoid = ['dark backgrounds', 'Playfair'];

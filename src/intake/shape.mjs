@@ -80,6 +80,14 @@ const SHAPES = {
       cta: 'Get in touch',
     })),
   'brand.avoid': items,
+  // Hex codes in the order given, #abc widened to #aabbcc. "none", or text with no codes, is [].
+  'brand.existingAssets.colours': (t) => [
+    ...new Set(
+      [...String(t).matchAll(/#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-f])/gi)].map(([, h]) => `#${(h.length === 3 ? [...h].map((c) => c + c).join('') : h).toLowerCase()}`),
+    ),
+  ],
+  // Up to three font names, headings first. "none" is [].
+  'brand.existingAssets.fonts': (t) => [...new Set(String(t).split(/[\n;,]+/).map((s) => s.trim()).filter((s) => s && !/^(none|no|n\/a)\.?$/i.test(s)))].slice(0, 3),
   'features.forms': (t) =>
     items(t).map((purpose) => ({ id: slugify(purpose), purpose, fields: ['name', 'email', 'message'], destination: 'none-yet' })),
 };

@@ -67,6 +67,10 @@ The required fields are `projectType`, `tier`, `client.name`, `client.industry`,
 | `q-access`: domain, DNS and existing material, with how good each is | `access` | The B1 plan lists what to ask the client for on day one |
 | `q-content-rules`: text that must never or must always appear | `contentRules` | The copy contract, and the copy check, which refuses copy that breaks a rule |
 | `q-languages`, `q-deadline`, `q-existing-site` | `client.languages`, `constraints.deadline`, `client.existingSite` | The brief's existing fields |
+| `q-brand-colours`: the brand's colours as hex codes, main first (round 2) | `brand.existingAssets.colours` | The first design direction is built from them; the B1 plan lists them |
+| `q-brand-fonts`: the brand's fonts, headings first (round 2) | `brand.existingAssets.fonts` | An open font in the catalog leads the first direction; for any other, the B1 plan asks the client for its licence and files |
+
+Colours are read as hex codes only (`#1F4E79`, or `#123` for `#112233`), in the order given; a colour typed as a word is not recorded, and the B1 plan shows what was. Up to three fonts are kept. `none` leaves either list empty.
 
 A date or an address can be answered with `null`, meaning there is none. The deadline and current-site recommendations are `null`, so they leave the field unset.
 

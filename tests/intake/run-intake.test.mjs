@@ -317,3 +317,30 @@ test('intake asks the pre-build questions, and "none" recommendations leave the 
   const plan = readFileSync(join(root, 'ws', 'prebuild', 'intake', 'plan.md'), 'utf8');
   assert.match(plan, /## Day-one access/);
 });
+
+test('intake asks for brand colours and fonts, and the plan says what to ask for when a font is not open', async () => {
+  const q = (field) => ({ kind: 'text', fills: [field] });
+  assert.deepEqual(shapeAnswer(q('brand.existingAssets.colours'), 'Navy #1F4E79, then #F2A65A; also #123 and #1f4e79 again'), ['#1f4e79', '#f2a65a', '#112233']);
+  assert.deepEqual(shapeAnswer(q('brand.existingAssets.colours'), 'none'), []);
+  assert.deepEqual(shapeAnswer(q('brand.existingAssets.colours'), '#12345g'), [], 'not a colour');
+  assert.deepEqual(shapeAnswer(q('brand.existingAssets.fonts'), 'Playfair Display, Inter\nInter; Gotham, Futura'), ['Playfair Display', 'Inter', 'Gotham']);
+  assert.deepEqual(shapeAnswer(q('brand.existingAssets.fonts'), 'None.'), []);
+
+  const { loadRegistry } = await import('../../src/registry/load.mjs');
+  const byId = new Map(loadRegistry().questions.questions.map((x) => [x.id, x]));
+  for (const id of ['q-brand-colours', 'q-brand-fonts']) {
+    assert.ok(byId.get(id).prompt.length <= 300, `${id} fits the prompt limit`);
+    assert.equal(byId.get(id).appliesTo.projectTypes, 'all');
+    assert.equal(byId.get(id).round, 2);
+  }
+
+  const { renderPlan } = await import('../../src/intake/plan.mjs');
+  const brief = JSON.parse(readFileSync(new URL('../../samples/briefs/business.json', import.meta.url), 'utf8'));
+  const est = { hours: { min: 1, max: 2 }, cost: { min: 1, max: 2, currency: 'USD' }, rateVersion: 'test', lines: [], assumptions: [] };
+  assert.doesNotMatch(renderPlan(brief, null, est), /## Brand/, 'nothing given: no section');
+  const plan = renderPlan({ ...brief, brand: { ...brief.brand, existingAssets: { colours: ['#1f4e79'], fonts: ['Playfair Display', 'Gotham'] } } }, null, est);
+  assert.match(plan, /## Brand[\s\S]*- Colours: `#1f4e79`\. The first direction is built from them/);
+  assert.match(plan, /- Fonts: Playfair Display, Gotham\. Playfair Display is open, so the first direction uses it\./);
+  assert.match(plan, /Ask the client for, now:\*\* the licence and font files for Gotham, or approval to use the closest open font instead\./);
+  assert.deepEqual(check('brief', { ...brief, brand: { ...brief.brand, existingAssets: { colours: ['#1f4e79'], fonts: ['Gotham'] } } }).errors, [], 'the shapes are valid brief values');
+});
