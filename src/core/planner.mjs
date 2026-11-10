@@ -24,7 +24,7 @@ const base = (project, id) => ({ approach_modules: [], depends_on: [], evidence:
 
 const SCHEMA = 'design/reference/design-spec.schema.json';
 const shape = (name) => `The file must match the "${name}" definition in ${SCHEMA}`;
-const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/summary.md', SCHEMA];
+const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/crux.json', 'research/summary.md', SCHEMA];
 const SPEC = ['design/direction.json', 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/motion-plan.json', 'design/asset-plan.json'];
 
 // Each stage's contract. A contract states what good looks like, because it is the agent's brief.
@@ -32,13 +32,16 @@ const STAGE_TASKS = {
   research: (brief) => ({
     budget: { minutes: 25, retries: 1 },
     inputs: ['intake/brief.json', 'intake/facts.json', 'intake/material/**', SCHEMA],
-    owns_files: ['research/summary.md', 'research/sources.json', 'research/positioning.json'],
+    owns_files: ['research/summary.md', 'research/sources.json', 'research/positioning.json', 'research/crux.json'],
     must_not_touch: ['intake/**', 'content/**', 'site/**'],
     acceptance: [
       `research/summary.md describes ${brief.client.name}'s business, audience and goals, and what the site must do for them, in plain prose of at least a few paragraphs`,
       'Every claim in the summary names a source id from research/sources.json, or is marked "(assumption)"',
       'research/sources.json is {"sources": [{"id", "title", "kind", "ref"}]}; the brief and intake facts count as sources (kind "client", ref their path)',
       `research/positioning.json states the business, audience insights, objectives and this business's unique positioning. ${shape('positioning')}`,
+      'research/crux.json sorts every fact about the business into five buckets: about (story, team, mission, values, promise; put first what nobody else can claim), whatWeDo (services, capabilities, process), ourWork (case studies, proof, metrics, client logos), resourceHub (tools, FAQs, guides, downloads) and reachUs (calls to action, contact points). Each item names its source id from research/sources.json, or "assumption"',
+      'A bucket with nothing real in it stays empty and lists in "gaps" what is missing, as a question for the client. Never fill a bucket by inventing proof, people or figures',
+      shape('crux'),
       'Use WebSearch and WebFetch to study at least two real competitors and three real, well-designed sites worth learning from. For each, say what specifically to learn: a layout, a type treatment, a way of telling the story. If the web is unavailable, say so in researchLimits and do not invent URLs',
       'Do not state a fact about the business that is not in the brief or client material',
     ],
@@ -85,6 +88,8 @@ const STAGE_TASKS = {
       'Do not default to cards. At most a quarter of sections may be card or grid layouts; no three neighbours may share a pattern; use at least four patterns',
       'Give each section (except a page\'s last) a transition: toNext says how it hands over to the section after it (a tone change, an overlap, a rule, a motion), and device notes any mobile difference',
       'Never state an operational fact the client did not give: no clock times, prices, durations or process steps beyond the client notes. Any you do use must already be a row in content/claims.json',
+      'Give every section a funnel stage, so each page takes its visitor from awareness (the hook) through interest (how it works, the benefits) and desire (proof) to action (a low-friction call to action). The home page opens with awareness; every page with a journey ends on an action; a stage steps back only after a call to action. Use "none" for utility sections such as legal text',
+      'Build each page from research/crux.json: a section draws on a bucket that has real facts. Where a bucket is empty, plan around its gap instead of a section that would need invented content',
       'Asset and motion ids you name here are defined next in design/asset-plan.json and design/motion-plan.json',
       shape('sectionPlan'),
     ],
@@ -127,6 +132,7 @@ const STAGE_TASKS = {
       `Each brief page has its title, a description and its call to action: ${brief.pages.map((p) => `${p.slug} "${p.cta}"`).join(', ')}`,
       'A headline says something, in this business\'s own voice; "Our services" fails. Write the way a good copywriter writes for this approach (see the direction). Use specifics from the brief and client material. Avoid stock phrases and do not open headlines the same way',
       "A stock or licensed photo is never described as this client's own work: captions and alt text say what it shows, not which job it came from",
+      'Write each section for its funnel stage in design/section-plan.json, using the facts sorted in research/crux.json. A gap stays a gap: no invented proof, testimonials or figures',
       'State only facts found in the brief, client material or research. Every number, year, time, price, duration, process step, guarantee or award goes in content/claims.json as {"claims": [{"text", "source"}]}, with a source id from research/sources.json — quote the source line as you write, not afterwards. If a section needs a fact you do not have (an ingredient, a method, an opening day), write around it rather than inventing it',
       shape('siteCopy'),
     ],

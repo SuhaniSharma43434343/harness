@@ -23,6 +23,7 @@ const read = (dir, file) => {
 
 export const FILES = {
   positioning: 'research/positioning.json',
+  crux: 'research/crux.json',
   decision: 'design/approach-decision.json',
   directions: 'design/directions.json',
   direction: 'design/direction.json',
@@ -117,6 +118,46 @@ export const sectionUse = (approach, id) => `${approach}/${pascal(id)}`;
 export const pagesOf = (plan) => plan?.pages ?? [];
 export const sectionsOf = (plan) => pagesOf(plan).flatMap((p) => p.sections.map((s) => ({ ...s, slug: p.slug })));
 
+// The five content buckets. Every fact is traceable, and a bucket with nothing in it says what is
+// missing as a question for the client, so a later stage never fills the gap by inventing.
+export const CRUX_BUCKETS = { about: 'About', whatWeDo: 'What We Do', ourWork: 'Our Work', resourceHub: 'Resource Hub', reachUs: 'Reach Us' };
+function cruxProblems(dir) {
+  const [crux, problems] = load(dir, 'crux', 'crux');
+  if (!crux) return problems;
+  const sources = new Set((read(dir, 'research/sources.json')?.sources ?? []).map((x) => x.id));
+  for (const [key, label] of Object.entries(CRUX_BUCKETS)) {
+    const b = crux.buckets[key];
+    if (!b.items.length && !b.gaps.length) problems.push(`research/crux.json: ${label} is empty; list its facts, or say what is missing as a question for the client`);
+    for (const it of b.items) {
+      if (it.source !== 'assumption' && !sources.has(it.source)) problems.push(`research/crux.json: ${label} "${it.text.slice(0, 50)}" cites ${it.source}, which is not in research/sources.json`);
+    }
+  }
+  return problems;
+}
+
+// The visitor journey on a page: awareness, interest, desire, action. A stage may only step back after
+// an action (a mid-page call to action starts the next loop), and a page that has a journey ends on an
+// action. Sections marked "none" are utility (legal text) and sit outside it.
+const FUNNEL = ['awareness', 'interest', 'desire', 'action'];
+export function funnelProblems(page) {
+  const problems = [];
+  const missing = page.sections.filter((s) => !s.funnel).map((s) => s.id);
+  if (missing.length) return [`${page.slug}: give every section a funnel stage (awareness, interest, desire, action, or none): ${missing.join(', ')}`];
+  const staged = page.sections.filter((s) => s.funnel !== 'none');
+  if (!staged.length) return problems;
+  let top = -1;
+  let prev = null;
+  for (const s of staged) {
+    const r = FUNNEL.indexOf(s.funnel);
+    if (r < top && prev !== 'action') problems.push(`${s.id}: "${s.funnel}" comes after "${FUNNEL[top]}" on ${page.slug}; the journey only steps back after a call to action`);
+    top = prev === 'action' ? r : Math.max(top, r);
+    prev = s.funnel;
+  }
+  if (staged.at(-1).funnel !== 'action') problems.push(`${page.slug}: the page ends on "${staged.at(-1).funnel}"; end its journey on an action`);
+  if (page.slug === '/' && staged[0].funnel !== 'awareness') problems.push(`/: the home page opens on "${staged[0].funnel}"; open with awareness, the hook`);
+  return problems;
+}
+
 export const CHECKS = {
   research(dir) {
     const [p, problems] = load(dir, 'positioning', 'positioning');
@@ -128,6 +169,7 @@ export const CHECKS = {
     }
     for (const r of p.references) if (!/^https?:\/\//.test(r.url)) problems.push(`research/positioning.json: reference "${r.name}" needs a full URL`);
     if (GENERIC_COPY.some((g) => g.test(p.positioning))) problems.push('research/positioning.json: the positioning uses stock phrases; say what is actually different about this business');
+    problems.push(...cruxProblems(dir));
     return problems;
   },
 
@@ -210,6 +252,7 @@ export const CHECKS = {
         for (const m of s.motion) if (motion && !motion.motions?.some((x) => x.id === m)) problems.push(`${s.id}: motion "${m}" is not in design/motion-plan.json`);
       }
       if (!page.sections.some((s) => s.assets.length)) problems.push(`${page.slug}: no section has a visual asset`);
+      problems.push(...funnelProblems(page));
     }
     const all = sectionsOf(plan);
     const cards = all.filter((s) => CARD_PATTERNS.test(s.pattern)).length;

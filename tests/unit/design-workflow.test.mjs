@@ -11,7 +11,7 @@ import { approve, hasApproval, loadProject, PHASES, returnToPhase } from '../../
 import { check } from '../../src/core/schemas.mjs';
 import { writeJsonAtomic } from '../../src/core/workspace.mjs';
 import { MAX_STAGE_RETURNS, retryStage, runDesignWorkflow, sendBack } from '../../src/design/manager.mjs';
-import { CHECKS, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
+import { CHECKS, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
 import { tokensFromDirection } from '../../src/site/tokens.mjs';
@@ -80,7 +80,14 @@ function spec() {
       surfaces: { borders: 'One hairline rule', shadows: 'None', radius: 'Square corners', treatments: 'Paper surfaces' },
       responsive: { desktop: 'Twelve columns', tablet: 'Eight columns', mobile: 'Four columns with the rule on top' },
     },
-    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count'] }), section('quote-rule', 'editorial-split'), section('old-houses', 'asymmetric', { assets: [] }), section('proof', 'quote-feature', { assets: [] })] }] },
+    'design/section-plan.json': { pages: [{ slug: '/', sections: [section('promise', 'statement', { motion: ['rise', 'cta-rule', 'count'], funnel: 'awareness' }), section('quote-rule', 'editorial-split', { funnel: 'interest' }), section('old-houses', 'asymmetric', { assets: [], funnel: 'desire' }), section('proof', 'quote-feature', { assets: [], funnel: 'action' })] }] },
+    'research/crux.json': { buckets: {
+      about: { items: [{ text: 'A family firm that fits old Portland houses', source: 'brief' }], gaps: [] },
+      whatWeDo: { items: [{ text: 'Kitchens, bathrooms and whole-house renovations', source: 'brief' }], gaps: [] },
+      ourWork: { items: [], gaps: ['Which finished jobs can we show, with the owners\' permission?'] },
+      resourceHub: { items: [], gaps: ['Is there a guide or a checklist the firm would share?'] },
+      reachUs: { items: [{ text: 'Book a home visit', source: 'assumption' }], gaps: [] },
+    } },
     'design/motion-plan.json': {
       concept: 'Things settle into place', loading: 'Text first, then images', navigation: 'Header stays put', pageTransitions: 'A short crossfade', reducedMotion: 'Everything shows, nothing moves',
       motions: [
@@ -257,6 +264,35 @@ test('a copy return also syncs the section plan, so later reviews never judge ag
   assert.equal(sync.agent, 'creative-director');
   assert.ok(sync.acceptance.some((a) => /match the corrected copy/.test(a)));
   assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_plan_synced'));
+});
+
+test('research sorts the facts into five buckets, each traceable, with gaps as client questions', () => {
+  const s = spec();
+  assert.deepEqual(CHECKS.research(fullProject().dir), []);
+  const crux = structuredClone(s['research/crux.json']);
+  crux.buckets.ourWork.gaps = [];
+  crux.buckets.about.items.push({ text: 'Forty years of trade experience', source: 'website' });
+  const problems = CHECKS.research(fullProject({ 'research/crux.json': crux }).dir);
+  assert.ok(problems.some((p) => /Our Work is empty/.test(p)), JSON.stringify(problems));
+  assert.ok(problems.some((p) => /cites website, which is not in research\/sources.json/.test(p)), JSON.stringify(problems));
+  const { dir } = fullProject();
+  rmSync(join(dir, 'research/crux.json'));
+  assert.ok(CHECKS.research(dir).some((p) => /research\/crux.json is missing/.test(p)));
+});
+
+test('sections follow the visitor journey: awareness to action, stepping back only after an action', () => {
+  const page = (slug, stages) => ({ slug, sections: stages.map((f, i) => ({ id: `s${i}`, ...(f ? { funnel: f } : {}) })) });
+  assert.deepEqual(funnelProblems(page('/', ['awareness', 'interest', 'desire', 'action'])), []);
+  assert.deepEqual(funnelProblems(page('/', ['awareness', 'action', 'interest', 'desire', 'action'])), [], 'a mid-page call to action starts the next loop');
+  assert.deepEqual(funnelProblems(page('/privacy', ['none', 'none'])), [], 'utility pages sit outside the journey');
+  assert.deepEqual(funnelProblems(page('/contact', ['action'])), []);
+  assert.ok(funnelProblems(page('/', ['awareness', 'desire', 'interest', 'action']))[0].includes('only steps back after a call to action'));
+  assert.ok(funnelProblems(page('/services', ['interest', 'desire'])).some((p) => /ends on "desire"/.test(p)));
+  assert.ok(funnelProblems(page('/', ['interest', 'action'])).some((p) => /open with awareness/.test(p)));
+  assert.ok(funnelProblems(page('/', ['awareness', null, 'action']))[0].includes('give every section a funnel stage'));
+  const plan = structuredClone(spec()['design/section-plan.json']);
+  plan.pages[0].sections[3].funnel = 'desire';
+  assert.ok(CHECKS['section-plan'](fullProject({ 'design/section-plan.json': plan }).dir).some((p) => /ends on "desire"/.test(p)));
 });
 
 test('a section plan cannot invent operational facts, and a registered claim covers real ones', () => {

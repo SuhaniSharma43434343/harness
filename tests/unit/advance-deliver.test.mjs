@@ -177,3 +177,19 @@ test('the final report is built from the ledger and never repeats a secret', () 
   }
   assert.ok(PHASES.some((ph) => text.includes(ph.name)));
 });
+
+test('handoff writes a growth roadmap from the project records, and claims no measurement', () => {
+  const p = inPhase('HANDOFF');
+  writeJsonAtomic(join(p.dir, 'design', 'section-plan.json'), { pages: [{ slug: '/', sections: [{ id: 'home-finder', pattern: 'interactive-finder' }, { id: 'home-story', pattern: 'editorial' }] }] });
+  writeJsonAtomic(join(p.dir, 'research', 'crux.json'), { buckets: { about: { items: [], gaps: [] }, whatWeDo: { items: [], gaps: [] }, ourWork: { items: [], gaps: ['Which finished jobs can we show?'] }, resourceHub: { items: [], gaps: [] }, reachUs: { items: [], gaps: [] } } });
+  writeJsonAtomic(join(p.dir, 'reports', 'defects.json'), { defects: [{ id: 'D-004', status: 'escalated', gate: 'performance', message: '/ Largest Contentful Paint is 3002 ms' }, { id: 'D-001', status: 'verified', gate: 'seo', message: 'fixed' }] });
+  writeJsonAtomic(join(p.dir, 'reports', 'release-checks.json'), { rows: [{ gate: 'seo', outcome: 'blocked', reason: 'no site URL' }, { gate: 'routes', outcome: 'passed' }] });
+  const { roadmap } = writeReport(p.project, p.opts);
+  const text = readFileSync(roadmap, 'utf8');
+  for (const s of ['# Growth roadmap', 'nothing in it has been measured yet', '`home-finder` on / (interactive-finder)', 'No analytics is installed', 'D-004 (escalated, performance)', 'Release check seo blocked: no site URL', 'Content gap (ourWork): Which finished jobs can we show?']) {
+    assert.ok(text.includes(s), `roadmap is missing: ${s}`);
+  }
+  assert.ok(!text.includes('home-story'), 'only interactive sections are listed to measure');
+  assert.ok(!text.includes('D-001'), 'verified defects are not backlog');
+  assert.ok(ledger.read(p.project, p.opts).some((e) => e.data?.event === 'report' && e.data.roadmap === 'reports/gdd-roadmap.md'));
+});
