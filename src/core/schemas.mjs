@@ -29,6 +29,8 @@ export const SCHEMAS = {
   industryPlaybook: 'industry-playbook.schema.json',
   // QA Verifier (Nidhi, T24).
   defectReport: 'defect-report.schema.json',
+  // Remember My Error: the project's log of agent mistakes.
+  errorMemory: 'error-memory.schema.json',
   // Starter template (Nidhi, T18).
   tokens: 'tokens.schema.json',
   siteConfig: 'site-config.schema.json',

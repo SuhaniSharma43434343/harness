@@ -1,5 +1,6 @@
 import { isAbsolute, join } from 'node:path';
 import { loadConfig } from '../core/config.mjs';
+import { withErrorRules } from '../core/error-memory.mjs';
 import { abandonTask, checkChanges, nextTask, submitTask } from '../core/step.mjs';
 
 const USAGE = 'Usage: forge task <next|check|submit|abandon> <project> [task] [--evidence a,b] [--json]';
@@ -35,7 +36,8 @@ export async function cmdTask(root, args) {
   const opts = { workspace: workspaceFor(root) };
 
   if (sub === 'next') {
-    const task = nextTask(project, opts);
+    const next = nextTask(project, opts);
+    const task = next && withErrorRules(project, next, opts);
     if (json) console.log(JSON.stringify(task, null, 2));
     else if (!task) console.log(`No task can start in ${project} right now. Run forge status ${project} to see why.`);
     else {
