@@ -1610,3 +1610,29 @@ test('a workflow that cannot take the run lock plans nothing', async () => {
   await assert.rejects(runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }) }), /already being run by process/);
   assert.equal(listTasks(project, opts).length, before, 'no task was planned');
 });
+
+test('a rebuild takes the next free fix id and supersedes the blocked attempts it replaces; build tasks wait for the build phase', () => {
+  const { project, opts, dir } = mediaProject((s) => {
+    const p = s['research/positioning.json'];
+    s['research/positioning.json'] = { ...p, ...TRUTH, competitors: p.competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' })) };
+    s['research/crux.json'] = { ...s['research/crux.json'], buyerQuestions: BUYER_QUESTIONS };
+    s['design/review.json'] = { ...s['design/review.json'], litmus: { ...LITMUS } };
+    return s;
+  });
+  write(dir, 'site/package.json', { name: 'site' });
+  setPhase(dir, 'BUILD');
+  planPhase(project, opts);
+  for (const id of ['build-foundation', 'build-page-home']) {
+    ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: id, from: 'verifying', to: 'done' } }, opts);
+    saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['x'] }, opts);
+  }
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'section-plan', attempt: 1, problems: ['x'] } }, opts);
+  planPhase(project, opts);
+  // The first rebuild of the page fails, and a duplicate already holds fix-2.
+  saveTask(project, { ...listTasks(project, opts).find((t) => t.id === 'build-page-home-fix-1'), status: 'blocked', blocked_reason: 'Verify command failed on attempt 3' }, opts);
+  addTasks(project, opts, task('build-page-home-fix-2', { agent: 'builder', status: 'blocked', blocked_reason: 'Superseded: duplicate' }));
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'design-system', attempt: 3, problems: ['fonts'] } }, opts);
+  const again = planPhase(project, opts).map((t) => t.id);
+  assert.ok(again.includes('build-page-home-fix-3'), JSON.stringify(again));
+  assert.match(listTasks(project, opts).find((t) => t.id === 'build-page-home-fix-1').blocked_reason, /^Superseded: rebuilt as build-page-home-fix-3/);
+});

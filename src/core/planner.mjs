@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { addTask, listTasks } from './board.mjs';
+import { addTask, listTasks, saveTask } from './board.mjs';
 import { withErrorRules } from './error-memory.mjs';
 import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
@@ -596,6 +596,8 @@ function rebuildStale(project, tasks, opts) {
     const n = Math.max(0, ...family(t.id).map((x) => Number(/-fix-(\d+)$/.exec(x.id)?.[1] ?? 0))) + 1;
     const id = `${t.id}-fix-${n}`;
     renamed.set(t.id, id);
+    // Earlier attempts left blocked are replaced by the rebuild, so nothing retries them.
+    for (const old of family(t.id)) if (old.status === 'blocked' && !old.blocked_reason?.startsWith('Superseded: ')) saveTask(project, { ...old, blocked_reason: `Superseded: rebuilt as ${id}` }, opts);
     return { ...t, id, idempotency_key: `${project}:${id}:v1`, acceptance: ['Rebuild: the specification changed after this was built (a new direction, plans or copy). Build it again from the current files, replacing the earlier work; nothing from the earlier build is approved', ...t.acceptance] };
   });
   return out.map((t) => ({ ...t, depends_on: t.depends_on.map((d) => renamed.get(d) ?? d) }));

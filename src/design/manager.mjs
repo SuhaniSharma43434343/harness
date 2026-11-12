@@ -96,7 +96,9 @@ function retryBuild(project, task, opts, findings, { force = false } = {}) {
   const logs = join(dir, 'evidence', 'tasks', task.id);
   const last = existsSync(logs) ? readdirSync(logs).sort().at(-1) : null;
   const output = findings ?? (last ? readFileSync(join(logs, last), 'utf8').split('\n').filter((l) => /^- /.test(l)).slice(0, 25) : []);
-  const n = Number(m[2] ?? 0) + 1;
+  // The next free fix number for this task: a superseded duplicate may already hold the next one.
+  const taken = listTasks(project, opts).map((t) => t.id.match(BUILD_TASK)).filter((x) => x && x[1] === m[1]).map((x) => Number(x[2] ?? 0));
+  const n = Math.max(Number(m[2] ?? 0), ...taken) + 1;
   const id = `${m[1]}-fix-${n}`;
   addTask(project, { ...task, id, status: 'pending', attempts: undefined, blocked_reason: undefined, heartbeat_at: undefined, evidence: [], depends_on: [], idempotency_key: `${project}:${id}:v1`, acceptance: [...output.map((o) => `Fix: ${o.slice(2)}`), ...task.acceptance.filter((a) => !a.startsWith('Fix: '))] }, opts);
   ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'build_retried', task: id } }, opts);
@@ -271,7 +273,13 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     if (outOfMoney()) return stop('budget');
     if (summary.errors.length) return stop('error', { errors: summary.errors });
     const tasks = listTasks(project, opts);
-    const blocked = summary.blocked.filter((b) => !isSuperseded(tasks.find((t) => t.id === b.task), tasks));
+    // Only this phase's work: a build task left blocked from an earlier build is planned again as a
+    // rebuild when the build phase comes round, not retried while the design is still being changed.
+    const ours = new Set(agentsForPhase(phase));
+    const blocked = summary.blocked.filter((b) => {
+      const t = tasks.find((x) => x.id === b.task);
+      return t && ours.has(t.agent) && !isSuperseded(t, tasks);
+    });
     if (blocked.length) {
       const task = tasks.find((t) => t.id === blocked[0].task);
       const stage = STAGES.find((s) => task.id === s.task || task.id.startsWith(`${s.task}-fix-`));
