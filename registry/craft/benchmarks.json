@@ -1,0 +1,96 @@
+{
+  "catalogVersion": "1.0.0",
+  "note": "Curated Awwwards Site of the Day (SOTD), Refero, GetLayers AI, and industry-benchmark visual references for P2 Research Visual Benchmarking. Grounding art direction in real visual craft.",
+  "benchmarks": [
+    {
+      "id": "linear-app",
+      "category": "developer-tools",
+      "name": "Linear (Issue Tracking & Dev Tool)",
+      "url": "https://linear.app",
+      "awards": ["Awwwards SOTD", "Webby Award"],
+      "visualDna": {
+        "mood": "Obsidian dark mode, precision engineering, tactile micro-glows",
+        "bgTone": "#08090C",
+        "surfaceTone": "rgba(255, 255, 255, 0.03)",
+        "accentGlow": "#5E6AD2",
+        "borderStyle": "1px solid rgba(255, 255, 255, 0.08)",
+        "heroArchetype": "type-behind-subject",
+        "layoutArchetype": "getlayers-cinematic-bento",
+        "signatureInteraction": "Cursor spotlight on Bento cards and keyboard shortcut telemetry",
+        "typography": "Inter display with tight tracking paired with tabular numbers"
+      }
+    },
+    {
+      "id": "zirka-interceptor",
+      "category": "defense-hardware",
+      "name": "ZIRKA Interceptor (Defense Drone)",
+      "url": "https://www.awwwards.com/sites/zirka-interceptor",
+      "awards": ["Awwwards SOTD", "Developer Award Nov 2026"],
+      "visualDna": {
+        "mood": "Tactical HUD, futuristic telemetry, military-grade dark slate",
+        "bgTone": "#0A0B0E",
+        "surfaceTone": "rgba(18, 22, 28, 0.8)",
+        "accentGlow": "#22C55E",
+        "borderStyle": "1px solid rgba(34, 197, 94, 0.2)",
+        "heroArchetype": "outlined-type-3d-object",
+        "layoutArchetype": "storyline-photo-scrub",
+        "signatureInteraction": "3D exploded drone model scrubbed via scroll with live telemetry overlays",
+        "typography": "Technical condensed sans with uppercase monospace corner brackets"
+      }
+    },
+    {
+      "id": "manus-ai",
+      "category": "ai-platform",
+      "name": "Manus (General AI Agent)",
+      "url": "https://manus.im",
+      "awards": ["Awwwards Nominee", "Design SOTD"],
+      "visualDna": {
+        "mood": "Minimalist high-contrast obsidian, ultra-clean product sandbox",
+        "bgTone": "#050507",
+        "surfaceTone": "rgba(255, 255, 255, 0.04)",
+        "accentGlow": "#6366F1",
+        "borderStyle": "1px solid rgba(255, 255, 255, 0.06)",
+        "heroArchetype": "type-behind-subject",
+        "layoutArchetype": "getlayers-cinematic-bento",
+        "signatureInteraction": "Interactive prompt-and-action sandbox with real-time state badge",
+        "typography": "High-legibility geometric sans with generous breathing space"
+      }
+    },
+    {
+      "id": "kinfolk-cafe",
+      "category": "food-beverage",
+      "name": "Kinfolk & Aesop Hospitality",
+      "url": "https://kinfolk.com",
+      "awards": ["Awwwards SOTD", "Editorial Award"],
+      "visualDna": {
+        "mood": "Warm tactile editorial, luxury serif, warm espresso and linen paper",
+        "bgTone": "#FAF7F2",
+        "surfaceTone": "#F2EBE1",
+        "accentGlow": "#C26D45",
+        "borderStyle": "1px solid rgba(0, 0, 0, 0.06)",
+        "heroArchetype": "floating-objects-wordmark",
+        "layoutArchetype": "storyline-photo-scrub",
+        "signatureInteraction": "Subtle liquid canvas shader background with smooth page crossfades",
+        "typography": "Editorial serif display with calm humanist body typeface"
+      }
+    },
+    {
+      "id": "apple-hardware-tour",
+      "category": "consumer-hardware",
+      "name": "Apple Flagship Hardware Tour",
+      "url": "https://apple.com",
+      "awards": ["Awwwards Site of the Year", "D&AD Black Pencil"],
+      "visualDna": {
+        "mood": "Immersive dark theater, cinematic spatial storytelling, hyper-detailed photography",
+        "bgTone": "#000000",
+        "surfaceTone": "#111111",
+        "accentGlow": "#0071E3",
+        "borderStyle": "1px solid rgba(255, 255, 255, 0.05)",
+        "heroArchetype": "outlined-type-3d-object",
+        "layoutArchetype": "storyline-photo-scrub",
+        "signatureInteraction": "Scroll-scrubbed canvas photo frame sequence with pinned chapter typography",
+        "typography": "SF Pro Display poster scale with high contrast hierarchy"
+      }
+    }
+  ]
+}

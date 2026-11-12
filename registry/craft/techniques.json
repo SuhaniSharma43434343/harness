@@ -144,6 +144,20 @@
       ]
     },
     {
+      "id": "canvas-frame-sequence",
+      "name": "Canvas scroll-scrubbed frame sequence",
+      "use": "Scroll-scrubbed photo or 3D frame sequence rendered on an HTML5 canvas as the visitor scrolls, turning photos into an interactive navigable movie.",
+      "jsKb": 2,
+      "needs": "HTML5 canvas with requestAnimationFrame and preloaded WebP frames",
+      "fallback": "Static keyframe poster image with crossfades.",
+      "reducedMotion": "Static poster image.",
+      "approaches": [
+        "APP-08",
+        "APP-02",
+        "APP-07"
+      ]
+    },
+    {
       "id": "react-three-fiber",
       "name": "React Three Fiber",
       "use": "Declarative Three.js in React. Not in this starter: it needs a React integration, so use three-scene instead.",

@@ -44,6 +44,7 @@ export const CRAFT = 'design/reference/craft/**';
 const CRAFT_FILE = 'design/reference/craft/awwwards.md';
 const LIB = 'design/reference/craft/patterns.json';
 const TECH = 'design/reference/craft/techniques.json';
+const BENCH = 'design/reference/craft/benchmarks.json';
 
 const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/crux.json', 'research/summary.md', SCHEMA];
 const SPEC = ['design/direction.json', 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/motion-plan.json', 'design/asset-plan.json'];
@@ -375,7 +376,7 @@ function copyReference(dir, approach) {
   cpSync(join(ROOT, 'schemas', 'crux.schema.json'), join(target, 'crux.schema.json'));
   cpSync(join(ROOT, 'registry', 'methodologies'), join(target, 'methodologies'), { recursive: true });
   mkdirSync(join(target, 'craft'), { recursive: true });
-  for (const f of ['awwwards.md', 'patterns.json', 'techniques.json']) cpSync(join(ROOT, 'registry', 'craft', f), join(target, 'craft', f));
+  for (const f of ['awwwards.md', 'patterns.json', 'techniques.json', 'benchmarks.json']) cpSync(join(ROOT, 'registry', 'craft', f), join(target, 'craft', f));
   if (approach) {
     const skill = join(ROOT, 'skills', approach.toLowerCase().replace('-', ''));
     if (existsSync(skill)) cpSync(skill, join(target, 'skill'), { recursive: true });

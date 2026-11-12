@@ -651,6 +651,37 @@
       ],
       "mobile": "Off: a poster or a short video.",
       "source": "Spline"
+    },
+    {
+      "id": "getlayers-cinematic-bento",
+      "category": "section-layout",
+      "name": "Cinematic Bento Grid with Spotlight Glow",
+      "looks": "An asymmetrical Bento Grid of obsidian cards with 1px glass borders, glowing gradient mesh backgrounds, micro-status tags, and mouse-following spotlight highlights.",
+      "build": "CSS Grid layout with glassmorphic cards, styled via CSS custom properties for radial border glows that follow cursor position.",
+      "when": "Feature showcases, technical specifications, and modern SaaS dashboards.",
+      "avoid": "When there is only one item to display or on pure text editorial layouts.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "Stacks to a single-column card list with fixed top glow highlights.",
+      "source": "GetLayers AI (getlayers.ai)"
+    },
+    {
+      "id": "storyline-photo-scrub",
+      "category": "gallery",
+      "name": "Navigable Photo Storyline Video Scrub",
+      "looks": "Full-screen canvas pinned in place while the visitor scrolls; high-resolution photos and camera frames smoothly scrub forward and backward like an interactive movie with pinned chapter text.",
+      "build": "HTML5 canvas with requestAnimationFrame drawing preloaded WebP image frames synchronized to scroll progress, with CSS sticky pinned text overlays.",
+      "when": "Product storytelling, brand origins, spatial walk-throughs, and flagship hardware tours.",
+      "avoid": "Utility pages, documentation, or when only low-resolution photography is available.",
+      "cost": "small-js",
+      "techniques": [
+        "canvas-frame-sequence",
+        "gsap-scrolltrigger"
+      ],
+      "mobile": "Shows optimized 720p keyframes with smooth touch scrub or static poster fallback.",
+      "source": "Apple / Awwwards SOTD"
     }
   ]
 }
