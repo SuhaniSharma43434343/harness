@@ -104,6 +104,39 @@ The direction is then planned and held to the choice. `forge go` shows the same 
 
 **Step by step.** At a terminal, `forge go` stops after every phase. It prints a short plain-language summary of what happened and which files hold it (`src/design/summary.mjs`), and goes on only on a yes. `--auto` turns this off; `--steps` turns it on where there is no terminal, and each run of `forge go` then goes one phase further. `runDesignWorkflow` takes `pauseEachPhase` for the same.
 
+**Art direction (workflow 2).** An audit of the built sites found that every design rule said what not to do with surfaces ("no glass, no soft shadows, no gradients"), and nothing said what to do. The agents read that as flat colour and 0 px corners, which is crude brutalism. Workflow 2 now asks for a full art direction and holds the build to it:
+
+- **The craft library.** `registry/craft/patterns.json` and `techniques.json` are copied to `design/reference/craft/` for the agents. They come from research across ten reference galleries (ScrollTide, Navbar Gallery, Refero, Footer Design, 21st.dev, Watermelon UI, Motion.dev, Spline, Paper Shaders, Manus).
+    - Patterns cover heroes, navigation, footers, galleries, products, testimonials, calls to action, FAQs, sections, backgrounds, transitions and interactions. Each one says what it looks like, how to build it, when to use it, its cost and its phone layout.
+    - Techniques cover CSS scroll-driven animation, View Transitions, SVG, Motion, GSAP ScrollTrigger, own shaders, Paper Shaders, Three.js and Spline, each with its script cost and fallback. React Three Fiber and Framer Motion are listed as not in this starter.
+- **`artDirection` in the direction (P3, chosen at B2).** It has:
+    - the visual concept, storytelling, typography and layout;
+    - the hero, navigation and footer archetypes;
+    - transitions, image treatment, gallery and background;
+    - a shader and a 3D decision, each made explicitly with why, where, technique and fallback;
+    - icons and micro-interactions.
+
+  The check refuses the two template heroes, archetypes outside the library, a technique the approach does not allow, and the hero of a recent project in the same workspace given without a reason.
+- **`atmosphere` in the design system (P5).** It has:
+    - surfaces (base, raised, sunken, and glass with one job);
+    - borders (subtle, strong, glow);
+    - a radius scale and tinted elevation;
+    - up to three gradients in the B2 colours;
+    - light, texture and motion.
+
+  The check refuses crude brutalism (square, flat, no depth, light or texture), decoration everywhere (glass on every surface, more than three gradients, heavy blur), off-brand gradient stops, and depth from fewer than two sources. When the build is planned, the harness writes it to `site/src/styles/atmosphere.css` as CSS variables (`src/site/atmosphere.mjs`). The starter ships neutral defaults, so a workflow 1 site looks as before.
+- **`visual` on every section, and `chrome` (P5 section plan).** Each section has an archetype, a focal point, three layers, an image treatment, an interaction, an entrance and a phone composition. Neighbours differ, there is at most one card or grid section per page, and the hero and chrome use the art direction's choices. A photo needs a `treatment`. Motion techniques must be known and stay within the approach's script budget: APP-01's 150 KB plus each other approach's allowance.
+- **The review (P8).** It rejects both extremes and answers a sixth litmus question, `artDirected`. `worksWithoutDecoration` now asks whether the structure stands with the effects off, not for a site without effects.
+- **The build is held to it** (design-fidelity, interactions and the visual review):
+    - `atmosphere-missing`: the page lacks the system's variables;
+    - `art-drift`: a square primary button against a radius scale, a flat colour where light or texture was planned, or a section not marked with its archetype;
+    - `chrome-drift`: the header or footer is not the planned archetype;
+    - `text-covered`: a solid box laid over a heading or text. Images over type, and anything marked `data-overlap`, are compositions, not mistakes.
+
+**Rewrite, not patch, after an approach change.** A fix task normally keeps what is right and changes only what the findings name. When the approach changes, that keeps a plan written for the wrong approach. On the forge-site rebuild, the motion plan stayed the old game plan through two fixes. So changing the approach at the pause marks the plans written for the old one in `design/reference/stale.json` (design system, section plan, motion plan, asset plan, media prompts), and each one's next fix rewrites it from scratch. The operator can ask for the same with `forge design retry <project> <stage> --note "<why>" --fresh`.
+
+**Rebuild after a change.** A build task that finished before the specification last changed (a stage sent back, a new approach, a new B2 or B3) is planned again as a rebuild (`build-<page>-fix-N`), told to replace the earlier work, and the page rebuilds wait for the foundation's. Before this, the finished tasks kept their ids, so a redesigned site was never rebuilt.
+
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
 **The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.

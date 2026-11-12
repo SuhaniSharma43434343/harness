@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { addTask, listTasks, saveTask, transitionTask } from '../core/board.mjs';
 import { agentsForPhase } from '../core/agents.mjs';
 import { advanceProject, exitBlockers } from '../core/advance.mjs';
-import { PermissionDenied } from '../core/errors.mjs';
+import { PermissionDenied, Unavailable } from '../core/errors.mjs';
+import { runLockHolder } from '../core/locks.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { pageTaskId, planPhase, specTask } from '../core/planner.mjs';
 import { loadProject, returnToPhase } from '../core/project.mjs';
@@ -37,7 +38,19 @@ function returnsOf(project, stage, opts) {
 
 // sendBack(project, stageId, problems) moves the project back to the stage's phase and adds a
 // fix task carrying the findings. Returns { returned: true } or, over the limit, { escalated: true }.
-export function sendBack(project, stageId, problems, { actor = 'design-manager', ...opts } = {}) {
+// The stages written for an approach: when the approach changes they are stale, and their next fix
+// rewrites them instead of patching (design/reference/stale.json, written by chooseApproach).
+export const APPROACH_STAGES = ['design-system', 'section-plan', 'motion-plan', 'asset-plan', 'media-prompts'];
+const staleFile = (dir) => join(dir, 'design', 'reference', 'stale.json');
+function takeStale(dir, stageId) {
+  if (!existsSync(staleFile(dir))) return false;
+  const s = JSON.parse(readFileSync(staleFile(dir), 'utf8'));
+  if (!s.stages.includes(stageId)) return false;
+  writeJsonAtomic(staleFile(dir), { ...s, stages: s.stages.filter((x) => x !== stageId) });
+  return true;
+}
+
+export function sendBack(project, stageId, problems, { actor = 'design-manager', fresh: asked = false, ...opts } = {}) {
   const stage = stageById(stageId);
   const { total, sinceRetry } = returnsOf(project, stageId, opts);
   const n = total + 1;
@@ -52,7 +65,9 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
   ledger.append(project, { actor, type: 'note', data: { event: 'design_returned', stage: stageId, attempt: n, problems } }, opts);
   for (const mistake of problems) recordError(project, { agent: stage.agent, stage: stageId, source: String(mistake).startsWith('media rejected') ? 'media-rejected' : 'design-returned', mistake }, opts);
   const brief = readJson(join(assertProjectExists(project, opts).dir, FILES.brief));
-  const fix = addTask(project, withErrorRules(project, specTask(project, stageId, brief, { fix: n, problems }), opts), opts);
+  const fresh = takeStale(assertProjectExists(project, opts).dir, stageId) || asked;
+  if (fresh) ledger.append(project, { actor, type: 'note', data: { event: 'design_rewrite', stage: stageId, attempt: n } }, opts);
+  const fix = addTask(project, withErrorRules(project, specTask(project, stageId, brief, { fix: n, problems, fresh }), opts), opts);
   // Work waiting on this stage now waits on its fix.
   for (const t of listTasks(project, opts)) {
     if (t.status === 'pending' && t.id !== fix.id && t.depends_on.some((d) => d === stage.task || d.startsWith(`${stage.task}-fix-`))) {
@@ -81,7 +96,9 @@ function retryBuild(project, task, opts, findings, { force = false } = {}) {
   const logs = join(dir, 'evidence', 'tasks', task.id);
   const last = existsSync(logs) ? readdirSync(logs).sort().at(-1) : null;
   const output = findings ?? (last ? readFileSync(join(logs, last), 'utf8').split('\n').filter((l) => /^- /.test(l)).slice(0, 25) : []);
-  const n = Number(m[2] ?? 0) + 1;
+  // The next free fix number for this task: a superseded duplicate may already hold the next one.
+  const taken = listTasks(project, opts).map((t) => t.id.match(BUILD_TASK)).filter((x) => x && x[1] === m[1]).map((x) => Number(x[2] ?? 0));
+  const n = Math.max(Number(m[2] ?? 0), ...taken) + 1;
   const id = `${m[1]}-fix-${n}`;
   addTask(project, { ...task, id, status: 'pending', attempts: undefined, blocked_reason: undefined, heartbeat_at: undefined, evidence: [], depends_on: [], idempotency_key: `${project}:${id}:v1`, acceptance: [...output.map((o) => `Fix: ${o.slice(2)}`), ...task.acceptance.filter((a) => !a.startsWith('Fix: '))] }, opts);
   ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'build_retried', task: id } }, opts);
@@ -208,7 +225,7 @@ export function retryBuildTask(project, base, { note, ...opts }) {
   return { task: id };
 }
 
-export function retryStage(project, stageId, { note, ...opts }) {
+export function retryStage(project, stageId, { note, fresh = false, ...opts }) {
   const stage = stageById(stageId);
   if (!stage?.task) throw new PermissionDenied(`"${stageId}" is not a stage an agent works on`, { hint: `Stages: ${STAGES.filter((s) => s.task).map((s) => s.id).join(', ')}` });
   if (!note) throw new PermissionDenied('A retry needs the operator\'s reason as its note');
@@ -218,7 +235,7 @@ export function retryStage(project, stageId, { note, ...opts }) {
     if (t.status === 'blocked' && (t.id === stage.task || t.id.startsWith(`${stage.task}-fix-`))) saveTask(project, { ...t, blocked_reason: reason }, opts);
     if (stageId === 'copy' && t.status === 'pending' && t.id.startsWith('section-plan-sync-')) transitionTask(project, t.id, 'blocked', { actor: 'design-manager', reason, ...opts });
   }
-  return sendBack(project, stageId, [note, ...CHECKS[stageId](assertProjectExists(project, opts).dir)], opts);
+  return sendBack(project, stageId, [note, ...CHECKS[stageId](assertProjectExists(project, opts).dir)], { ...opts, fresh });
 }
 
 // runDesignWorkflow(project, opts) => { stoppedAt, reason, spentUsd, log }
@@ -243,6 +260,8 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     const { phase } = loadProject(project, opts);
     if (phase === stopBefore) return stop('reached');
     if (outOfMoney()) return stop('budget');
+    const holder = runLockHolder(project, opts);
+    if (holder) throw new Unavailable(`Project "${project}" is already being run by process ${holder.pid} on ${holder.host}`, { hint: 'Wait for that run to finish; nothing was planned.' });
     await commandStep(project, phase, opts);
     planPhase(project, opts);
     const summary = await runProject(project, { ...opts, worker: counted, agents: agentsForPhase(phase), verifier: opts.verifier });
@@ -254,7 +273,13 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     if (outOfMoney()) return stop('budget');
     if (summary.errors.length) return stop('error', { errors: summary.errors });
     const tasks = listTasks(project, opts);
-    const blocked = summary.blocked.filter((b) => !isSuperseded(tasks.find((t) => t.id === b.task), tasks));
+    // Only this phase's work: a build task left blocked from an earlier build is planned again as a
+    // rebuild when the build phase comes round, not retried while the design is still being changed.
+    const ours = new Set(agentsForPhase(phase));
+    const blocked = summary.blocked.filter((b) => {
+      const t = tasks.find((x) => x.id === b.task);
+      return t && ours.has(t.agent) && !isSuperseded(t, tasks);
+    });
     if (blocked.length) {
       const task = tasks.find((t) => t.id === blocked[0].task);
       const stage = STAGES.find((s) => task.id === s.task || task.id.startsWith(`${s.task}-fix-`));

@@ -189,3 +189,48 @@ ${ids.map((id) => `<div data-section="${id}"><h2>Heading ${id}</h2><p style="hei
   const good = await fidelity(project(GOOD));
   assert.ok(!good.findings.some((f) => ['cramped-section', 'flat-rhythm', 'hero-no-action'].includes(f.id)));
 });
+
+// Workflow 2: the built site carries the design system's atmosphere and the plan's art direction.
+const ATMO = {
+  surfaces: { base: '#f7f5f0', raised: '#ffffff', sunken: '#efece5', glass: { fill: 'rgba(255, 255, 255, 0.7)', blur: '14px', border: 'rgba(0, 0, 0, 0.1)', use: 'The navigation pill' } },
+  borders: { subtle: '#e2ded5', strong: '#1f1b16', glow: 'rgba(47, 107, 90, 0.35)' },
+  radius: { sm: '6px', md: '14px', lg: '28px' },
+  elevation: { low: '0 1px 2px rgba(0,0,0,.08)', mid: '0 8px 24px rgba(0,0,0,.1)', high: '0 24px 60px rgba(0,0,0,.14)' },
+  gradients: [], lighting: 'A radial light behind the hero', texture: { kind: 'grain', opacity: 0.05 },
+  motion: { easeOut: 'ease-out', fast: '150ms', base: '300ms', slow: '600ms' },
+};
+const artSpec = () => {
+  const plan = structuredClone(SPEC['design/section-plan.json']);
+  plan.pages[0].sections[0].visual = { archetype: 'type-behind-subject', layers: { back: 'A radial light from the top', mid: 'm', front: 'f' } };
+  plan.pages[0].sections[1].visual = { archetype: 'pull-quote-portrait', layers: { back: 'The plain page', mid: 'm', front: 'f' } };
+  plan.chrome = { navigation: { archetype: 'floating-glass-pill' }, footer: { archetype: 'cropped-wordmark-footer' } };
+  return { 'design/section-plan.json': plan, 'design/design-system.json': { ...SPEC['design/design-system.json'], atmosphere: ATMO }, 'design/reference/workflow.json': { version: 2 } };
+};
+const ATMO_CSS = ':root{--radius-md:14px;--surface-1:#ffffff;--elevation-2:0 8px 24px rgba(0,0,0,.1)}';
+
+test('workflow 2: a build that drops the atmosphere, squares the button, flattens the light and loses the archetypes is flagged', { skip }, async () => {
+  const flat = GOOD.replace('<body>', '<body><header><a href="/" style="display:inline-block;padding:12px 20px;background:#222;color:#fff;border-radius:0">Book</a></header>');
+  const r = await fidelity(project(flat, artSpec()));
+  const ids = new Set(r.findings.map((f) => f.id));
+  assert.ok(ids.has('atmosphere-missing'), JSON.stringify(r.findings.map((f) => f.id)));
+  assert.ok(r.findings.some((f) => f.id === 'art-drift' && /primary button is square/.test(f.message)));
+  assert.ok(r.findings.some((f) => f.id === 'art-drift' && /Section promise is planned with "A radial light from the top" behind it, but renders a flat colour/.test(f.message)));
+  assert.ok(r.findings.some((f) => f.id === 'art-drift' && /Section proof is planned as "pull-quote-portrait" but is marked with no data-archetype/.test(f.message)));
+  assert.ok(r.findings.some((f) => f.id === 'chrome-drift' && /header is planned as "floating-glass-pill"/.test(f.message)));
+  assert.equal(r.status, 'fail');
+});
+
+test('workflow 2: a build that carries the atmosphere and the archetypes passes those checks', { skip }, async () => {
+  const good = GOOD
+    .replace('</style>', `${ATMO_CSS}[data-section="promise"]{background-image:radial-gradient(circle at 50% 0%, #e2ded5, transparent 70%)}</style>`)
+    .replace('<div data-section="promise">', '<div data-section="promise" data-archetype="type-behind-subject">')
+    .replace('<div data-section="proof"', '<div data-section="proof" data-archetype="pull-quote-portrait"')
+    .replace('<a href="#proof" style="display:inline-block;padding:12px 20px;background:#222;color:#fff">', '<a href="#proof" style="display:inline-block;padding:12px 20px;background:#222;color:#fff;border-radius:14px">')
+    .replace('<body>', '<body><header data-archetype="floating-glass-pill"><a href="/two">Two</a></header>')
+    .replace('</body>', '<footer data-archetype="cropped-wordmark-footer"><p>Harbor</p></footer></body>');
+  const r = await fidelity(project(good, artSpec()));
+  assert.deepEqual(r.findings.filter((f) => ['atmosphere-missing', 'art-drift', 'chrome-drift'].includes(f.id)), []);
+  // A workflow 1 project is never asked for any of it.
+  const old = await fidelity(project(GOOD));
+  assert.ok(!old.findings.some((f) => ['atmosphere-missing', 'art-drift', 'chrome-drift'].includes(f.id)));
+});

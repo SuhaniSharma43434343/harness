@@ -75,10 +75,25 @@ function probePage({ ids, minVisible }) {
       signature: `${[...lefts].sort((a, b) => a - b).join(',')}|${getComputedStyle(inner).backgroundColor}|${heading ? getComputedStyle(heading).textAlign : ''}`,
       headingFont: heading ? getComputedStyle(heading).fontFamily : null,
       space,
+      // What the art direction asks of the section: a background with light or texture, and its archetype.
+      backImage: [el, ...el.children].some((n) => {
+        const st = getComputedStyle(n);
+        return st.backgroundImage !== 'none' || getComputedStyle(n, '::before').backgroundImage !== 'none' || getComputedStyle(n, '::after').backgroundImage !== 'none';
+      }) || !!el.querySelector('canvas, video'),
+      archetype: el.getAttribute('data-archetype') ?? el.firstElementChild?.getAttribute('data-archetype') ?? null,
     };
   }
   // The first screen's calls to action: visible links and buttons above the fold, outside the
   // navigation menu (a header button counts, a menu link does not).
+  // The atmosphere as the page has it, the primary button's shape, and the chrome's archetype marks.
+  const root = getComputedStyle(document.documentElement);
+  out.atmosphere = { radiusMd: root.getPropertyValue('--radius-md').trim(), elevation2: root.getPropertyValue('--elevation-2').trim(), surface1: root.getPropertyValue('--surface-1').trim() };
+  const primary = [...document.querySelectorAll('main a[href], main button, header a[href], header button')].find((b) => {
+    const st = getComputedStyle(b);
+    return b.getBoundingClientRect().width > 0 && st.backgroundColor !== 'rgba(0, 0, 0, 0)' && parseFloat(st.paddingLeft) >= 8;
+  });
+  out.buttonRadius = primary ? parseFloat(getComputedStyle(primary).borderTopLeftRadius) : null;
+  out.chrome = { navigation: document.querySelector('header [data-archetype], header[data-archetype]')?.getAttribute('data-archetype') ?? null, footer: document.querySelector('footer [data-archetype], footer[data-archetype]')?.getAttribute('data-archetype') ?? null };
   out.firstScreenActions = [...document.querySelectorAll('a[href], button, [role="button"], input[type="submit"]')].filter((a) => {
     if (a.closest('nav')) return false;
     const r = a.getBoundingClientRect();
@@ -242,6 +257,22 @@ export default {
 
           // The home page's first screen gives the visitor something to do. Under workflow 2 a hero
           // without one is a defect; for an older project it is reported as advice.
+          // Workflow 2: the builder built the art direction, not its own idea of it.
+          if (v2 && system?.atmosphere && vp.name === 'desktop') {
+            const want = system.atmosphere;
+            const norm2 = (x) => String(x).replace(/\s+/g, '');
+            if (norm2(probe.atmosphere.radiusMd) !== norm2(want.radius.md) || norm2(probe.atmosphere.surface1).toLowerCase() !== norm2(want.surfaces.raised).toLowerCase()) add('atmosphere-missing', 'serious', `The page does not carry the design system's atmosphere (--radius-md is "${probe.atmosphere.radiusMd}", --surface-1 is "${probe.atmosphere.surface1}"): keep site/src/styles/atmosphere.css as the harness wrote it`, where);
+            const square = ['sm', 'md', 'lg'].every((k) => /^0(px)?$/.test(want.radius[k]));
+            if (!square && probe.buttonRadius === 0) add('art-drift', 'serious', `The primary button is square, but the design system's radius scale is ${want.radius.sm} / ${want.radius.md} / ${want.radius.lg}`, where);
+            for (const planned of pagePlan.sections) {
+              const s = probe.sections[planned.id];
+              const back = planned.visual?.layers?.back ?? '';
+              if (s && /gradient|light|glow|mesh|radial|grain|texture|shader|noise/i.test(back) && !s.backImage) add('art-drift', 'serious', `Section ${planned.id} is planned with "${back.slice(0, 60)}" behind it, but renders a flat colour`, where);
+              if (s && planned.visual && planned.visual.archetype !== s.archetype) add('art-drift', 'moderate', `Section ${planned.id} is planned as "${planned.visual.archetype}" but is marked ${s.archetype ? `"${s.archetype}"` : 'with no data-archetype'}`, where);
+            }
+            const chrome = plan.chrome ?? {};
+            for (const k of ['navigation', 'footer']) if (chrome[k] && probe.chrome[k] !== chrome[k].archetype) add('chrome-drift', 'moderate', `The ${k === 'navigation' ? 'header' : 'footer'} is planned as "${chrome[k].archetype}" but is marked ${probe.chrome[k] ? `"${probe.chrome[k]}"` : 'with no data-archetype'}`, where);
+          }
           if (route === '/' && probe.firstScreenActions === 0) add('hero-no-action', v2 ? 'serious' : 'moderate', `The first screen of the home page has no call to action (no button or link outside the menu) at ${vp.name}`, where);
           if (vp.name === 'desktop') {
             const spaced = pagePlan.sections.map((p) => probe.sections[p.id]).filter((s) => s?.space && s.height >= 200);

@@ -27,6 +27,8 @@ export const SCHEMAS = {
   estimate: 'estimate.schema.json',
   // Industry playbooks: what each kind of business needs from its site.
   industryPlaybook: 'industry-playbook.schema.json',
+  // The craft library: composition patterns and techniques (registry/craft/).
+  patternLibrary: 'pattern-library.schema.json',
   // QA Verifier (Nidhi, T24).
   defectReport: 'defect-report.schema.json',
   // Remember My Error: the project's log of agent mistakes.

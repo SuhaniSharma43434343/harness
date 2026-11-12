@@ -16,7 +16,7 @@ import { buildTargets, MAX_STAGE_RETURNS, retryBuildTask, retryStage, runDesignW
 import { CHECKS, contentRuleProblems, funnelProblems, isSuperseded, loadMethodologies, readiness, sectionUse, writeLockedPages } from '../../src/design/spec.mjs';
 import { createBudget, limitedWorker } from '../../src/core/spend.mjs';
 import { classifyGate } from '../../src/design/release.mjs';
-import { tokensFromDirection } from '../../src/site/tokens.mjs';
+import { mix, tokensFromDirection } from '../../src/site/tokens.mjs';
 import { STUB_MARK, stubsLeft, withSiteLock } from '../../src/qa/visual.mjs';
 import { addTasks, newProject, task } from './helpers.mjs';
 import { agentsForPhase } from '../../src/core/agents.mjs';
@@ -1037,6 +1037,46 @@ const FAQ_ITEMS = [
   ['Do you do small jobs as well as whole houses?', 'Kitchens, bathrooms and single rooms are most of the work, and a whole-house renovation is planned room by room so you can live in the rest of it.'],
   ['How do I start, and what does the first visit cost?', 'Book a home visit. The site lead measures the room, talks through what you want, and the drawing and the itemised quote follow in writing.'],
 ];
+// Workflow 2 art direction, atmosphere and section visuals, for the complete fixture.
+const ART = {
+  visualConcept: 'The house as a ship carpenter sees it: measured lines, warm timber light and nothing square',
+  storytelling: 'Each page walks from the crooked room to the fitted result, one measured step at a time',
+  typography: 'A sturdy serif at poster scale for one line per page, a bookish serif for reading, tight leading on display lines',
+  layout: 'A twelve column grid measured off a visible rule, with images bleeding off one edge and text cards overlapping them',
+  hero: { archetype: 'type-behind-subject', description: 'The firm name split across the width at poster scale, with a cut-out of the site lead and his rule standing in the gap' },
+  navigation: { archetype: 'floating-glass-pill', description: 'A compact pill floating near the top centre with the wordmark, three links and a dark call to action, over a frosted fill' },
+  footer: { archetype: 'cropped-wordmark-footer', description: 'The firm name set across the full width at poster scale, its baseline cut by the bottom edge, with the links in a thin row above' },
+  transitions: 'Sections hand over along the measured rule, which carries across each seam into the next section',
+  imageTreatment: 'Unretouched site photographs in a warm duotone of timber and forest green, cropped tight on hands and joints',
+  gallery: 'One large finished room with two smaller details stacked beside it, specifications floating on glass chips',
+  background: { effect: 'A soft radial light from the top of the hero, like a window on an old staircase', technique: 'css-scroll-timeline' },
+  shader: { use: false, why: 'A renovation firm needs warm photographs more than a moving background' },
+  threeD: { use: false, why: 'There is no product to turn, and phones on site are slow' },
+  icons: 'Thin two pixel line icons drawn like carpenter marks, at twenty four pixels, in the text colour',
+  microInteractions: ['The rule under a link thickens on hover', 'A button drops two pixels when pressed', 'The quote total ticks once when it scrolls in'],
+};
+const ATMOSPHERE = {
+  surfaces: { base: '#fbf8f3', raised: '#f2ede5', sunken: '#ece5da', glass: { fill: 'rgba(251, 248, 243, 0.72)', blur: '14px', border: 'rgba(31, 27, 22, 0.12)', use: 'The floating navigation pill only' } },
+  borders: { subtle: '#ddd5ca', strong: '#1f1b16', glow: 'rgba(47, 107, 90, 0.35)' },
+  radius: { sm: '6px', md: '14px', lg: '28px' },
+  elevation: { low: '0 1px 2px rgba(31, 27, 22, 0.08)', mid: '0 8px 24px rgba(31, 27, 22, 0.10)', high: '0 24px 60px rgba(31, 27, 22, 0.14)' },
+  gradients: [{ name: 'window-light', kind: 'radial', stops: ['#f2ede5', '#fbf8f3'], use: 'The light behind the hero' }],
+  lighting: 'One warm radial light from the top of the hero, like a window on an old staircase',
+  texture: { kind: 'paper', opacity: 0.05 },
+  motion: { easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)', fast: '150ms', base: '300ms', slow: '600ms' },
+};
+const VISUALS = { promise: 'type-behind-subject', 'quote-rule': 'editorial-split-overlap', 'old-houses': 'asymmetric-feature-gallery', process: 'sticky-stack', proof: 'pull-quote-portrait', decide: 'split-faq-index' };
+const visual = (archetype) => ({
+  archetype, focalPoint: 'The large display line, then the photograph',
+  layers: { back: 'The warm window light', mid: 'The duotone photograph', front: 'The type and the call to action' },
+  imageTreatment: 'Warm duotone, cropped tight on the joint', interaction: 'Hovering the image lifts it two pixels',
+  transitionIn: 'Rises twelve pixels and settles on entry', mobileComposition: 'The photograph first, the text card overlapping its foot',
+});
+const CHROME = {
+  navigation: { archetype: 'floating-glass-pill', composition: 'A pill near the top centre with the wordmark, links and a call to action', mobile: 'The links fold into one menu button inside the pill', behaviour: 'Stays put and gains a soft shadow once the hero has passed' },
+  footer: { archetype: 'cropped-wordmark-footer', composition: 'The firm name across the full width, its baseline cut off', mobile: 'The wordmark stays, the links stack', behaviour: 'The wordmark rises into place as it scrolls in' },
+};
+
 function v2Spec() {
   const s = spec();
   const home = s['design/section-plan.json'].pages[0];
@@ -1047,12 +1087,14 @@ function v2Spec() {
   for (const [id, step, bucket, media] of steps) Object.assign(home.sections.find((x) => x.id === id), { hierarchyStep: step, contentBucket: bucket, media });
   home.sections.push({ ...structuredClone(home.sections[4]), id: 'decide', pattern: 'list-editorial', assets: [], funnel: 'action', hierarchyStep: 6, contentBucket: 'reachUs', media: 'x-factor-tool' });
   home.flow = 'primary';
+  for (const sec of home.sections) sec.visual = visual(VISUALS[sec.id]);
+  s['design/section-plan.json'].chrome = structuredClone(CHROME);
   const copy = s['content/copy.json'];
   copy.pages[0].sections.push({ id: 'decide', headline: 'What people ask before they book', items: FAQ_ITEMS.map(([title, text]) => ({ title, text })), cta: { label: 'Book a visit', href: 'tel:2075550142' } });
   return {
     ...s,
-    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY },
-    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS },
+    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY, artDirection: structuredClone(ART) },
+    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS, atmosphere: structuredClone(ATMOSPHERE) },
     'design/reference/workflow.json': { version: 2 },
   };
 }
@@ -1086,7 +1128,7 @@ test('the design system refuses default buttons, a no-name navigation bar, purpl
   assert.match(defaults, /components.navigation.style must say what makes this navigation bar this brand's/);
   assert.match(CHECKS['design-system'](ds((x) => ({ ...x, color: { ...x.color, secondary: '#7c3aed' }, visualLanguage: [...x.visualLanguage, 'A violet gradient wash behind every hero'] }))).join('\n'), /purple-violet gradient/);
   assert.doesNotMatch(CHECKS['design-system'](ds((x) => ({ ...x, visualLanguage: [...x.visualLanguage, 'A paper-to-sand gradient at the foot of each page'] }))).join('\n'), /purple-violet/, 'a gradient in the brand colours is fine');
-  assert.match(CHECKS['design-system'](ds((x) => ({ ...x, surfaces: { borders: 'None', shadows: 'Soft diffuse shadows under every panel', radius: 'Rounded 24px corners', treatments: 'Frosted glass panels' } }))).join('\n'), /glass, soft shadows and rounded corners are the whole surface language/);
+  assert.match(CHECKS['design-system'](ds((x) => ({ ...x, atmosphere: { ...x.atmosphere, surfaces: { ...x.atmosphere.surfaces, glass: { ...x.atmosphere.surfaces.glass, use: 'Every panel and card' } } } }))).join('\n'), /glass on every surface is decoration/);
 });
 
 test('every section names its step, bucket and media; a primary page runs the six steps in order', () => {
@@ -1146,14 +1188,14 @@ test('the contracts tell each stage about the identity, the six steps, the bucke
 });
 
 // Workflow 2, Stage 2 tracks 4A and 4B, and the anti-slop gate before development.
-const PHOTO = { id: 'workshop', kind: 'photo', description: 'The site lead measuring a crooked doorframe in an old Portland kitchen', source: 'licensed', file: 'photos/workshop.jpg', licence: 'Unsplash', alt: 'A carpenter measuring an old doorframe' };
+const PHOTO = { id: 'workshop', kind: 'photo', treatment: 'Warm duotone, cropped tight on the hands', description: 'The site lead measuring a crooked doorframe in an old Portland kitchen', source: 'licensed', file: 'photos/workshop.jpg', licence: 'Unsplash', alt: 'A carpenter measuring an old doorframe' };
 const PROMPT = { section: 'quote-rule', asset: 'workshop', format: 'photo', aspect: '3:2',
   prompt: 'A carpenter in a worn canvas apron measures a crooked painted doorframe in an old Portland kitchen, morning light from a sash window, warm paper tones, shot at eye level on a 35mm lens, shallow depth of field',
   negative: 'AI artefacts, warped hands or text, plastic skin, purple light, stock-photo smiles' };
 const STYLE_LOCK = 'Warm paper and forest green, soft morning window light, 35mm documentary framing, fine film grain, calm and exact';
 function mediaProject(change = (x) => x) {
   return v2Project((s) => {
-    s['design/asset-plan.json'].assets.push(PHOTO);
+    s['design/asset-plan.json'].assets.push(structuredClone(PHOTO));
     Object.assign(s['design/section-plan.json'].pages[0].sections.find((x) => x.id === 'quote-rule'), { media: 'photo', assets: ['kitchen', 'workshop'] });
     s['design/media-prompts.json'] = { styleLock: STYLE_LOCK, prompts: [PROMPT] };
     s['assets/public/photos/workshop.jpg'] = 'jpeg bytes';
@@ -1167,6 +1209,7 @@ const LITMUS = {
   everySectionHasAReason: { answer: 'yes', note: 'Each section is one of the six steps' },
   claimsRealAndSourced: { answer: 'yes', note: 'Every claim is in content/claims.json' },
   rhythmAndPointOfView: { answer: 'yes', note: 'Tight and generous sections alternate around one idea' },
+  artDirected: { answer: 'yes', note: 'The window light, the duotone and the measured rule come from one idea' },
 };
 
 test('the media tracks are workflow 2 only: an older project is never asked for prompts or a media check', () => {
@@ -1239,7 +1282,7 @@ test('copy and the media prompts start together after the plans, and the review 
   setPhase(v2.dir, 'TECHNICAL_PLAN');
   const [review] = planPhase(v2.project, v2.opts).filter((t) => t.id.startsWith('design-review'));
   assert.ok(review.inputs.includes('design/media-prompts.json') && review.inputs.includes('design/media-review.json') && review.inputs.includes('content/copy.json'), 'the review sees layout, copy and media together');
-  assert.match(review.acceptance.join('\n'), /everything is a card; purple gradients; random floating orbs[\s\S]*couldBeAnyCompany/);
+  assert.match(review.acceptance.join('\n'), /everything is a card;[\s\S]*purple gradients; random floating orbs[\s\S]*harsh brutalist boxes[\s\S]*couldBeAnyCompany[\s\S]*artDirected/);
   // The phases run copy and media before the review: CONTENT and ASSETS_LICENSING come before TECHNICAL_PLAN.
   const order = PHASES.map((p) => p.name);
   assert.ok(order.indexOf('CONTENT') < order.indexOf('TECHNICAL_PLAN') && order.indexOf('ASSETS_LICENSING') < order.indexOf('TECHNICAL_PLAN'));
@@ -1252,7 +1295,7 @@ test('copy and the media prompts start together after the plans, and the review 
 test('the anti-slop gate: the review answers the five litmus questions, and a failing answer cannot be ready', () => {
   const review = (r) => mediaProject((s) => ({ ...s, 'design/review.json': r })).dir;
   const base = { verdict: 'ready', summary: 'The site holds together', findings: [] };
-  assert.match(CHECKS.review(review(base)).join('\n'), /answer the five litmus questions/);
+  assert.match(CHECKS.review(review(base)).join('\n'), /answer the six litmus questions/);
   assert.deepEqual(CHECKS.review(review({ ...base, litmus: LITMUS })), []);
   const generic = { ...base, litmus: { ...LITMUS, couldBeAnyCompany: { answer: 'yes', note: 'Swap the name and it is any builder' }, worksWithoutDecoration: { answer: 'no', note: 'Without the gradients it is empty' } } };
   assert.match(CHECKS.review(review(generic)).join('\n'), /the litmus fails \(couldBeAnyCompany, worksWithoutDecoration\), so the verdict must be "changes"/);
@@ -1353,4 +1396,243 @@ test('each phase has a plain summary of what happened and which files hold it', 
   assert.match(summaryLines(phaseSummary(dir, 'TECHNICAL_PLAN')).join('\n'), /ready to build/);
   assert.match(phaseSummary(dir, 'PREVIEW_REPORT').lines[0], /The preview report step is done/);
   for (const line of Object.keys(PHASES).length ? summaryLines(phaseSummary(dir, 'RESEARCH')) : []) assert.ok(line.length < 260, 'lines stay short');
+});
+
+// Workflow 2, art direction: the craft library, the art direction at B2, the atmosphere, how each section
+// looks, and the review's sixth litmus answer.
+test('the craft library validates: archetypes for every place, the two template heroes marked, React techniques kept out', async () => {
+  const lib = (f) => JSON.parse(readFileSync(new URL(`../../registry/craft/${f}.json`, import.meta.url), 'utf8'));
+  const patterns = lib('patterns');
+  const techniques = lib('techniques');
+  assert.deepEqual(check('patternLibrary', patterns).errors, []);
+  assert.deepEqual(check('patternLibrary', techniques).errors, []);
+  const usable = (cat) => patterns.patterns.filter((p) => p.category === cat && !p.banned);
+  assert.ok(usable('hero').length >= 8, 'at least 8 heroes');
+  assert.ok(usable('navigation').length >= 6, 'at least 6 navigation bars');
+  assert.ok(usable('footer').length >= 6, 'at least 6 footers');
+  assert.deepEqual(patterns.patterns.filter((p) => p.banned).map((p) => p.id).sort(), ['centred-over-photo', 'split-headline-photo']);
+  const ids = new Set(techniques.techniques.map((t) => t.id));
+  for (const p of patterns.patterns) for (const t of p.techniques ?? []) assert.ok(ids.has(t), `${p.id} names a known technique: ${t}`);
+  assert.deepEqual(techniques.techniques.filter((t) => t.inStarter === false).map((t) => t.id).sort(), ['framer-motion', 'react-three-fiber']);
+  assert.equal(new Set(patterns.patterns.map((p) => p.id)).size, patterns.patterns.length, 'ids are unique');
+});
+
+test('the art direction is decided before B2, from the library, with shader and 3D decided explicitly', () => {
+  const art = (change) => v2Project((s) => ({ ...s, 'design/direction.json': { ...s['design/direction.json'], artDirection: change(structuredClone(ART)) } })).dir;
+  assert.match(CHECKS.direction(v2Project((s) => ({ ...s, 'design/direction.json': { ...s['design/direction.json'], artDirection: undefined } })).dir).join('\n'), /artDirection is missing/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, hero: { ...a.hero, archetype: 'giant-hero' } }))).join('\n'), /artDirection.hero: "giant-hero" is not a hero archetype/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, hero: { ...a.hero, archetype: 'split-headline-photo' } }))).join('\n'), /is the hero every generated site already has/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, footer: { ...a.footer, archetype: 'floating-glass-pill' } }))).join('\n'), /footer: "floating-glass-pill" is not a footer archetype/, 'an archetype from the wrong category');
+  assert.deepEqual(CHECKS.direction(art((a) => ({ ...a, hero: { archetype: 'custom', description: a.hero.description, reason: 'The client\'s founder insists on his hand-drawn plan' } }))), [], 'custom with a reason');
+  assert.match(CHECKS.direction(art((a) => ({ ...a, shader: { use: true, why: 'A moving light would suit the window idea' } }))).join('\n'), /shader: when it is used, name a technique/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, shader: { use: true, why: 'A moving light would suit the window idea', technique: 'glsl-shader', where: 'Behind the hero only', fallback: 'The same radial light in CSS' } }))).join('\n'), /Own GLSL shader belongs to APP-05 or APP-07, not APP-01/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, threeD: { use: true, why: 'Turning the kitchen would help', technique: 'react-three-fiber', where: 'The kitchen section', fallback: 'A photo of the kitchen' } }))).join('\n'), /needs a React integration this starter does not have/);
+  assert.match(CHECKS.direction(art((a) => ({ ...a, typography: 'Serif' }))).join('\n'), /artDirection.typography must be decided in a full sentence/);
+});
+
+test('the same hero as a recent project in the workspace needs a reason', () => {
+  const { dir } = v2Project();
+  write(dirname(dir), 'earlier/design/direction.json', { artDirection: { hero: { archetype: 'type-behind-subject' } } });
+  assert.match(CHECKS.direction(dir).join('\n'), /"type-behind-subject" was the hero of a recent project in this workspace/);
+  const d = JSON.parse(readFileSync(join(dir, 'design/direction.json'), 'utf8'));
+  d.artDirection.hero.reason = 'The cut-out of the site lead is the strongest image the client has';
+  write(dir, 'design/direction.json', d);
+  assert.doesNotMatch(CHECKS.direction(dir).join('\n'), /recent project/);
+});
+
+test('the atmosphere refuses both extremes: crude brutalism and decoration everywhere, and off-brand gradients', async () => {
+  const { atmosphereProblems, onBrand } = await import('../../src/site/atmosphere.mjs');
+  const palette = Object.values(COLOURS);
+  assert.deepEqual(atmosphereProblems(ATMOSPHERE, palette), [], 'a balanced atmosphere passes');
+  const brutal = { ...ATMOSPHERE, radius: { sm: '0', md: '0px', lg: '0' }, elevation: { low: 'none', mid: 'none', high: 'none' }, gradients: [], texture: { kind: 'none', opacity: 0 } };
+  const b = atmosphereProblems(brutal, palette).join('\n');
+  assert.match(b, /is crude brutalism: square corners, no depth, no light and no texture/);
+  assert.match(b, /has depth from only 1 source/);
+  const busy = { ...ATMOSPHERE, gradients: [1, 2, 3, 4].map((i) => ({ name: `g${i}`, kind: 'mesh', stops: ['#2f6b5a', '#fbf8f3'], use: 'A wash' })), surfaces: { ...ATMOSPHERE.surfaces, glass: { ...ATMOSPHERE.surfaces.glass, blur: '40px', use: 'Every card and panel' } } };
+  const d = atmosphereProblems(busy, palette).join('\n');
+  assert.match(d, /has 4 gradients; more than three is decoration/);
+  assert.match(d, /glass on every surface is decoration/);
+  assert.match(d, /a 40px glass blur is heavy for phones/);
+  assert.match(atmosphereProblems({ ...ATMOSPHERE, gradients: [{ name: 'neon', kind: 'linear', stops: ['#7c3aed', '#fbf8f3'], use: 'Hero' }] }, palette).join('\n'), /gradient "neon" uses #7c3aed, which is not one of the B2 colours/);
+  assert.equal(onBrand(mix('#2f6b5a', '#fbf8f3', 0.5), palette), true, 'a tint of a B2 colour is on brand');
+  assert.match(atmosphereProblems(undefined, palette)[0], /atmosphere is missing/);
+  assert.match(CHECKS['design-system'](v2Project((s) => ({ ...s, 'design/design-system.json': { ...s['design/design-system.json'], atmosphere: brutal } })).dir).join('\n'), /crude brutalism/, 'the design-system check applies it');
+});
+
+test('the atmosphere becomes CSS variables, written for the build where the builder cannot drop them', async () => {
+  const { atmosphereCss, ATMOSPHERE_VARS } = await import('../../src/site/atmosphere.mjs');
+  const css = atmosphereCss(ATMOSPHERE);
+  for (const v of ATMOSPHERE_VARS) assert.match(css, new RegExp(`${v}: `), v);
+  assert.match(css, /--radius-md: 14px;/);
+  assert.match(css, /--surface-glass: rgba\(251, 248, 243, 0.72\);/);
+  assert.match(css, /--gradient-window-light: radial-gradient\(circle at 30% 20%, #f2ede5, #fbf8f3\);/);
+  assert.match(css, /--grain-opacity: 0.05;/);
+  const starter = readFileSync(new URL('../../starters/astro-base/src/styles/atmosphere.css', import.meta.url), 'utf8');
+  for (const v of ATMOSPHERE_VARS) assert.match(starter, new RegExp(`${v}: `), `the starter's neutral default has ${v}`);
+  // Planning the build of a workflow 2 project writes the file over the starter's defaults.
+  // A complete workflow 2 project: research with the Truth Doc, both media tracks and a reviewed plan.
+  const { project, opts, dir } = mediaProject((s) => {
+    const p = s['research/positioning.json'];
+    s['research/positioning.json'] = { ...p, ...TRUTH, competitors: p.competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' })) };
+    s['research/crux.json'] = { ...s['research/crux.json'], buyerQuestions: BUYER_QUESTIONS };
+    s['design/review.json'] = { ...s['design/review.json'], litmus: { ...LITMUS } };
+    return s;
+  });
+  assert.deepEqual(readiness(dir).stages.filter((x) => !x.ok).map((x) => x.problems).flat(), [], 'the fixture is ready to build');
+  write(dir, 'site/package.json', { name: 'site' });
+  setPhase(dir, 'BUILD');
+  planPhase(project, opts);
+  assert.equal(readFileSync(join(dir, 'site/src/styles/atmosphere.css'), 'utf8'), css);
+  assert.match(readFileSync(new URL('../../starters/astro-base/src/layouts/Base.astro', import.meta.url), 'utf8'), /import '..\/styles\/atmosphere.css';/);
+  const foundation = listTasks(project, opts).find((t) => t.id === 'build-foundation');
+  assert.match(foundation.acceptance.join('\n'), /data-archetype="<its archetype>"[\s\S]*Keep site\/src\/styles\/atmosphere.css as the harness wrote it/);
+});
+
+test('every section is planned for how it looks: a visual, different neighbours, few card grids, the chosen hero and chrome', () => {
+  const plan = (change) => v2Project((s) => { change(s['design/section-plan.json']); return s; }).dir;
+  assert.deepEqual(CHECKS['section-plan'](plan(() => {})), []);
+  assert.match(CHECKS['section-plan'](plan((x) => { delete x.pages[0].sections[2].visual; })).join('\n'), /old-houses: describe how it looks in "visual"/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[2].visual.archetype = 'editorial-split-overlap'; })).join('\n'), /old-houses: the same archetype \("editorial-split-overlap"\) as the section before it/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[2].visual.archetype = 'bento-features'; x.pages[0].sections[4].visual.archetype = 'cards-footer'; })).join('\n'), /\/: 2 sections use a card or grid archetype; at most one per page/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[0].visual.archetype = 'composer-hero'; })).join('\n'), /promise: the hero's archetype is "composer-hero", but the art direction chose "type-behind-subject"/);
+  assert.match(CHECKS['section-plan'](plan((x) => { delete x.chrome; })).join('\n'), /plan the navigation and footer in "chrome"/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.chrome.footer.archetype = 'cards-footer'; })).join('\n'), /chrome.footer is "cards-footer", but the art direction chose "cropped-wordmark-footer"/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[1].visual.interaction = 'Hover'; })).join('\n'), /quote-rule: visual.interaction must say what the visitor sees/);
+});
+
+test('a photo needs a treatment, and the motion techniques stay known and within the script budget', () => {
+  const { dir } = mediaProject((s) => { delete s['design/asset-plan.json'].assets.find((a) => a.id === 'workshop').treatment; return s; });
+  assert.match(CHECKS['asset-plan'](dir).join('\n'), /photo workshop needs a "treatment"/);
+  const motion = (techniques) => v2Project((s) => { s['design/motion-plan.json'].motions.forEach((m, i) => { if (techniques[i]) m.technique = techniques[i]; }); return s; }).dir;
+  assert.deepEqual(CHECKS['motion-plan'](motion(['motion-dev', 'css-scroll-timeline'])), []);
+  assert.match(CHECKS['motion-plan'](motion(['tween-max'])).join('\n'), /technique "tween-max" is not in design\/reference\/craft\/techniques.json/);
+  assert.match(CHECKS['motion-plan'](motion(['three-scene', 'gsap-scrolltrigger', 'motion-dev'])).join('\n'), /the techniques cost about 208 KB of script \(three-scene, gsap-scrolltrigger, motion-dev\), over the 150 KB this approach allows/);
+});
+
+test('the review answers a sixth litmus question: is the site art-directed from one concept', () => {
+  const review = (r) => mediaProject((s) => ({ ...s, 'design/review.json': r })).dir;
+  const base = { verdict: 'ready', summary: 'The site holds together', findings: [] };
+  const { artDirected: _a, ...five } = LITMUS;
+  assert.match(CHECKS.review(review({ ...base, litmus: five })).join('\n'), /answer the sixth litmus question, "artDirected"/);
+  assert.match(CHECKS.review(review({ ...base, litmus: { ...LITMUS, artDirected: { answer: 'no', note: 'Flat boxes, nothing from the window idea' } } })).join('\n'), /the litmus fails \(artDirected\)/);
+});
+
+test('the contracts carry the art direction to every stage and to the builder', () => {
+  const lines = (stage) => specTask('demo', stage, BRIEF).acceptance.join('\n');
+  assert.match(lines('direction'), /"artDirection"[\s\S]*"visualConcept"[\s\S]*"shader" and "threeD"[\s\S]*"microInteractions"/);
+  assert.match(lines('direction'), /crude brutalism: square flat boxes, three flat colours/);
+  assert.match(lines('direction'), /split-headline-photo and centred-over-photo/);
+  assert.match(lines('design-system'), /"atmosphere"[\s\S]*"radius" \(sm, md, lg: a scale, not one value\)[\s\S]*--surface-glass/);
+  assert.match(lines('section-plan'), /Describe how every section LOOKS in "visual"[\s\S]*an asymmetric gallery, one large featured product[\s\S]*"chrome"/);
+  assert.match(lines('asset-plan'), /Every photo has a "treatment"/);
+  assert.match(lines('motion-plan'), /"technique": a technique id from design\/reference\/craft\/techniques.json/);
+});
+
+test('when the approach changes, the plans written for the old one are rewritten, not patched', async () => {
+  const { chooseApproach } = await import('../../src/design/approach-guide.mjs');
+  const { project, opts, dir } = await approachProject();
+  write(dir, 'design/direction.json', spec()['design/direction.json']);
+  chooseApproach(project, 'APP-02', { note: 'A cinematic story suits the launch', ...opts });
+  const stale = JSON.parse(readFileSync(join(dir, 'design/reference/stale.json'), 'utf8'));
+  assert.deepEqual([stale.from, stale.to], ['APP-01', 'APP-02']);
+  assert.deepEqual(stale.stages, ['design-system', 'section-plan', 'motion-plan', 'asset-plan'], 'only the plans that exist');
+  setPhase(dir, 'TECHNICAL_PLAN');
+  sendBack(project, 'motion-plan', ['motion-plan.json still describes the old approach'], opts);
+  const fix = listTasks(project, opts).find((t) => t.id === 'motion-plan-fix-1');
+  assert.match(fix.acceptance.join('\n'), /Rewrite this file from scratch for the current design\/direction.json/);
+  assert.doesNotMatch(fix.acceptance.join('\n'), /Keep what is already right/);
+  assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_rewrite' && e.data.stage === 'motion-plan'));
+  // Taken once: the next return of the same stage patches again.
+  setPhase(dir, 'TECHNICAL_PLAN');
+  sendBack(project, 'motion-plan', ['one small thing'], opts);
+  assert.match(listTasks(project, opts).find((t) => t.id === 'motion-plan-fix-2').acceptance.join('\n'), /Keep what is already right/);
+  // Choosing the same approach again marks nothing.
+  const again = await approachProject();
+  write(again.dir, 'design/direction.json', spec()['design/direction.json']);
+  chooseApproach(again.project, 'APP-01', { note: 'Same as before', ...again.opts });
+  assert.ok(!existsSync(join(again.dir, 'design/reference/stale.json')));
+});
+
+test('the operator can ask for a fresh rewrite on a retry', () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'TECHNICAL_PLAN');
+  retryStage(project, 'section-plan', { note: 'The plan still uses the railway vocabulary; rewrite it as the film reel', fresh: true, ...opts });
+  const fix = listTasks(project, opts).find((t) => t.id.startsWith('section-plan-fix'));
+  assert.match(fix.acceptance[0], /^Fix: The plan still uses the railway vocabulary/);
+  assert.match(fix.acceptance.join('\n'), /Rewrite this file from scratch/);
+  retryStage(project, 'section-plan', { note: 'A small wording fix', ...opts });
+  const fixes = listTasks(project, opts).filter((t) => t.id.startsWith('section-plan-fix'));
+  assert.match(fixes.at(-1).acceptance.join('\n'), /Keep what is already right/, 'without --fresh a retry patches');
+});
+
+test('build tasks finished before the specification changed are planned again as rebuilds, pages after the foundation', () => {
+  const { project, opts, dir } = mediaProject((s) => {
+    const p = s['research/positioning.json'];
+    s['research/positioning.json'] = { ...p, ...TRUTH, competitors: p.competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' })) };
+    s['research/crux.json'] = { ...s['research/crux.json'], buyerQuestions: BUYER_QUESTIONS };
+    s['design/review.json'] = { ...s['design/review.json'], litmus: { ...LITMUS } };
+    return s;
+  });
+  write(dir, 'site/package.json', { name: 'site' });
+  setPhase(dir, 'BUILD');
+  const first = planPhase(project, opts).map((t) => t.id);
+  assert.deepEqual(first, ['build-foundation', 'build-page-home']);
+  // Nothing changed since they finished: nothing to rebuild.
+  for (const id of first) ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: id, from: 'verifying', to: 'done' } }, opts);
+  for (const id of first) saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['x'] }, opts);
+  assert.deepEqual(planPhase(project, opts), []);
+  // The section plan is sent back and fixed: the finished build is of an older design.
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'section-plan', attempt: 1, problems: ['x'] } }, opts);
+  const again = planPhase(project, opts);
+  assert.deepEqual(again.map((t) => t.id), ['build-foundation-fix-1', 'build-page-home-fix-1']);
+  assert.match(again[0].acceptance[0], /^Rebuild: the specification changed after this was built/);
+  assert.deepEqual(again[1].depends_on, ['build-foundation-fix-1'], 'the page waits for the rebuilt foundation');
+  // Once the rebuilds finish, the plan is settled.
+  for (const t of again) ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: t.id, from: 'verifying', to: 'done' } }, opts);
+  for (const t of again) saveTask(project, { ...listTasks(project, opts).find((x) => x.id === t.id), status: 'done', evidence: ['x'] }, opts);
+  assert.deepEqual(planPhase(project, opts), []);
+});
+
+test('the design system names the B2 faces first: a text that only mentions them is a swap', () => {
+  const ds = (typography) => fullProject({ 'design/design-system.json': { ...spec()['design/design-system.json'], typography: { ...spec()['design/design-system.json'].typography, ...typography } } }).dir;
+  assert.deepEqual(CHECKS['design-system'](ds({ display: 'Fraunces (OFL-1.1, via Fontsource) set at 700 with tight tracking' })).filter((p) => /face/.test(p)), []);
+  const swapped = CHECKS['design-system'](ds({ display: 'Barlow Condensed (OFL-1.1) set heavy and condensed, replacing Fraunces for the signage look', body: 'Source Sans 3, a calm sans; Lora is kept for nothing' })).join('\n');
+  assert.match(swapped, /the display face must be the B2 choice, Fraunces, named first \(it names "barlow condensed"\)/);
+  assert.match(swapped, /the body face must be the B2 choice, Lora, named first \(it names "source sans 3"\)/);
+});
+
+test('a workflow that cannot take the run lock plans nothing', async () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'UX_DESIGN_SYSTEM');
+  // Another live process holds the lock: this test process's parent, which is alive while the test runs.
+  write(dir, 'locks/run.lock', { pid: process.ppid, host: (await import('node:os')).hostname(), startedAt: new Date().toISOString() });
+  const before = listTasks(project, opts).length;
+  await assert.rejects(runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }) }), /already being run by process/);
+  assert.equal(listTasks(project, opts).length, before, 'no task was planned');
+});
+
+test('a rebuild takes the next free fix id and supersedes the blocked attempts it replaces; build tasks wait for the build phase', () => {
+  const { project, opts, dir } = mediaProject((s) => {
+    const p = s['research/positioning.json'];
+    s['research/positioning.json'] = { ...p, ...TRUTH, competitors: p.competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' })) };
+    s['research/crux.json'] = { ...s['research/crux.json'], buyerQuestions: BUYER_QUESTIONS };
+    s['design/review.json'] = { ...s['design/review.json'], litmus: { ...LITMUS } };
+    return s;
+  });
+  write(dir, 'site/package.json', { name: 'site' });
+  setPhase(dir, 'BUILD');
+  planPhase(project, opts);
+  for (const id of ['build-foundation', 'build-page-home']) {
+    ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: id, from: 'verifying', to: 'done' } }, opts);
+    saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['x'] }, opts);
+  }
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'section-plan', attempt: 1, problems: ['x'] } }, opts);
+  planPhase(project, opts);
+  // The first rebuild of the page fails, and a duplicate already holds fix-2.
+  saveTask(project, { ...listTasks(project, opts).find((t) => t.id === 'build-page-home-fix-1'), status: 'blocked', blocked_reason: 'Verify command failed on attempt 3' }, opts);
+  addTasks(project, opts, task('build-page-home-fix-2', { agent: 'builder', status: 'blocked', blocked_reason: 'Superseded: duplicate' }));
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'design-system', attempt: 3, problems: ['fonts'] } }, opts);
+  const again = planPhase(project, opts).map((t) => t.id);
+  assert.ok(again.includes('build-page-home-fix-3'), JSON.stringify(again));
+  assert.match(listTasks(project, opts).find((t) => t.id === 'build-page-home-fix-1').blocked_reason, /^Superseded: rebuilt as build-page-home-fix-3/);
 });

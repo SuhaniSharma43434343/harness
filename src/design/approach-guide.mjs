@@ -6,6 +6,7 @@ import { assertValid } from '../core/schemas.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
 import { loadRegistry } from '../registry/load.mjs';
 import { FILES, workflowVersion } from './spec.mjs';
+import { APPROACH_STAGES } from './manager.mjs';
 
 // The approach pause (workflow 2). The registry still decides which approaches a brief qualifies for
 // (src/registry/select.mjs), but the operator chooses the one the site is built around, after a
@@ -64,6 +65,11 @@ export function chooseApproach(project, id, { note, ...opts } = {}) {
     entry.fallback = { ...(reg.fallback.approach ? { approach: reg.fallback.approach } : {}), description: reg.fallback.description };
     if (entry.matrixStatus === 'experimental') entry.needsApproval = 'B2';
     writeJsonAtomic(file, assertValid('approachDecision', decision));
+  }
+  const before = readApproachChoice(dir)?.approach ?? (existsSync(join(dir, FILES.direction)) ? readJson(join(dir, FILES.direction)).primaryApproach : undefined);
+  if (before && before !== option.id) {
+    const stale = APPROACH_STAGES.filter((s) => existsSync(join(dir, FILES[{ 'design-system': 'designSystem', 'section-plan': 'sectionPlan', 'motion-plan': 'motionPlan', 'asset-plan': 'assetPlan', 'media-prompts': 'mediaPrompts' }[s]])));
+    writeJsonAtomic(join(dir, 'design', 'reference', 'stale.json'), { from: before, to: option.id, stages: stale });
   }
   const choice = { approach: option.id, name: option.name, note, chosenAt: new Date().toISOString() };
   writeJsonAtomic(choiceFile(dir), choice);
