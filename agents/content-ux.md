@@ -16,6 +16,7 @@ You decide what each page is for and what it says. Every page has a purpose and 
 - Write the sitemap and key journeys in `ux/`, one entry per page in the brief.
 - Write the wireframe spec: sections per page, in order, with their purpose.
 - Write the real copy for every planned section, the brand story, navigation and footer in `content/copy.json`, using only sourced claims. Write like a copywriter who knows this business: specific, in its own voice, with no stock phrases.
+- Write each section for its step in the six-step hierarchy, in the rhythm of the visual style locked at B2. Step 6 is a deep decision FAQ: at least five real buyer questions from `research/crux.json`, each answered in full, then the call to action. A question the research could not answer is left out and kept as a gap, never answered by guessing.
 - Ask for B3 when content is complete. After B3 the content is locked.
 
 ## Never

@@ -130,6 +130,30 @@ const craftLines = (stage) =>
     copy: [`Read ${CRAFT_FILE}. Headlines use the owner's own facts and say something only this business can say. Short sentences, plain English, no stock phrases`],
   })[stage] ?? [];
 
+// Workflow 2, visual style first and the six-step hierarchy: contract lines for the stages that lock
+// the identity before copy, plan each page as a hierarchy, and tag every section's media.
+const VISUAL_FIRST = {
+  direction: [
+    'Lock the identity now, before B2 and before any copy, in "identity": "logo" (how the logo or mark is integrated: placement, scale, how it meets the type and the grid; say if it is a temporary wordmark), "navigation" (the navigation bar\'s own style: shape, position, how it behaves on scroll and on a phone, never a plain row of links), "buttons" (shape, weight, how primary and secondary differ, what hover, press and focus do) and "signature" (the one move a visitor will remember). Each in a full sentence, specific to this industry: an auto-parts shop and a law firm must not get the same answer',
+    'Avoid the machine-made looks: purple-violet gradients, glass and soft shadows as the whole language, rounded cards everywhere, default square or pill buttons, a navigation bar no one designed',
+  ],
+  'design-system': [
+    'Build the identity as components in "components": "navigation" (style, desktop, mobile, scroll) and "buttons" (shape, primary, secondary, and states: hover, active, focus, and disabled if used). They follow design/direction.json identity; the shape says what makes these buttons this brand\'s',
+  ],
+  'section-plan': [
+    'Give every page a "flow": "primary" for the home page and each landing or product page, "supporting" for pages that help a decision, "utility" for legal and practical text. Where the site has a path per visitor type (Residential or Commercial, Student or Parent), give each path\'s page its "audienceView" and plan the flow between them',
+    'Every section names "hierarchyStep" and "contentBucket". A primary page runs all six steps in order: 1 what the product is and is not (from the boundaries in research/positioning.json), 2 what the visitor wants and needs (the personas), 3 the risk or cost of not acting, 4 the advantages, 5 why it is better than the alternatives (from the competitor research), 6 deep decision FAQs that lead into the call to action. A supporting page never steps back. Utility sections use "none"',
+    'A section draws on a crux bucket that has facts. If its bucket is empty in research/crux.json, plan around the gap and say so in its purpose; never plan a section that would need invented content',
+    'Every section names its "media": "photo", "video", "custom-authored" (SVG, CSS art or a shader made for the site), "x-factor-tool" (a calculator, audience switcher, comparison or deep FAQ the visitor uses) or "none". No floating orbs, blobs or random 3D: every visual has a job',
+  ],
+  'asset-plan': [
+    'Every section whose media is "photo" lists a photo asset, "video" a video, and "custom-authored" an svg, illustration, css-art, shader or frames asset. No 3D asset unless the media step chose one',
+  ],
+  copy: [
+    'Write each section for its hierarchy step. Step 6 sections are deep decision FAQs: at least five real buyer questions from research/crux.json buyerQuestions (price, compatibility, edge cases), each answered in full in 25 words or more, then the call to action. An unanswered buyer question is not answered by guessing: leave it out and keep it as a gap',
+  ],
+};
+
 // Each stage's contract. A contract states what good looks like, because it is the agent's brief.
 const STAGE_TASKS = {
   research: (brief) => ({
@@ -167,6 +191,7 @@ const STAGE_TASKS = {
       ...(brief?.truths?.length ? [`The concept rests on one of the facts only this business can claim (intake/brief.json truths): ${brief.truths.map((t) => `"${t.text}"`).join(', ')}. Say in whyThisApproach which one, and why`] : []),
       'design/direction.md is the same direction as prose for the other agents: the concept, the personality, what the site must feel like, and what it must never do',
       ...businessAcceptance(brief, 'direction'),
+      ...VISUAL_FIRST['direction'],
       shape('direction'),
     ],
   }),
@@ -183,6 +208,7 @@ const STAGE_TASKS = {
       'State 3 or more rules of the visual language: the specific recurring devices that make this site recognisable',
       'Give separate desktop, tablet and mobile rules',
       ...craftLines('design-system'),
+      ...VISUAL_FIRST['design-system'],
       shape('designSystem'),
     ],
   }),
@@ -208,6 +234,7 @@ const STAGE_TASKS = {
       ...(brief.audience.some((a) => a.arrivesFrom?.length || a.mood) ? ['Where an audience says where it arrives from or its mood, plan the first screen it lands on for that: arriving from a social post or a QR code means a phone and a cold start; a worried visitor needs reassurance before a sales pitch'] : []),
       'Asset and motion ids you name here are defined next in design/asset-plan.json and design/motion-plan.json',
       ...businessAcceptance(brief, 'section-plan'),
+      ...VISUAL_FIRST['section-plan'],
       shape('sectionPlan'),
     ],
   }),
@@ -237,6 +264,7 @@ const STAGE_TASKS = {
       'A licensed stock photo may only illustrate a kind of work. Its alt text describes what it shows; it must never name this client, say "our" or "finished", or stand for one of the client\'s own jobs',
       'Where no real file exists, use source "authored": a detailed inline SVG illustration, CSS artwork or shader the builder will make. Describe it so it looks made on purpose, with layers and depth. Never plan a generic placeholder',
       ...mediaAcceptance(brief, 'asset-plan'),
+      ...VISUAL_FIRST['asset-plan'],
       shape('assetPlan'),
     ],
   }),
@@ -258,6 +286,7 @@ const STAGE_TASKS = {
       ...craftLines('copy'),
       ...mediaAcceptance(brief, 'copy'),
       ...businessAcceptance(brief, 'copy'),
+      ...VISUAL_FIRST['copy'],
       shape('siteCopy'),
     ],
   }),
