@@ -19,13 +19,13 @@ forge design retry <project> <stage or build task> --note <decision>   # the ope
 | Phase | Output | Agent | What its check refuses |
 | --- | --- | --- | --- |
 | P2 Research | `research/positioning.json`, `research/crux.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning; a content bucket with neither facts nor a stated gap; a fact whose source is not in `research/sources.json`. Under workflow 2 also: no onliness statement (or gap), nothing on what the product is or is not, an audience with no persona, a competitor with nothing to learn or avoid, a Big 5 buyer-question category with no question |
-| P3 Approach | `design/direction.json`, `direction.md` | Design Manager | An approach the brief did not select; any of the 8 not analysed; a combination the methodology forbids; a philosophy copied word for word |
+| P3 Approach | `design/direction.json`, `direction.md` | Design Manager | An approach the brief did not select; any of the 8 not analysed; a combination the methodology forbids; a philosophy copied word for word. Under workflow 2 also: no `identity` (logo, navigation, buttons, signature), or one given in less than a sentence |
 | P4 Directions | `design/directions.json` | `forge directions`, operator at B2 | The existing design rules |
-| P5 Design system | `design/design-system.json` | Creative Director | Fonts or colours that differ from B2; fewer than 5 type levels; no separate mobile rules |
-| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids; a section with no funnel stage, a journey out of order, a page that does not end on an action |
+| P5 Design system | `design/design-system.json` | Creative Director | Fonts or colours that differ from B2; fewer than 5 type levels; no separate mobile rules. Under workflow 2 also: no `components` (navigation, buttons with hover, active and focus states), default button shapes, a purple-violet gradient, glass with soft shadows and rounded corners as the whole language |
+| P5 Sections | `design/section-plan.json` | Creative Director | Vague compositions; patterns outside the approach; 3 neighbours alike; over a quarter cards; mobile the same as desktop; unknown asset or motion ids; a section with no funnel stage, a journey out of order, a page that does not end on an action. Under workflow 2 also: a page with no `flow`, a section with no `hierarchyStep`, `contentBucket` or `media`, a primary page missing a step or out of order, a section on an empty crux bucket that does not plan around the gap, orbs, blobs or random 3D, a media tag with no matching asset |
 | P5 Motion | `design/motion-plan.json` | Creative Director | No hover; no pin where the approach requires one, a pin where it forbids one; a motion with no purpose or no section |
-| P5 Assets | `design/asset-plan.json` | Creative Director | Unused assets; licensed files with no licence or path |
-| P6 Copy | `content/copy.json` | Content & UX | Sections with no copy; label headlines; repeated headlines; stock phrases; thin pages. Passing writes the locked `content/pages/` |
+| P5 Assets | `design/asset-plan.json` | Creative Director | Unused assets; licensed files with no licence or path. Under workflow 2 also: a 3D asset the media step did not choose |
+| P6 Copy | `content/copy.json` | Content & UX | Sections with no copy; label headlines; repeated headlines; stock phrases; thin pages. Passing writes the locked `content/pages/`. Under workflow 2 also: a step 6 deep FAQ with fewer than five questions, an answer under 25 words, or no call to action |
 | P7 Assets | `assets/register.json` | Asset Rights, alongside the copy in P6 (it needs only the asset plan), so P7 has nothing left to wait for after B3 | Uncleared licences; planned files that are not on hand |
 | P8 Review | `design/review.json` | Design Manager | Its own judgement of the whole specification |
 | P9 Build | `site/` | Builder | See below |
@@ -43,6 +43,28 @@ Each stage's rules live in `src/design/spec.mjs`, and its contract, which is the
 In `research/crux.json`, against `schemas/crux.schema.json`, it lists the questions buyers ask before they buy: at least one for each They Ask, You Answer Big 5 category (pricing, problems, comparisons, reviews, best of), plus edge cases. Each question has the source that answers it, or a gap for the client.
 
 Once research passes, the harness writes `research/truth-doc.md` and the workflow stops. The operator reads it and confirms the facts are real with `forge facts <project> confirm --note "<what you checked>"`. That records a ledger note naming the document's hash, so a fact changed afterwards needs a new confirmation. A wrong or invented fact goes back with `forge design retry <project> research --note "<what is wrong>"`. B1 still approves the brief and the estimate at the end of intake, before research spends anything.
+
+**Visual style first (workflow 2).** The identity is decided before any copy is written. The direction (P3) states it in `identity`, so the operator's B2 choice covers it:
+- how the logo or mark is integrated;
+- the navigation bar's own style;
+- the buttons and their states;
+- the one signature move.
+
+The design system (P5) builds it as `components`. The checks refuse the looks that make a site seem machine-made: purple-violet gradients, glass and soft shadows as the whole language, default buttons, and a navigation bar no one designed.
+
+**The six-step page hierarchy (workflow 2).** Every page has a `flow`: primary, supporting or utility. A primary page runs six steps in order:
+1. what the product is and is not;
+2. what the visitor wants and needs;
+3. the risk or cost of not acting;
+4. the advantages;
+5. why it is better than others;
+6. deep decision FAQs that lead into the call to action.
+
+A supporting page never steps back. Every section also names:
+- its `contentBucket` from `research/crux.json`. An empty bucket means the section plans around the gap rather than inventing content.
+- its `media`: photo, video, custom-authored, x-factor-tool or none. It needs a matching asset, and orbs, blobs and random 3D are refused.
+
+The step 6 copy answers at least five real buyer questions, each in 25 words or more, then gives the call to action. The AIDA funnel stage stays alongside.
 
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 

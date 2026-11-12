@@ -1017,3 +1017,130 @@ test('forge facts writes the Truth Doc, then records the confirmation with the o
     console.log = log;
   }
 });
+
+// Workflow 2, Stage 1.5 and Step 3: the identity is locked at B2, and every page is planned as the
+// six-step hierarchy with each section's crux bucket and media named.
+const IDENTITY = {
+  logo: 'A temporary wordmark set in the display face, hung from the ruled margin at the top left',
+  navigation: 'A ruled bar that reads like a carpenter rule, with the page names marked as measurements along it',
+  buttons: 'Square-cornered tabs with a heavy underline rule; pressing one drops the rule two pixels, focus draws the full outline',
+  signature: 'A measured rule runs down every page margin, with section numbers marked like inches',
+};
+const COMPONENTS = {
+  navigation: { style: 'A ruled bar with page names marked along it like measurements', desktop: 'Full width under the wordmark', mobile: 'A bottom bar with the three main jobs', scroll: 'Stays put and thins to the rule alone' },
+  buttons: { shape: 'Square tabs sitting on a heavy underline rule', primary: 'Ink tab on paper', secondary: 'Rule only, no fill', states: { hover: 'The rule thickens', active: 'The tab drops two pixels', focus: 'A full outline in the accent colour' } },
+};
+const FAQ_ITEMS = [
+  ['Will the quote change once the walls are open?', 'No. The itemised quote changes only if you change the plan, and anything found behind a wall is priced and agreed with you in writing before work on it starts.'],
+  ['Can you work with what is already in the house?', 'Yes. Old floors, beams and doors are measured and fitted rather than replaced, because a crooked house usually holds more good timber than a new one would bring.'],
+  ['What if my house is listed or in a conservation area?', 'The site lead checks what the rules allow before the drawing is made, and the quote names any part of the work that needs permission first.'],
+  ['Do you do small jobs as well as whole houses?', 'Kitchens, bathrooms and single rooms are most of the work, and a whole-house renovation is planned room by room so you can live in the rest of it.'],
+  ['How do I start, and what does the first visit cost?', 'Book a home visit. The site lead measures the room, talks through what you want, and the drawing and the itemised quote follow in writing.'],
+];
+function v2Spec() {
+  const s = spec();
+  const home = s['design/section-plan.json'].pages[0];
+  const steps = [
+    ['promise', 1, 'about', 'custom-authored'], ['quote-rule', 2, 'whatWeDo', 'custom-authored'], ['old-houses', 3, 'whatWeDo', 'none'],
+    ['process', 4, 'whatWeDo', 'none'], ['proof', 5, 'reachUs', 'none'],
+  ];
+  for (const [id, step, bucket, media] of steps) Object.assign(home.sections.find((x) => x.id === id), { hierarchyStep: step, contentBucket: bucket, media });
+  home.sections.push({ ...structuredClone(home.sections[4]), id: 'decide', pattern: 'list-editorial', assets: [], funnel: 'action', hierarchyStep: 6, contentBucket: 'reachUs', media: 'x-factor-tool' });
+  home.flow = 'primary';
+  const copy = s['content/copy.json'];
+  copy.pages[0].sections.push({ id: 'decide', headline: 'What people ask before they book', items: FAQ_ITEMS.map(([title, text]) => ({ title, text })), cta: { label: 'Book a visit', href: 'tel:2075550142' } });
+  return {
+    ...s,
+    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY },
+    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS },
+    'design/reference/workflow.json': { version: 2 },
+  };
+}
+const v2Project = (change = (x) => x) => fullProject(change(v2Spec()));
+const V2_STAGES = ['direction', 'design-system', 'section-plan', 'asset-plan', 'copy'];
+
+test('a complete workflow 2 specification passes: identity, components, six steps, buckets, media, a deep FAQ', () => {
+  const { dir } = v2Project();
+  for (const stage of V2_STAGES) assert.deepEqual(CHECKS[stage](dir), [], stage);
+});
+
+test('a project planned before workflow 2 is not held to the identity or the hierarchy', () => {
+  const { dir } = fullProject();
+  for (const stage of V2_STAGES) assert.deepEqual(CHECKS[stage](dir), [], stage);
+});
+
+test('the identity is locked before B2: logo, navigation, buttons and a signature, each a real sentence', () => {
+  let { dir } = v2Project((s) => ({ ...s, 'design/direction.json': { ...s['design/direction.json'], identity: undefined } }));
+  assert.match(CHECKS.direction(dir).join('\n'), /lock the identity before B2 in "identity"/);
+  ({ dir } = v2Project((s) => ({ ...s, 'design/direction.json': { ...s['design/direction.json'], identity: { ...IDENTITY, navigation: 'A sticky header', buttons: 'Rounded' } } })));
+  const p = CHECKS.direction(dir).join('\n');
+  assert.match(p, /identity.navigation must describe the navigation bar's own style/);
+  assert.match(p, /identity.buttons must describe the button style/);
+});
+
+test('the design system refuses default buttons, a no-name navigation bar, purple gradients and glass as the whole language', () => {
+  const ds = (change) => v2Project((s) => ({ ...s, 'design/design-system.json': change(structuredClone(s['design/design-system.json'])) })).dir;
+  assert.match(CHECKS['design-system'](ds((x) => ({ ...x, components: undefined }))).join('\n'), /define the navigation bar and the buttons in "components"/);
+  const defaults = CHECKS['design-system'](ds((x) => { x.components.buttons.shape = 'Rounded rectangle'; x.components.navigation.style = 'Links in a row'; return x; })).join('\n');
+  assert.match(defaults, /components.buttons.shape is a default/);
+  assert.match(defaults, /components.navigation.style must say what makes this navigation bar this brand's/);
+  assert.match(CHECKS['design-system'](ds((x) => ({ ...x, color: { ...x.color, secondary: '#7c3aed' }, visualLanguage: [...x.visualLanguage, 'A violet gradient wash behind every hero'] }))).join('\n'), /purple-violet gradient/);
+  assert.doesNotMatch(CHECKS['design-system'](ds((x) => ({ ...x, visualLanguage: [...x.visualLanguage, 'A paper-to-sand gradient at the foot of each page'] }))).join('\n'), /purple-violet/, 'a gradient in the brand colours is fine');
+  assert.match(CHECKS['design-system'](ds((x) => ({ ...x, surfaces: { borders: 'None', shadows: 'Soft diffuse shadows under every panel', radius: 'Rounded 24px corners', treatments: 'Frosted glass panels' } }))).join('\n'), /glass, soft shadows and rounded corners are the whole surface language/);
+});
+
+test('every section names its step, bucket and media; a primary page runs the six steps in order', () => {
+  const plan = (change) => v2Project((s) => { change(s['design/section-plan.json']); return s; }).dir;
+  let p = CHECKS['section-plan'](plan((x) => { delete x.pages[0].sections[2].hierarchyStep; delete x.pages[0].sections[2].media; })).join('\n');
+  assert.match(p, /old-houses: name its hierarchyStep, media/);
+  assert.match(p, /a primary page runs all six steps; it is missing 3 \(the risk or cost of not acting\)/);
+  p = CHECKS['section-plan'](plan((x) => { x.pages[0].sections[3].hierarchyStep = 2; })).join('\n');
+  assert.match(p, /\/: step 2 \(wants and needs\) comes after step 3 \(the risk or cost of not acting\); the hierarchy only moves forward/);
+  assert.match(CHECKS['section-plan'](plan((x) => { delete x.pages[0].flow; })).join('\n'), /\/: give the page a flow/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].flow = 'supporting'; })).join('\n'), /the home page is a primary page/);
+  // A supporting page may skip steps but never goes back.
+  const supporting = (steps) => plan((x) => { x.pages[0].flow = 'supporting'; x.pages[0].slug = '/'; x.pages[0].sections.forEach((s, i) => { s.hierarchyStep = steps[i]; }); });
+  assert.doesNotMatch(CHECKS['section-plan'](supporting([1, 2, 4, 4, 5, 6])).join('\n'), /only moves forward/);
+});
+
+test('a section never stands on an empty bucket or on decoration, and its media needs a matching asset', () => {
+  const plan = (change) => v2Project((s) => { change(s['design/section-plan.json']); return s; }).dir;
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[4].contentBucket = 'ourWork'; })).join('\n'), /proof: the ourWork bucket has no facts in research\/crux.json; plan around its gap/);
+  assert.doesNotMatch(CHECKS['section-plan'](plan((x) => { Object.assign(x.pages[0].sections[4], { contentBucket: 'ourWork', purpose: 'Plans around the ourWork gap: no finished jobs yet' }); })).join('\n'), /bucket has no facts/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[2].background = 'Floating orbs drift behind the text'; })).join('\n'), /old-houses: floating orbs, blobs and random 3D are decoration with no job/);
+  assert.match(CHECKS['section-plan'](plan((x) => { x.pages[0].sections[0].media = 'photo'; })).join('\n'), /promise: its media is photo, so it needs an asset of kind photo/);
+});
+
+test('a 3D asset the operator did not choose is refused', () => {
+  const { dir } = v2Project((s) => {
+    s['design/asset-plan.json'].assets.push({ id: 'spinning-house', kind: '3d', description: 'A slowly turning model of a house for the hero', source: 'authored', alt: 'A model house' });
+    s['design/section-plan.json'].pages[0].sections[0].assets.push('spinning-house');
+    return s;
+  });
+  assert.match(CHECKS['asset-plan'](dir).join('\n'), /spinning-house is a 3D asset the operator did not choose/);
+});
+
+test('step 6 is a deep decision FAQ: five real questions answered in full, then the call to action', () => {
+  const { dir } = v2Project((s) => {
+    const faq = s['content/copy.json'].pages[0].sections.find((x) => x.id === 'decide');
+    faq.items = faq.items.slice(0, 3).map((it, i) => (i === 0 ? { ...it, text: 'Yes, usually.' } : it));
+    delete faq.cta;
+    return s;
+  });
+  const p = CHECKS.copy(dir).join('\n');
+  assert.match(p, /decide: a deep decision FAQ answers at least five real buyer questions; it has 3/);
+  assert.match(p, /decide: answer each question in full \(25 words or more\); too short: "Will the quote change once the walls are/);
+  assert.match(p, /decide: the deep FAQ leads straight into the call to action/);
+});
+
+test('the contracts tell each stage about the identity, the six steps, the buckets, the media and the deep FAQ', () => {
+  const lines = (stage) => specTask('demo', stage, BRIEF).acceptance.join('\n');
+  assert.match(lines('direction'), /Lock the identity now, before B2[\s\S]*"logo"[\s\S]*"navigation"[\s\S]*"buttons"[\s\S]*"signature"/);
+  assert.match(lines('direction'), /purple-violet gradients/);
+  assert.match(lines('design-system'), /"components": "navigation"[\s\S]*"buttons"[\s\S]*hover, active, focus/);
+  assert.match(lines('section-plan'), /"flow"[\s\S]*"audienceView"/);
+  assert.match(lines('section-plan'), /1 what the product is and is not[\s\S]*6 deep decision FAQs/);
+  assert.match(lines('section-plan'), /"x-factor-tool"[\s\S]*No floating orbs/);
+  assert.match(lines('asset-plan'), /"custom-authored" an svg/);
+  assert.match(lines('copy'), /Step 6 sections are deep decision FAQs: at least five real buyer questions/);
+});
