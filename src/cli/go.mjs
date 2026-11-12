@@ -73,7 +73,7 @@ export function summarise(brief, estimate) {
 export async function runGo(project, opts = {}) {
   const {
     workspace, prompt, answers = {}, approve: approveCodes = [], direction, deep = false, decide, askOperator,
-    worker, maxUsd = Infinity, media = {}, fetch: fetchImpl, say = () => {}, designRun = runDesignWorkflow, repair = runRepairLoop, registry = loadRegistry(),
+    worker, maxUsd = Infinity, media = {}, qa: runQa = true, fetch: fetchImpl, say = () => {}, designRun = runDesignWorkflow, repair = runRepairLoop, registry = loadRegistry(),
   } = opts;
   const ctx = { workspace };
   let state;
@@ -151,6 +151,7 @@ export async function runGo(project, opts = {}) {
     }
   }
 
+  if (!runQa) return { status: 'ready', qa: null, spentUsd: spent };
   say('Reviewing the built site...');
   const qa = await repair(project, { ...ctx, worker, gates: DESIGN_QA_GATES });
   return { status: 'ready', qa: { outcome: qa.outcome, loops: qa.loops, open: openDefects(qa.report).length }, spentUsd: spent };
@@ -227,6 +228,7 @@ export async function cmdGo(root, args) {
       direction: flag(args, '--direction'),
       deep: args.includes('--deep'),
       maxUsd: Number(flag(args, '--max-usd') ?? 25),
+      qa: !args.includes('--no-qa'),
       media: {
         off: args.includes('--no-media'),
         skip: args.includes('--no-media'),
@@ -276,6 +278,10 @@ function report(project, r) {
     for (const d of [].concat(r.detail ?? [])) console.log(`  - ${typeof d === 'string' ? d : JSON.stringify(d)}`);
     console.log(`Spent so far: $${r.spentUsd.toFixed(2)}. After fixing, run ${rerun} again to continue.`);
     return 1;
+  }
+  if (!r.qa) {
+    console.log(`\nSite built. Visual QA was skipped (--no-qa). Run it later with: forge qa ${project} --repair`);
+    return 0;
   }
   console.log(`\nSite built. Visual QA ${r.qa.outcome} after ${r.qa.loops} repair loop(s); open defects: ${r.qa.open}. Spent $${r.spentUsd.toFixed(2)}.`);
   console.log(`See it: forge preview ${project}`);

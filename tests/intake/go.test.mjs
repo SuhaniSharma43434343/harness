@@ -173,3 +173,15 @@ test('what the owner says is unique (truths) reaches the design stages; the visi
   const none = { ...b, truths: [] };
   assert.ok(!businessAcceptance(none, 'direction').join(' ').includes('no competitor can claim'), 'an unknown is never presented as a fact');
 });
+
+test('with qa switched off, go stops at a built site and says how to run visual QA later', async () => {
+  const ws = workspace();
+  let repaired = false;
+  const r = await runGo('skyline', {
+    workspace: ws, prompt: PROMPT, approve: ['B1', 'B3'], direction: 'D1', qa: false,
+    designRun: fakeFlow('skyline', ws), repair: async () => { repaired = true; return { outcome: 'passed', loops: 0, report: { defects: [] } }; },
+  });
+  assert.equal(r.status, 'ready');
+  assert.equal(r.qa, null);
+  assert.equal(repaired, false, 'visual QA did not run');
+});
