@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/pattern-library.schema.json",
+  "title": "Craft library: composition patterns and techniques (registry/craft/patterns.json, techniques.json)",
+  "description": "The archetypes a section plan, navigation and footer choose from, and the techniques a motion plan may name. Each is a specification a builder can implement: what it looks like, how to build it, when to use it, what it costs and how it recomposes on a phone. Patterns were distilled from public reference galleries; each names its source.",
+  "definitions": {
+    "pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "name", "looks", "build", "when", "avoid", "cost", "mobile", "source"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "category": { "enum": ["hero", "navigation", "footer", "gallery", "product", "testimonial", "cta", "faq", "section-layout", "transition", "background", "interaction"] },
+        "name": { "type": "string", "minLength": 3 },
+        "looks": { "type": "string", "minLength": 40, "description": "What it looks like: positions, scale, layering." },
+        "build": { "type": "string", "minLength": 30, "description": "How to build it: the CSS features or library calls." },
+        "when": { "type": "string", "minLength": 10 },
+        "avoid": { "type": "string", "minLength": 10 },
+        "cost": { "enum": ["css-only", "small-js", "library", "webgl"] },
+        "techniques": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+        "mobile": { "type": "string", "minLength": 15 },
+        "source": { "type": "string", "minLength": 3 },
+        "banned": { "type": "boolean", "description": "A pattern every generated site already has: never chosen as a hero." }
+      }
+    },
+    "technique": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "use", "jsKb", "needs", "fallback", "reducedMotion", "approaches"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "name": { "type": "string", "minLength": 3 },
+        "use": { "type": "string", "minLength": 20 },
+        "jsKb": { "type": "number", "minimum": 0, "description": "Approximate script cost, KB gzip." },
+        "needs": { "type": "string", "minLength": 3, "description": "Packages or browser features." },
+        "fallback": { "type": "string", "minLength": 10 },
+        "reducedMotion": { "type": "string", "minLength": 10 },
+        "approaches": { "type": "array", "minItems": 1, "items": { "$ref": "common.schema.json#/definitions/approachId" } },
+        "inStarter": { "type": "boolean", "description": "false for techniques that need an integration the Astro starter does not have (React)." }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "libraryVersion": { "type": "string" },
+    "note": { "type": "string" },
+    "patterns": { "type": "array", "items": { "$ref": "#/definitions/pattern" } },
+    "techniques": { "type": "array", "items": { "$ref": "#/definitions/technique" } }
+  }
+}

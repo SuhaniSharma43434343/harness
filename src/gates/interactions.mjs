@@ -363,10 +363,36 @@ async function layoutChecks(context, base, route, add, width) {
         const top = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
         if (top && top !== el && !el.contains(top) && !top.contains(el) && !(el.labels && [...el.labels].some((l) => l.contains(top)))) covered.push(`${label(el)} (under ${top.tagName.toLowerCase()}${top.className && typeof top.className === 'string' ? `.${top.className.split(' ')[0]}` : ''})`);
       }
-      return { clipped: clipped.slice(0, 3), covered: covered.slice(0, 3) };
+      // Text with something opaque laid over part of it: sample points along each line on the screen.
+      const textCovered = [];
+      const opaque = (n) => {
+        const st = getComputedStyle(n);
+        const bg = st.backgroundColor.match(/rgba?\(([^)]+)\)/)?.[1].split(',').map(Number);
+        // Images, video and canvas laid over type are a composition (a cut-out in front of a wordmark);
+        // a solid box over text is a mistake. An intended overlap is marked data-overlap.
+        if (n.matches('img, video, canvas, svg, picture') || n.closest('[data-overlap]')) return false;
+        return st.backgroundImage !== 'none' || (bg && (bg.length < 4 || bg[3] > 0.5));
+      };
+      for (const el of document.querySelectorAll('h1, h2, h3, p')) {
+        const st = getComputedStyle(el);
+        if (st.visibility === 'hidden' || !el.textContent.trim()) continue;
+        // Text the browser does not show (a closed <details>, display: none, opacity 0) cannot be covered.
+        if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true, opacityProperty: true, contentVisibilityAuto: true })) continue;
+        for (const r of el.getClientRects()) {
+          if (r.width < 20 || r.bottom < 0 || r.top > innerHeight) continue;
+          const points = [0.2, 0.5, 0.8].flatMap((fx) => [0.5, 0.75].map((fy) => [r.left + r.width * fx, r.top + r.height * fy]));
+          const hit = points.map(([x, y]) => document.elementFromPoint(x, y)).find((top) => top && top !== el && !el.contains(top) && !top.contains(el) && opaque(top));
+          if (hit) {
+            textCovered.push(`${label(el)} (under ${hit.tagName.toLowerCase()}${hit.className && typeof hit.className === 'string' ? `.${hit.className.split(' ')[0]}` : ''})`);
+            break;
+          }
+        }
+      }
+      return { clipped: clipped.slice(0, 3), covered: covered.slice(0, 3), textCovered: textCovered.slice(0, 3) };
     });
     for (const c of r.clipped) add('text-clipped', 'serious', `${route}: text is cut off by its box at ${width}px: "${c}"`, at);
     for (const c of r.covered) add('control-covered', 'serious', `${route}: a control is covered by another element at ${width}px: ${c}`, at);
+    for (const c of r.textCovered) add('text-covered', 'serious', `${route}: text has something laid over it at ${width}px: "${c}"`, at);
   } catch (err) {
     add('interaction-check-error', 'serious', `${route}: the layout checks broke: ${String(err.message).slice(0, 160)}`, at);
   } finally {

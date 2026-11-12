@@ -10,6 +10,7 @@ import { FILES, readiness, sectionUse, stageById, WORKFLOW_VERSION, workflowVers
 import { STUB_MARK } from '../qa/visual.mjs';
 import app03 from '../approaches/app03.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
+import { atmosphereCss } from '../site/atmosphere.mjs';
 
 // The planner: writes the task contracts a phase needs onto the board, from the brief and the
 // design specification. These contracts are the whole design workflow: research and positioning,
@@ -41,6 +42,8 @@ const shape = (name) => `The file must match the "${name}" definition in ${SCHEM
 // The craft guide: how well the work must be done, judged the way Awwwards judges. Every design stage reads it.
 export const CRAFT = 'design/reference/craft/**';
 const CRAFT_FILE = 'design/reference/craft/awwwards.md';
+const LIB = 'design/reference/craft/patterns.json';
+const TECH = 'design/reference/craft/techniques.json';
 
 const SPEC_INPUTS = ['intake/brief.json', 'intake/material/**', 'research/positioning.json', 'research/crux.json', 'research/summary.md', SCHEMA];
 const SPEC = ['design/direction.json', 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/motion-plan.json', 'design/asset-plan.json'];
@@ -136,19 +139,30 @@ const craftLines = (stage) =>
 const VISUAL_FIRST = {
   direction: [
     'Lock the identity now, before B2 and before any copy, in "identity": "logo" (how the logo or mark is integrated: placement, scale, how it meets the type and the grid; say if it is a temporary wordmark), "navigation" (the navigation bar\'s own style: shape, position, how it behaves on scroll and on a phone, never a plain row of links), "buttons" (shape, weight, how primary and secondary differ, what hover, press and focus do) and "signature" (the one move a visitor will remember). Each in a full sentence, specific to this industry: an auto-parts shop and a law firm must not get the same answer',
-    'Avoid the machine-made looks: purple-violet gradients, glass and soft shadows as the whole language, rounded cards everywhere, default square or pill buttons, a navigation bar no one designed',
+    'Avoid both machine-made extremes. Not decoration everywhere: purple-violet gradients, glass and soft shadows as the whole language, rounded cards everywhere. And not crude brutalism: square flat boxes, three flat colours, no depth, no light, 90s forms. A premium site has depth, light and texture that come from its concept',
+    `Decide the art direction in "artDirection", read ${LIB} and ${TECH} first: "visualConcept" (the one visual idea, from this brand's world), "storytelling" (how the pages unfold as a story), "typography" (the hierarchy, the scale contrast and the one display moment), "layout" (the composition system: grid, asymmetry, overlap, negative space), "hero", "navigation" and "footer" (each an "archetype" id from the pattern library for its category, or "custom" with a "reason", and a "description" of what it looks like: placement, scale, layering), "transitions" (how sections hand over), "imageTreatment" (how photos are art-directed: duotone, mask, crop, frame, grain, light), "gallery", "background" ("effect" and "technique"), "shader" and "threeD" (each decided: "use" true or false, "why", and when used the "technique" id, "where" and its "fallback"), "icons" (style, stroke, size) and "microInteractions" (at least three, each with what it confirms)`,
+    'The hero is never "headline left, photo right" and never "centred headline over a photo with two buttons" (the patterns split-headline-photo and centred-over-photo). Choose effects for the concept, not to look complicated, and keep them within the approach\'s script budget',
   ],
   'design-system': [
     'Build the identity as components in "components": "navigation" (style, desktop, mobile, scroll) and "buttons" (shape, primary, secondary, and states: hover, active, focus, and disabled if used). They follow design/direction.json identity; the shape says what makes these buttons this brand\'s',
+    'Define the "atmosphere", all from the B2 colours and their tints: "surfaces" (base, raised, sunken, and "glass" with its fill, blur, border and its one "use"), "borders" (subtle, strong, glow), "radius" (sm, md, lg: a scale, not one value), "elevation" (low, mid, high CSS shadows, tinted with the palette, never pure black), "gradients" (up to three, each a mesh, radial, linear or conic gradient whose stops are B2 colours or mixes of them, with its use), "lighting" (where light falls: a radial glow behind the hero, a rim light on cards), "texture" (grain, noise, paper or none, with an opacity up to 0.2) and "motion" (easeOut, easeSpring, and fast, base and slow durations). Depth comes from at least two of elevation, light, layered surfaces and texture',
+    'The harness writes the atmosphere as CSS custom properties (site/src/styles/atmosphere.css): --surface-1..3, --surface-glass, --glass-blur, --border-subtle, --border-glow, --gradient-<name>, --light-radial, --radius-sm|md|lg, --elevation-1..3, --ease-out, --dur-*. The builder styles the site with them',
   ],
   'section-plan': [
     'Give every page a "flow": "primary" for the home page and each landing or product page, "supporting" for pages that help a decision, "utility" for legal and practical text. Where the site has a path per visitor type (Residential or Commercial, Student or Parent), give each path\'s page its "audienceView" and plan the flow between them',
     'Every section names "hierarchyStep" and "contentBucket". A primary page runs all six steps in order: 1 what the product is and is not (from the boundaries in research/positioning.json), 2 what the visitor wants and needs (the personas), 3 the risk or cost of not acting, 4 the advantages, 5 why it is better than the alternatives (from the competitor research), 6 deep decision FAQs that lead into the call to action. A supporting page never steps back. Utility sections use "none"',
     'A section draws on a crux bucket that has facts. If its bucket is empty in research/crux.json, plan around the gap and say so in its purpose; never plan a section that would need invented content',
     'Every section names its "media": "photo", "video", "custom-authored" (SVG, CSS art or a shader made for the site), "x-factor-tool" (a calculator, audience switcher, comparison or deep FAQ the visitor uses) or "none". No floating orbs, blobs or random 3D: every visual has a job',
+    `Describe how every section LOOKS in "visual", using ${LIB}: "archetype" (a pattern id, or "custom"), "focalPoint" (what the eye lands on first), "layers" (back: background effect or light; mid: imagery; front: type and controls), "imageTreatment", "interaction" (what hover, scroll or tap does), "transitionIn" (how it arrives) and "mobileComposition" (how it recomposes on a phone, not just stacks). Not "a product gallery with three cards" but, for example: an asymmetric gallery, one large featured product on the left two-thirds, two smaller supporting products stacked on the right, specifications floating over the featured image on a glass chip, a hover that lifts the image and shifts its light, a crossfade between products, and on a phone a swipeable row with the featured product first`,
+    'Neighbouring sections never share an archetype, at most one section per page is a card or grid archetype, and the home hero uses the archetype design/direction.json artDirection.hero chose. Treat hero, navigation, products, gallery, testimonials, call to action, FAQ and footer each as a designed composition',
+    'Plan the navigation and footer in "chrome": "navigation" and "footer", each with its "archetype" (the one the art direction chose), "composition", "mobile" and "behaviour" (on scroll, on open, on hover)',
   ],
   'asset-plan': [
     'Every section whose media is "photo" lists a photo asset, "video" a video, and "custom-authored" an svg, illustration, css-art, shader or frames asset. No 3D asset unless the media step chose one',
+    'Every photo has a "treatment" that follows design/direction.json artDirection.imageTreatment: duotone in the palette, a mask or shaped crop, a frame, grain, a light leak. A stock photo with no treatment looks like stock',
+  ],
+  'motion-plan': [
+    `A motion may name its "technique": a technique id from ${TECH} (for example gsap-scrolltrigger, motion-one, css-scroll-timeline, view-transitions, three-scene, spline-embed, glsl-shader, svg-draw). Together the named techniques stay within the approach's script budget; prefer CSS when it does the job. Every motion says what reduced motion shows`,
   ],
   copy: [
     'Write each section for its hierarchy step. Step 6 sections are deep decision FAQs: at least five real buyer questions from research/crux.json buyerQuestions (price, compatibility, edge cases), each answered in full in 25 words or more, then the call to action. An unanswered buyer question is not answered by guessing: leave it out and keep it as a gap',
@@ -159,8 +173,9 @@ const VISUAL_FIRST = {
 // before anything is built, against the Avoiding AI Slop checklist, and answers the five litmus questions.
 const SLOP_REVIEW = [
   'Judge the plan, the copy (content/copy.json), the media prompts (design/media-prompts.json) and the media check (design/media-review.json) together, as one site, before any of it is built',
-  'Each of these is a blocking finding against the stage that owns it: everything is a card; purple gradients; random floating orbs or decorative 3D; typography without personality; cramped sections with no room to breathe; the same layout repeated across sections; random AI graphics; animation with no purpose; the same three-layer text stack in every section; generic headlines with no marketing voice; a hero with no memorable focal point or hook; no user flow between sections and pages; rounded corners, shadows and glass used everywhere; more decoration than intention; a mobile layout that is only the desktop stacked',
-  'Answer the five litmus questions in "litmus", each "yes" or "no" with a note: couldBeAnyCompany (could this site belong to any company?), worksWithoutDecoration (if the gradients and animations disappeared, would the design still work?), everySectionHasAReason (does every section have a clear reason to exist in the six-step hierarchy?), claimsRealAndSourced (are all claims real and sourced?), rhythmAndPointOfView (does the page have rhythm, hierarchy and a memorable point of view?). Any failing answer (yes to the first, no to the others) means verdict "changes", with a blocking finding naming the stage and the exact change',
+  'Each of these is a blocking finding against the stage that owns it: everything is a card; the same three-card section; repeated rounded rectangles; purple gradients; random floating orbs or decorative 3D; typography without personality; generic centred headings; cramped sections with no room to breathe; the same layout repeated across neighbouring sections; the same hero structure every project has (headline left with a photo right, or centred over a photo); random AI graphics; stock images with no visual concept; animation with no purpose; the same three-layer text stack in every section; generic headlines with no marketing voice; a hero with no memorable focal point or hook; no user flow between sections and pages; rounded corners, shadows and glass used everywhere; harsh brutalist boxes, three flat colours with no depth, light or texture, and crude 90s forms; more decoration than intention; a mobile layout that is only the desktop stacked',
+  'Demand, and send back when missing: distinct section compositions; strong visual hierarchy; brand-specific storytelling; intentional negative space; premium imagery with a treatment; creative navigation and footer; meaningful interaction; one consistent art direction (design/direction.json artDirection and design/design-system.json atmosphere) carried into every section\'s "visual"',
+  'Answer the six litmus questions in "litmus", each "yes" or "no" with a note: couldBeAnyCompany (could this site belong to any company?), worksWithoutDecoration (with the effects switched off, by reduced motion or no WebGL, do the structure and hierarchy still stand? This does not ask for a site without effects), artDirected (do depth, light, imagery and motion all come from one concept?), everySectionHasAReason (does every section have a clear reason to exist in the six-step hierarchy?), claimsRealAndSourced (are all claims real and sourced?), rhythmAndPointOfView (does the page have rhythm, hierarchy and a memorable point of view?). Any failing answer (yes to the first, no to the others) means verdict "changes", with a blocking finding naming the stage and the exact change',
 ];
 
 const MEDIA_STAGES = {
@@ -284,6 +299,7 @@ const STAGE_TASKS = {
       'Include at least one hover interaction, plus loading behaviour, navigation behaviour, page transitions and what reduced motion shows',
       'Keep to the primary approach\'s animation and scrolling. If its methodology requires pinning, include a pin; if it forbids pinning, do not',
       ...craftLines('motion-plan'),
+      ...VISUAL_FIRST['motion-plan'],
       shape('motionPlan'),
     ],
   }),
@@ -359,11 +375,20 @@ function copyReference(dir, approach) {
   cpSync(join(ROOT, 'schemas', 'crux.schema.json'), join(target, 'crux.schema.json'));
   cpSync(join(ROOT, 'registry', 'methodologies'), join(target, 'methodologies'), { recursive: true });
   mkdirSync(join(target, 'craft'), { recursive: true });
-  cpSync(join(ROOT, 'registry', 'craft', 'awwwards.md'), join(target, 'craft', 'awwwards.md'));
+  for (const f of ['awwwards.md', 'patterns.json', 'techniques.json']) cpSync(join(ROOT, 'registry', 'craft', f), join(target, 'craft', f));
   if (approach) {
     const skill = join(ROOT, 'skills', approach.toLowerCase().replace('-', ''));
     if (existsSync(skill)) cpSync(skill, join(target, 'skill'), { recursive: true });
   }
+}
+
+// Workflow 2: the design system's atmosphere becomes site/src/styles/atmosphere.css, replacing the
+// starter's neutral defaults, before the foundation is built.
+function writeAtmosphere(dir) {
+  const system = existsSync(join(dir, FILES.designSystem)) ? readJson(join(dir, FILES.designSystem)) : null;
+  if (workflowVersion(dir) < 2 || !system?.atmosphere) return;
+  mkdirSync(join(dir, 'site', 'src', 'styles'), { recursive: true });
+  writeFileSync(join(dir, 'site', 'src', 'styles', 'atmosphere.css'), atmosphereCss(system.atmosphere));
 }
 
 // Puts the chosen 3D model and video into the site: the Scene3D section for a model (the APP-03 recipes,
@@ -479,6 +504,7 @@ const PLANS = {
     }
     if (!existsSync(join(dir, 'site', 'package.json'))) scaffoldSite(project, { actor: 'lead-developer', ...opts });
     placeMedia(dir, brief);
+    writeAtmosphere(dir);
     const direction = readJson(join(dir, FILES.direction));
     const approaches = [direction.primaryApproach, ...direction.combination.map((c) => c.approach)];
     copyReference(dir, direction.primaryApproach);
@@ -501,6 +527,7 @@ const PLANS = {
         acceptance: [
           'Turn design/design-system.json into the site\'s foundation: site/src/styles/ holds the system as custom properties and base type (secondary colour, hierarchy, spacing, grid, surfaces). tokens.json stays as it is',
           'Rewrite the Header and Footer to the direction, reading their text from site/src/copy.json (a copy of content/copy.json): nav, navCta, footer. The header behaves as the motion plan\'s navigation says, and the footer is a designed part of the site, not a copyright line',
+          'Under workflow 2, build the Header as design/section-plan.json chrome.navigation and the Footer as chrome.footer describe, and mark each outer element with data-archetype="<its archetype>". Keep site/src/styles/atmosphere.css as the harness wrote it and style buttons, surfaces, cards and panels with its variables (radius, elevation, glass, glow, gradients, light, grain) and the utilities in global.css (.surface-raised, .glass, .glow-border, .mesh-bg, .radial-light, .grain, .lift). The primary button\'s radius and depth are design-system components.buttons; do not flatten or square what the system did not',
           'Add site/src/lib/motion.js: the motion plan\'s shared behaviour for this approach, wired from data-motion attributes. Reduced motion shows every word, fully visible. Use the approach\'s recipes in site/src/lib/ when they fit',
           'Keep the starter\'s page routes and the skip link. Do not write page sections: each page is built next, in parallel, by its own task, and none of them may edit these shared files, so put everything the pages share here',
           'Prepare site/public for every page: only the files design/asset-plan.json lists, and any image rendered under 300 px wide gets its own small file (a -thumb variant or sized copy). Add the packages the approaches need to site/package.json',
@@ -527,6 +554,7 @@ const PLANS = {
             `Build only the page ${pagePlan.slug}. Other pages are built at the same time by other tasks, so change no file outside these: ${files.join(', ')}`,
             `Each of those files is a placeholder now. Replace it with the real component for its section in design/section-plan.json. Each component receives its copy as props (headline, subheadline, body, items, cta, eyebrow, note, as in site/src/copy.json)`,
           'Implement the composition exactly as specified: the placement, overlap, scale, background and typography it names, at desktop, tablet and mobile. Use bespoke layout for each section, and use the design system\'s properties, never hard-coded colours or fonts',
+          'Under workflow 2, build each section as its "visual" says: the archetype, the focal point, the three layers (background effect or light, imagery, type and controls), the image treatment, the interaction, the entrance and the phone composition. Give each section\'s outer element data-archetype="<visual.archetype>". Nothing may cover a heading or a line of body text. If a planned effect cannot be built within the budget, use its fallback and say so in your report; never drop it silently',
           'Render every string of copy exactly as given, unbroken in the HTML, so it can be verified. Line-splitting for animation happens at runtime, in JavaScript',
           'Assets: client or licensed images come from /<file> under site/public/. Authored assets are made here as detailed inline SVG or CSS, as the plan describes; they must look finished. Give each planned asset\'s outermost element data-asset="<asset id>"',
           'Motion: for each motion id a section uses, put data-motion="<motion id>" on the element that moves or responds, and implement the behaviour through site/src/lib/motion.js. Hover motions need a real visible change on hover',

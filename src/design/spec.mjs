@@ -1,10 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { check } from '../core/schemas.mjs';
 import { isClaim } from '../gates/claims.mjs';
 import { ROOT } from '../core/workspace.mjs';
 import { toMarkdown, pageFile } from '../site/content.mjs';
 import { tokensFromDirection } from '../site/tokens.mjs';
+import { atmosphereProblems } from '../site/atmosphere.mjs';
 
 // The design specification: the files that must exist, complete and consistent, before anyone
 // writes site code. Each stage has one check that returns a list of problems in plain words. The
@@ -271,10 +272,6 @@ function componentProblems(s) {
   const colours = [s.color.primary, s.color.secondary, s.color.accent].filter(Boolean);
   const language = JSON.stringify([s.visualLanguage, s.surfaces, s.color.usage]).toLowerCase();
   if (colours.some(purple) && /gradient/.test(language)) problems.push('design/design-system.json: a purple-violet gradient is the most common machine-made look; pick colours and a treatment from this business');
-  const glass = /glass|frosted|backdrop.?blur/.test(language);
-  const soft = /soft|diffuse|drop.?shadow/.test(String(s.surfaces.shadows).toLowerCase());
-  const round = /round|pill|circular/.test(String(s.surfaces.radius).toLowerCase());
-  if (glass && soft && round) problems.push('design/design-system.json: glass, soft shadows and rounded corners are the whole surface language; that is decoration, not a point of view');
   return problems;
 }
 
@@ -387,12 +384,129 @@ function voiceProblems(c) {
   if (sections.length >= 5 && stacked.length / sections.length >= 0.6) problems.push(`content/copy.json: ${stacked.length} of ${sections.length} sections repeat the same eyebrow, headline, subheadline and body stack; vary how sections speak`);
   return problems;
 }
-const LITMUS_FAILS = { couldBeAnyCompany: 'yes', worksWithoutDecoration: 'no', everySectionHasAReason: 'no', claimsRealAndSourced: 'no', rhythmAndPointOfView: 'no' };
+const LITMUS_FAILS = { couldBeAnyCompany: 'yes', worksWithoutDecoration: 'no', everySectionHasAReason: 'no', claimsRealAndSourced: 'no', rhythmAndPointOfView: 'no', artDirected: 'no' };
 function litmusProblems(r) {
-  if (!r.litmus) return ['design/review.json: answer the five litmus questions in "litmus": could this belong to any company, does it work without gradients and animation, does every section have a reason, are all claims real and sourced, does the page have rhythm and a point of view'];
+  if (!r.litmus) return ['design/review.json: answer the six litmus questions in "litmus": could this belong to any company, does the structure stand with the effects off, does every section have a reason, are all claims real and sourced, does the page have rhythm and a point of view, is it art-directed from one concept'];
+  if (!r.litmus.artDirected) return ['design/review.json: answer the sixth litmus question, "artDirected": do depth, light, imagery and motion all come from one concept?'];
   const failing = Object.entries(LITMUS_FAILS).filter(([k, bad]) => r.litmus[k].answer === bad).map(([k]) => k);
   if (failing.length && r.verdict === 'ready') return [`design/review.json: the litmus fails (${failing.join(', ')}), so the verdict must be "changes", with a blocking finding for each`];
   return [];
+}
+
+// Workflow 2, art direction: the pattern and technique library the plan chooses from
+// (registry/craft/, copied to design/reference/craft/ for the agents).
+let library;
+export function craftLibrary() {
+  if (!library) {
+    const load = (f) => JSON.parse(readFileSync(join(ROOT, 'registry', 'craft', f), 'utf8'));
+    library = { patterns: load('patterns.json').patterns, techniques: load('techniques.json').techniques };
+  }
+  return library;
+}
+const patternIds = (category) => new Set(craftLibrary().patterns.filter((x) => !category || x.category === category).map((x) => x.id));
+const techniqueIds = () => new Set(craftLibrary().techniques.map((x) => x.id));
+// The two heroes every generated site already has.
+export const BANNED_HEROES = new Set(['split-headline-photo', 'centred-over-photo']);
+
+// The hero archetypes of the other projects in this workspace, newest first.
+function recentHeroes(dir, n = 3) {
+  const ws = dirname(dir);
+  if (!existsSync(ws)) return [];
+  return readdirSync(ws, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && join(ws, e.name) !== dir)
+    .map((e) => join(ws, e.name, FILES.direction))
+    .filter((f) => existsSync(f))
+    .map((f) => ({ f, at: statSync(f).mtimeMs }))
+    .sort((a, b) => b.at - a.at)
+    .map(({ f }) => { try { return JSON.parse(readFileSync(f, 'utf8')).artDirection?.hero?.archetype; } catch { return undefined; } })
+    .filter(Boolean)
+    .slice(0, n);
+}
+
+function artDirectionProblems(d, dir) {
+  const a = d.artDirection;
+  const where = 'design/direction.json: artDirection';
+  if (!a) return [`${where} is missing: decide the visual concept, storytelling, typography, layout, hero, navigation, footer, transitions, image treatment, gallery, background, shader and 3D, icons and micro-interactions before B2`];
+  const problems = [];
+  for (const k of ['visualConcept', 'storytelling', 'typography', 'layout', 'transitions', 'imageTreatment', 'gallery', 'icons']) {
+    if (words(a[k]) < 8) problems.push(`${where}.${k} must be decided in a full sentence, specific to this brand`);
+  }
+  for (const [k, cat] of [['hero', 'hero'], ['navigation', 'navigation'], ['footer', 'footer']]) {
+    const x = a[k];
+    if (x.archetype === 'custom' ? words(x.reason) < 6 : !patternIds(cat).has(x.archetype)) problems.push(`${where}.${k}: "${x.archetype}" is not a ${cat} archetype in design/reference/craft/patterns.json; choose one, or use "custom" with a reason`);
+    if (words(x.description) < 10) problems.push(`${where}.${k}.description must say what it looks like: placement, scale, layering`);
+  }
+  if (BANNED_HEROES.has(a.hero.archetype)) problems.push(`${where}.hero: "${a.hero.archetype}" is the hero every generated site already has; choose a composition for this brand`);
+  const recent = recentHeroes(dir);
+  if (recent.includes(a.hero.archetype) && words(a.hero.reason) < 6) problems.push(`${where}.hero: "${a.hero.archetype}" was the hero of a recent project in this workspace; choose another, or give a reason it fits this brand`);
+  for (const k of ['shader', 'threeD']) {
+    const e = a[k];
+    if (words(e.why) < 5) problems.push(`${where}.${k}: say why it is or is not used`);
+    if (e.use && (!techniqueIds().has(e.technique) || words(e.fallback) < 4 || words(e.where) < 3)) problems.push(`${where}.${k}: when it is used, name a technique from design/reference/craft/techniques.json, where it goes, and its fallback`);
+    else if (e.use) {
+      const t = craftLibrary().techniques.find((x) => x.id === e.technique);
+      const approaches = [d.primaryApproach, ...(d.combination ?? []).map((c) => c.approach)];
+      if (t.inStarter === false) problems.push(`${where}.${k}: ${t.name} needs a React integration this starter does not have; ${t.fallback}`);
+      else if (!t.approaches.some((x) => approaches.includes(x))) problems.push(`${where}.${k}: ${t.name} belongs to ${t.approaches.join(' or ')}, not ${approaches.join(' + ')}; choose a technique this approach allows, or use: false`);
+    }
+  }
+  if (words(a.background.effect) < 5) problems.push(`${where}.background.effect must say what the background does`);
+  return problems;
+}
+
+// Workflow 2, how each section looks: every section has a visual composition, neighbours differ, the
+// hero and the chrome follow the art direction, and card grids stay rare.
+const CARD_ARCHETYPE = /bento|cards?(-|$)|tiles?$|-grid$/;
+function visualProblems(plan, direction) {
+  const problems = [];
+  const art = direction?.artDirection;
+  const known = patternIds();
+  for (const page of pagesOf(plan)) {
+    let prev = null;
+    let cards = 0;
+    for (const sec of page.sections) {
+      if (!sec.visual) {
+        if (sec.hierarchyStep !== 'none') problems.push(`${sec.id}: describe how it looks in "visual": archetype, focal point, layers, image treatment, interaction, entrance and phone composition`);
+        prev = null;
+        continue;
+      }
+      const v = sec.visual;
+      if (v.archetype !== 'custom' && !known.has(v.archetype)) problems.push(`${sec.id}: visual.archetype "${v.archetype}" is not in design/reference/craft/patterns.json; choose one, or use "custom"`);
+      if (prev && v.archetype === prev && v.archetype !== 'custom') problems.push(`${sec.id}: the same archetype ("${v.archetype}") as the section before it; neighbouring sections need different compositions`);
+      if (CARD_ARCHETYPE.test(v.archetype)) cards++;
+      for (const k of ['focalPoint', 'imageTreatment', 'interaction', 'transitionIn', 'mobileComposition']) if (words(v[k]) < 4) problems.push(`${sec.id}: visual.${k} must say what the visitor sees`);
+      prev = v.archetype;
+    }
+    if (cards > 1) problems.push(`${page.slug}: ${cards} sections use a card or grid archetype; at most one per page`);
+  }
+  const hero = pagesOf(plan).find((p) => p.slug === '/')?.sections?.[0];
+  if (art && hero?.visual && hero.visual.archetype !== art.hero.archetype) problems.push(`${hero.id}: the hero's archetype is "${hero.visual.archetype}", but the art direction chose "${art.hero.archetype}"`);
+  if (!plan.chrome) problems.push('design/section-plan.json: plan the navigation and footer in "chrome", with their archetype, composition, phone layout and behaviour');
+  else if (art) {
+    for (const k of ['navigation', 'footer']) if (plan.chrome[k].archetype !== art[k].archetype) problems.push(`design/section-plan.json: chrome.${k} is "${plan.chrome[k].archetype}", but the art direction chose "${art[k].archetype}"`);
+  }
+  return problems;
+}
+
+// Workflow 2, the techniques a motion plan names: known, and within the approach's script budget.
+function techniqueProblems(m, direction) {
+  const problems = [];
+  const all = new Map(craftLibrary().techniques.map((t) => [t.id, t]));
+  const used = [...new Set(m.motions.map((x) => x.technique).filter(Boolean))];
+  for (const id of used) if (!all.has(id)) problems.push(`design/motion-plan.json: technique "${id}" is not in design/reference/craft/techniques.json`);
+  if (direction) {
+    // Every site is built on APP-01, whose budget is the base; each other approach adds its allowance.
+    const approaches = ['APP-01', ...new Set([direction.primaryApproach, ...(direction.combination ?? []).map((c) => c.approach)].filter((x) => x !== 'APP-01'))];
+    const budget = approaches.reduce((sum, id) => {
+      try {
+        const b = JSON.parse(readFileSync(join(ROOT, 'registry', 'approaches', `${id}.json`), 'utf8')).budget ?? {};
+        return sum + (b.jsKbGzip ?? 0) + (b.extraJsKbGzip ?? 0);
+      } catch { return sum; }
+    }, 0);
+    const cost = used.reduce((sum, id) => sum + (all.get(id)?.jsKb ?? 0), 0);
+    if (cost > budget) problems.push(`design/motion-plan.json: the techniques cost about ${cost} KB of script (${used.join(', ')}), over the ${budget} KB this approach allows; drop one or use a lighter one`);
+  }
+  return problems;
 }
 
 export const CHECKS = {
@@ -430,7 +544,7 @@ export const CHECKS = {
     }
     if (d.interpretation.philosophy.trim() === method.philosophy.trim()) problems.push('design/direction.json: the philosophy repeats the methodology word for word; interpret it for this business');
     if (words(d.concept) < 8) problems.push('design/direction.json: the concept must be a real idea in a full sentence');
-    if (workflowVersion(dir) >= 2) problems.push(...identityProblems(d));
+    if (workflowVersion(dir) >= 2) problems.push(...identityProblems(d), ...artDirectionProblems(d, dir));
     const chosen = read(dir, FILES.approachChoice)?.approach;
     if (chosen && d.primaryApproach !== chosen) problems.push(`design/direction.json: the operator chose ${chosen} at the approach pause; the primary approach must be ${chosen}, not ${d.primaryApproach}`);
     return problems;
@@ -451,7 +565,10 @@ export const CHECKS = {
     if (!s.typography.body.includes(tokens.font.body.family)) problems.push(`design/design-system.json: the body face must be the B2 choice, ${tokens.font.body.family}`);
     if (s.visualLanguage.length < 3) problems.push('design/design-system.json: describe at least three rules of the visual language');
     if (same(s.responsive.desktop, s.responsive.mobile)) problems.push('design/design-system.json: mobile rules must differ from desktop rules');
-    if (workflowVersion(dir) >= 2) problems.push(...componentProblems(s));
+    if (workflowVersion(dir) >= 2) {
+      problems.push(...componentProblems(s));
+      problems.push(...atmosphereProblems(s.atmosphere, [...Object.values(tokens.color), s.color.secondary].filter(Boolean)));
+    }
     return problems;
   },
 
@@ -548,7 +665,7 @@ export const CHECKS = {
     }
     const heroSection = homePlan?.sections?.[0];
     if (heroSection && CENTRED_HERO.test(heroSection.composition) && !BROKEN_GRID.test(heroSection.composition)) problems.push('design/section-plan.json: the home hero is a centred layout with nothing overlapping or bleeding; give it scale contrast and one element that breaks the grid');
-    if (workflowVersion(dir) >= 2) problems.push(...hierarchyProblems(plan, { crux: read(dir, FILES.crux), assets: assets?.assets ?? [] }));
+    if (workflowVersion(dir) >= 2) problems.push(...hierarchyProblems(plan, { crux: read(dir, FILES.crux), assets: assets?.assets ?? [] }), ...visualProblems(plan, direction));
     return problems;
   },
 
@@ -570,6 +687,7 @@ export const CHECKS = {
     if (kinds.size < 3) problems.push('design/motion-plan.json: use at least three kinds of motion (scroll, pin, hover, micro, transition, ambient), not one effect everywhere');
     if (!kinds.has('scroll') && !kinds.has('pin')) problems.push('design/motion-plan.json: define at least one scroll-linked motion (kind "scroll" or "pin")');
     for (const x of m.motions) if (words(x.purpose) < 4) problems.push(`design/motion-plan.json: motion ${x.id} needs a purpose: what does it make clearer?`);
+    if (workflowVersion(dir) >= 2) problems.push(...techniqueProblems(m, direction));
     return problems;
   },
 
@@ -585,6 +703,7 @@ export const CHECKS = {
     const used = new Set(sectionsOf(plan).flatMap((s) => s.assets));
     if (plan) for (const x of a.assets) if (!used.has(x.id)) problems.push(`design/asset-plan.json: asset ${x.id} is not used by any section`);
     if (workflowVersion(dir) >= 2) {
+      for (const x of a.assets) if (x.kind === 'photo' && words(x.treatment) < 3) problems.push(`design/asset-plan.json: photo ${x.id} needs a "treatment" (duotone, mask, crop, frame, grain): a photo without a visual concept looks like stock`);
       for (const x of a.assets) if (x.kind === '3d' && !(t3?.decision === 'chosen' && x.id === mediaId('model', t3.id))) problems.push(`design/asset-plan.json: ${x.id} is a 3D asset the operator did not choose; 3D appears only when the media step chose it`);
     }
     for (const x of a.assets) {

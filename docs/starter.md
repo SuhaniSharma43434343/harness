@@ -46,6 +46,10 @@ The scaffold only uses text already in the brief, so it never invents a claim, a
 5. Keep JavaScript inside the section. Astro bundles a component's `<script>` only on pages that use it, so the APP-01 pages stay within budget. Heavy libraries (Three.js, GSAP) belong in a dynamic `import()` behind the approach's fallback.
 6. Add the approach to `approaches` in `src/site.json`.
 
+### The atmosphere
+
+`src/styles/atmosphere.css` holds the atmosphere variables: `--surface-1..3`, `--surface-glass`, `--glass-blur`, `--border-subtle`, `--border-glow`, `--radius-sm|md|lg`, `--elevation-1..3`, `--light-radial`, `--grain-opacity`, `--ease-*`, `--dur-*`. The starter's values are neutral, so a site without an atmosphere looks as before. A workflow 2 project's build replaces the file with the design system's atmosphere. `global.css` adds opt-in utilities on those variables: `.surface-raised`, `.surface-sunken`, `.glass`, `.glow-border`, `.radial-light`, `.grain` and `.lift`.
+
 ### One route per page, so each page loads only its own CSS
 
 Before every build, `scripts/sync-content.mjs` pulls in `content/pages/` and then writes a route for each page: `src/pages/<slug>.astro` (`index.astro` for `/`). The route imports only the sections that page's frontmatter names and renders them with `src/components/SectionList.astro`. Astro gives each page the CSS of the components its route imports, so a page loads its own sections' CSS and the layout's, not every section on the site. On hearwell-v2 that took each page from 125 KB of CSS to between 17 and 47 KB (before compression).

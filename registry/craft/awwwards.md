@@ -4,12 +4,16 @@ Read this before you make any design decision. The approach (APP-01 to APP-08) s
 
 ## What makes a site look machine-made (never do these)
 
+There are two ways to look machine-made, and both fail. Decoration everywhere: glass, glow, gradients and rounded cards with no idea behind them. And its opposite, crude brutalism: square flat boxes in three flat colours, no depth, no light, no texture, forms that look like 1998. A premium site sits between them, with depth and light that come from its concept.
+
 - A centred headline over a stock photo or a gradient, with two buttons under it, as the whole hero.
+- The same hero every project gets: a headline on the left and a photo on the right, or centred over a photo.
+- Harsh square boxes with thick black borders and hard offset shadows on everything, three flat colours and nothing else.
 - Three or four equal cards in a row, repeated down the page (features, services, reviews, pricing).
 - The same section shape twice in a row: heading, paragraph, image, repeat.
 - Every section the same width, the same padding, the same background, with nothing overlapping anything.
 - One typeface used at one weight, headings only a little bigger than the body.
-- A purple-to-blue gradient, glass cards, soft shadows on everything, emoji or stock icon rows.
+- A purple-to-blue gradient, glass on every card, soft shadows on everything, emoji or stock icon rows.
 - Stock phrases ("Welcome to", "Unlock your", "Why choose us", "Our services", "Get started today").
 - Motion that is only "fade up on scroll" on every element.
 - Generic photos of smiling people at laptops, or a handshake.
@@ -22,9 +26,27 @@ Read this before you make any design decision. The approach (APP-01 to APP-08) s
 3. **Break the grid on purpose.** In at least a third of sections (legal text aside), something overlaps, bleeds off the edge, is offset, is cropped by the viewport, or sits on a different axis from its neighbours. Show it in the composition: what overlaps what, by how much, which layer is on top.
 4. **Type with character.** Use the display face the direction chose, at real weight and tight tracking at large sizes, with a body face that is calm. Set at least one moment of type as image: very large, cropped, outlined, or running along a path.
 5. **Colour with discipline.** One dominant colour, one sharp accent, neutrals with a slight tint. Use the accent for the primary action and one or two moments, nowhere else.
-6. **Real imagery.** Use the client's own photos, cropped with intent (tight crops, odd aspect ratios, one image taking a full screen). Never fill a gap with a stock photo. A missing photo is replaced by type, colour or a drawn shape, not a fake.
+6. **Real imagery, art-directed.** Use the client's own photos first, cropped with intent (tight crops, odd aspect ratios, one image taking a full screen). A licensed photo may illustrate a kind of work, never the client's own job, and it always gets a treatment that makes it part of the brand: a duotone in the palette, a mask or shaped crop, a frame, grain, a light leak. A missing photo is replaced by type, colour, a drawn shape or a shader, not a fake.
 7. **Rhythm.** Alternate dense and empty, loud and quiet, dark and light. No three neighbouring sections share a layout or a background.
 8. **Details.** Custom cursor or hover states that fit the concept, styled focus rings, a designed 404, designed form states, a footer that finishes the story. Small things are how a site feels made by a person.
+
+## Surfaces, light and depth (what to do)
+
+Design the atmosphere (`design/design-system.json` "atmosphere") as carefully as the type. Typical values from premium sites, to adapt, not to copy:
+
+- **A radius scale, not one value:** 6 to 8 px on buttons, 12 to 16 px on cards, 20 to 28 px on large panels, 999 px on pills and chips. A brand may choose sharp corners, but then depth must come from somewhere else.
+- **Layered surfaces:** the page, a raised surface one step lighter (or darker on a dark site), a sunken one for inputs and code. On dark: about #0a0a0b, #111214, #18191c. On light: white on a warm off-white.
+- **Borders:** 1 px at 6 to 10% of the text colour; a glow border on the one thing that matters (the accent at 30%, with a soft outer glow).
+- **Glass, with one job:** a 12 to 24 px blur with a little saturation, a translucent fill and a bright 1 px top edge, on the floating navigation or one panel over a busy background. Never on every card.
+- **Light:** one or two radial washes in the palette at 25 to 40% opacity, fading by 60%; a spotlight that follows the cursor on dark cards; gradient text on one word at most.
+- **Texture:** grain at 4 to 10% opacity over large flat fields, so colour does not look like a default.
+- **Elevation tinted with the palette:** low, mid and high shadows in the text colour at 8 to 14%, never pure black.
+
+The harness turns the atmosphere into CSS variables (`--surface-1`, `--surface-glass`, `--border-glow`, `--gradient-<name>`, `--light-radial`, `--radius-sm|md|lg`, `--elevation-1..3`); the builder uses them, and the global utilities `.surface-raised`, `.glass`, `.glow-border`, `.radial-light`, `.grain` and `.lift`.
+
+## Compositions to choose from
+
+`design/reference/craft/patterns.json` holds the hero, navigation, footer, gallery, product, testimonial, call-to-action, FAQ, section, background, transition and interaction patterns, each with what it looks like, how to build it, when to use it and how it recomposes on a phone. `techniques.json` holds the techniques (CSS scroll-driven animation, View Transitions, SVG drawing, Motion, GSAP ScrollTrigger, own shaders, Paper Shaders, Three.js, Spline) with their script cost and fallback. Choose for the concept, not to look complicated, and stay within the approach's script budget.
 
 ## Usability (30%)
 
