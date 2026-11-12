@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { addTask, listTasks, saveTask, transitionTask } from '../core/board.mjs';
 import { agentsForPhase } from '../core/agents.mjs';
 import { advanceProject, exitBlockers } from '../core/advance.mjs';
-import { PermissionDenied } from '../core/errors.mjs';
+import { PermissionDenied, Unavailable } from '../core/errors.mjs';
+import { runLockHolder } from '../core/locks.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { pageTaskId, planPhase, specTask } from '../core/planner.mjs';
 import { loadProject, returnToPhase } from '../core/project.mjs';
@@ -257,6 +258,8 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     const { phase } = loadProject(project, opts);
     if (phase === stopBefore) return stop('reached');
     if (outOfMoney()) return stop('budget');
+    const holder = runLockHolder(project, opts);
+    if (holder) throw new Unavailable(`Project "${project}" is already being run by process ${holder.pid} on ${holder.host}`, { hint: 'Wait for that run to finish; nothing was planned.' });
     await commandStep(project, phase, opts);
     planPhase(project, opts);
     const summary = await runProject(project, { ...opts, worker: counted, agents: agentsForPhase(phase), verifier: opts.verifier });

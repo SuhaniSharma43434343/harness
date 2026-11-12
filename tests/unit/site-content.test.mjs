@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as ledger from '../../src/core/ledger.mjs';
 import { check } from '../../src/core/schemas.mjs';
@@ -228,4 +229,13 @@ test('the prebuild replaces its own routes, leaves hand-written pages alone, and
   const r = syncContent(siteDir);
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /Page "contact" uses section "APP-01\/Missing", but src\/sections\/APP-01\/Missing\.astro does not exist/);
+});
+
+test('a package listed in package.json but not installed is found, so the build installs it', async () => {
+  const { missingPackages } = await import('../../src/site/build.mjs');
+  const site = mkdtempSync(join(tmpdir(), 'forge-pkg-'));
+  writeFileSync(join(site, 'package.json'), JSON.stringify({ dependencies: { astro: '1.0.0', '@fontsource/barlow-condensed': '^5.0.0' }, devDependencies: { sharp: '1.0.0' } }));
+  mkdirSync(join(site, 'node_modules', 'astro'), { recursive: true });
+  writeFileSync(join(site, 'node_modules', 'astro', 'package.json'), '{}');
+  assert.deepEqual(missingPackages(site), ['@fontsource/barlow-condensed', 'sharp']);
 });

@@ -35,9 +35,15 @@ export function lockInSync(siteDir) {
 // Installs the site's dependencies when they are missing, then runs `astro build`. It uses
 // npm ci when the lockfile matches package.json, and npm install (which updates the lockfile)
 // when it does not. Resolves to { ok, code, output, dist }; a failing build is a result, not an exception.
+// A dependency package.json lists that is not in node_modules (a builder added a package): install.
+export function missingPackages(siteDir) {
+  const pkg = JSON.parse(readFileSync(join(siteDir, 'package.json'), 'utf8'));
+  return Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((name) => !existsSync(join(siteDir, 'node_modules', name, 'package.json')));
+}
+
 export function buildSite(siteDir, { install = 'auto', env } = {}) {
   let output = '';
-  if (install === 'always' || (install === 'auto' && !existsSync(join(siteDir, 'node_modules')))) {
+  if (install === 'always' || (install === 'auto' && (!existsSync(join(siteDir, 'node_modules')) || missingPackages(siteDir).length))) {
     const r = run(lockInSync(siteDir) ? ['ci', '--no-audit', '--no-fund'] : ['install', '--no-audit', '--no-fund'], siteDir, env);
     output += r.output;
     if (r.code !== 0) return { ok: false, code: r.code, output, dist: null };

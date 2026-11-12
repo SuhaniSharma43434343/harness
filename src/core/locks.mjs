@@ -52,6 +52,14 @@ export function acquireRunLock(project, opts = {}) {
   return { file, takenOver: held };
 }
 
+// The run lock's holder when another live process holds it, else null.
+export function runLockHolder(project, opts = {}) {
+  const file = join(projectPaths(project, opts).locks, RUN_LOCK);
+  if (!existsSync(file)) return null;
+  const held = readJson(file);
+  return held && held.pid !== process.pid && !lockIsStale(held) ? held : null;
+}
+
 export function releaseRunLock(project, opts = {}) {
   rmSync(join(projectPaths(project, opts).locks, RUN_LOCK), { force: true });
 }
