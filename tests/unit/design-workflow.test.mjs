@@ -1088,13 +1088,13 @@ function v2Spec() {
   home.sections.push({ ...structuredClone(home.sections[4]), id: 'decide', pattern: 'list-editorial', assets: [], funnel: 'action', hierarchyStep: 6, contentBucket: 'reachUs', media: 'x-factor-tool' });
   home.flow = 'primary';
   for (const sec of home.sections) sec.visual = visual(VISUALS[sec.id]);
-  s['design/section-plan.json'].chrome = CHROME;
+  s['design/section-plan.json'].chrome = structuredClone(CHROME);
   const copy = s['content/copy.json'];
   copy.pages[0].sections.push({ id: 'decide', headline: 'What people ask before they book', items: FAQ_ITEMS.map(([title, text]) => ({ title, text })), cta: { label: 'Book a visit', href: 'tel:2075550142' } });
   return {
     ...s,
-    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY, artDirection: ART },
-    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS, atmosphere: ATMOSPHERE },
+    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY, artDirection: structuredClone(ART) },
+    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS, atmosphere: structuredClone(ATMOSPHERE) },
     'design/reference/workflow.json': { version: 2 },
   };
 }
@@ -1195,7 +1195,7 @@ const PROMPT = { section: 'quote-rule', asset: 'workshop', format: 'photo', aspe
 const STYLE_LOCK = 'Warm paper and forest green, soft morning window light, 35mm documentary framing, fine film grain, calm and exact';
 function mediaProject(change = (x) => x) {
   return v2Project((s) => {
-    s['design/asset-plan.json'].assets.push(PHOTO);
+    s['design/asset-plan.json'].assets.push(structuredClone(PHOTO));
     Object.assign(s['design/section-plan.json'].pages[0].sections.find((x) => x.id === 'quote-rule'), { media: 'photo', assets: ['kitchen', 'workshop'] });
     s['design/media-prompts.json'] = { styleLock: STYLE_LOCK, prompts: [PROMPT] };
     s['assets/public/photos/workshop.jpg'] = 'jpeg bytes';
