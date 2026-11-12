@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/crux.schema.json",
+  "title": "The crux: five content buckets and the buyer's questions (research/crux.json)",
+  "description": "Every fact about the client, sorted into five buckets before any plan or copy is written, and the questions real buyers ask before they buy (They Ask, You Answer). A fact names its source id from research/sources.json, or \"assumption\". What is not known is a gap, written as a question for the client, and is never filled by inventing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["buckets"],
+  "properties": {
+    "buckets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["about", "whatWeDo", "ourWork", "resourceHub", "reachUs"],
+      "properties": {
+        "about": { "$ref": "#/definitions/bucket" },
+        "whatWeDo": { "$ref": "#/definitions/bucket" },
+        "ourWork": { "$ref": "#/definitions/bucket" },
+        "resourceHub": { "$ref": "#/definitions/bucket" },
+        "reachUs": { "$ref": "#/definitions/bucket" }
+      }
+    },
+    "buyerQuestions": {
+      "description": "The questions buyers ask before they buy, by the They Ask, You Answer Big 5 (pricing, problems, comparisons, reviews, best of) plus edge cases. Each has a source where the business already answers it, or a gap saying what the client must tell us.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "category"],
+        "anyOf": [{ "required": ["source"] }, { "required": ["gap"] }],
+        "properties": {
+          "question": { "type": "string", "minLength": 5 },
+          "category": { "enum": ["pricing", "problems", "comparisons", "reviews", "best", "edge"] },
+          "source": { "type": "string", "minLength": 1, "description": "Where the answer comes from: a source id from research/sources.json, or \"assumption\"." },
+          "gap": { "type": "string", "minLength": 5, "description": "What the client must tell us before this can be answered." }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "bucket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items", "gaps"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "source"],
+            "properties": {
+              "text": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "What is missing from this bucket, as a question for the client."
+        }
+      }
+    }
+  }
+}

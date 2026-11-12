@@ -11,6 +11,7 @@ import { PHASES, advancePhase, hasApproval, loadProject, nextPhases } from './pr
 import { check } from './schemas.mjs';
 import { assertProjectExists } from './workspace.mjs';
 import { CHECKS as SPEC, FILES, isSuperseded, readiness } from '../design/spec.mjs';
+import { factsBlockers } from '../design/truth.mjs';
 
 // Phase exits (the plan's workflow table). advanceProject moves a project to its next phase
 // only when the phase's exit gate holds: its evidence (below), its tasks finished, and its exit
@@ -40,7 +41,8 @@ function deployments(project, opts) {
 const mockRun = () => process.env.FORGE_MOCK === '1';
 const stageEvidence = (dir, ...stages) => (mockRun() ? [] : stages.flatMap((s) => SPEC[s](dir)));
 const EVIDENCE = {
-  RESEARCH: (dir) => stageEvidence(dir, 'research'),
+  // Under workflow 2 research also needs the operator to confirm the Truth Doc's facts are real.
+  RESEARCH: (dir, project, opts) => [...stageEvidence(dir, 'research'), ...(mockRun() ? [] : factsBlockers(project, dir, opts))],
   UX_DESIGN_SYSTEM: (dir) => stageEvidence(dir, 'design-system', 'section-plan', 'motion-plan', 'asset-plan'),
   CONTENT: (dir) => stageEvidence(dir, 'copy'),
   INTAKE: (dir) => {

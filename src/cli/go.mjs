@@ -5,6 +5,7 @@ import { loadConfig } from '../core/config.mjs';
 import { approve, createProject, loadProject, PHASES } from '../core/project.mjs';
 import { readJson } from '../core/workspace.mjs';
 import { chooseDirection, readDirections } from '../design/choose.mjs';
+import { confirmFacts } from '../design/truth.mjs';
 import { runDesignWorkflow } from '../design/manager.mjs';
 import { ESSENTIAL_FIELDS, extractFromPrompt, expressAsk } from '../intake/express.mjs';
 import { runIntake } from '../intake/run.mjs';
@@ -17,7 +18,7 @@ import { openDefects } from '../qa/defects.mjs';
 import { createClaudeCodeWorker } from '../workers/claude-code.mjs';
 import { DESIGN_QA_GATES } from './design.mjs';
 
-const USAGE = 'Usage: forge go <project> "<what the website is for>" [--answers <file.json>] [--approve B1,B3] [--direction <id>] [--deep] [--max-usd <n>] [--model <m>]';
+const USAGE = 'Usage: forge go <project> "<what the website is for>" [--answers <file.json>] [--approve B1,FACTS,B3] [--direction <id>] [--deep] [--max-usd <n>] [--model <m>]';
 
 // What the operator is agreeing to, in plain words, shown before each approval.
 export const APPROVAL_COVERS = {
@@ -38,6 +39,7 @@ export function classifyBlockers(blockers) {
     }
     else if (approval) decisions.push({ kind: 'approval', code: approval[1] });
     else if (b.startsWith('licence not cleared')) decisions.push({ kind: 'licence', detail: b });
+    else if (b.startsWith('facts confirmation')) decisions.push({ kind: 'facts', detail: b });
     else other.push(b);
   }
   return { decisions, other };
@@ -118,6 +120,14 @@ export async function runGo(project, opts = {}) {
       if (!yes) return { kind: 'approval', code: need.code, covers: APPROVAL_COVERS[need.code] ?? 'the work of this phase' };
       approve(project, need.code, { ...ctx, note: 'Approved by the operator (forge go)' });
       say(`${need.code} recorded.`);
+      return null;
+    }
+    if (need.kind === 'facts') {
+      // The Truth Doc is the operator's to check: forge go only records a confirmation they gave.
+      const yes = approveCodes.includes('FACTS') || (await decide?.({ kind: 'facts', file: join(dir, 'research', 'truth-doc.md') })) === true;
+      if (!yes) return { kind: 'facts', detail: `Read ${join(dir, 'research', 'truth-doc.md')} and check every fact is real.`, hint: `Confirm with: forge go ${project} --approve FACTS   (or forge facts ${project} confirm --note "<what you checked>")` };
+      confirmFacts(project, { ...ctx, note: 'Confirmed by the operator (forge go)' });
+      say('Facts confirmed.');
       return null;
     }
     return { kind: 'licence', detail: need.detail, hint: `forge design accept-licence ${project} <package> --note "<your decision>"` };
@@ -207,6 +217,10 @@ export async function cmdGo(root, args) {
   const decide = rl
     ? async (need) => {
         if (need.kind.startsWith('media-')) return askMedia(rl, need);
+        if (need.kind === 'facts') {
+          console.log(`\nResearch is done. Read ${need.file}: every fact, what the business is and is not, and the buyer questions.`);
+          return /^y(es)?$/i.test((await rl.question('Are these facts real? (yes/no) > ')).trim());
+        }
         if (need.kind === 'approval') {
           console.log(`\n${need.code} covers: ${need.covers}`);
           return /^y(es)?$/i.test((await rl.question(`Approve ${need.code}? (yes/no) > `)).trim());

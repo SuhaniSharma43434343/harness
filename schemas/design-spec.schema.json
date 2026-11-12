@@ -274,6 +274,22 @@
               },
               "observation": {
                 "$ref": "#/definitions/text"
+              },
+              "learn": {
+                "$ref": "#/definitions/text",
+                "description": "What to learn from this competitor."
+              },
+              "avoid": {
+                "$ref": "#/definitions/text",
+                "description": "What to avoid doing the way this competitor does."
+              },
+              "visual": {
+                "$ref": "#/definitions/text",
+                "description": "What the site looks like: layout, type, imagery."
+              },
+              "screenshot": {
+                "type": "string",
+                "description": "A local screenshot under research/screenshots/, never committed."
               }
             }
           }
@@ -297,12 +313,113 @@
               },
               "whatToLearn": {
                 "$ref": "#/definitions/text"
+              },
+              "avoid": {
+                "$ref": "#/definitions/text",
+                "description": "What not to copy from this reference."
+              },
+              "visual": {
+                "$ref": "#/definitions/text"
+              },
+              "screenshot": {
+                "type": "string",
+                "description": "A local screenshot under research/screenshots/, never committed."
               }
             }
           }
         },
         "researchLimits": {
           "type": "string"
+        },
+        "onliness": {
+          "description": "The onliness statement: the one thing only this business can claim, with its source. When the client has not given one, a gap says what to ask.",
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "required": [
+                "statement",
+                "source"
+              ]
+            },
+            {
+              "required": [
+                "gap"
+              ]
+            }
+          ],
+          "properties": {
+            "statement": {
+              "$ref": "#/definitions/text"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gap": {
+              "$ref": "#/definitions/text"
+            }
+          }
+        },
+        "boundaries": {
+          "description": "What the product or service is, and what it is not, so no later stage promises something the business does not do.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "whatItIs",
+            "whatItIsNot"
+          ],
+          "properties": {
+            "whatItIs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/sourcedText"
+              }
+            },
+            "whatItIsNot": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/sourcedText"
+              }
+            }
+          }
+        },
+        "personas": {
+          "description": "One persona per audience in the brief: what they want, what they need, and the one action the site asks of them.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "segment",
+              "wants",
+              "needs",
+              "desiredAction",
+              "source"
+            ],
+            "properties": {
+              "segment": {
+                "$ref": "#/definitions/text"
+              },
+              "wants": {
+                "$ref": "#/definitions/textList"
+              },
+              "needs": {
+                "$ref": "#/definitions/textList"
+              },
+              "desiredAction": {
+                "$ref": "#/definitions/text"
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "visualNotes": {
+          "description": "What the competitors and references look like, seen in a browser where one was available: layouts, type, imagery, navigation.",
+          "$ref": "#/definitions/textList"
         }
       }
     },
@@ -1190,79 +1307,24 @@
       }
     },
     "crux": {
-      "description": "The five content buckets: every fact about the client, sorted before any plan or copy is written. Each fact names its source id from research/sources.json, or \"assumption\".",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "buckets"
-      ],
-      "properties": {
-        "buckets": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "about",
-            "whatWeDo",
-            "ourWork",
-            "resourceHub",
-            "reachUs"
-          ],
-          "properties": {
-            "about": {
-              "$ref": "#/definitions/cruxBucket"
-            },
-            "whatWeDo": {
-              "$ref": "#/definitions/cruxBucket"
-            },
-            "ourWork": {
-              "$ref": "#/definitions/cruxBucket"
-            },
-            "resourceHub": {
-              "$ref": "#/definitions/cruxBucket"
-            },
-            "reachUs": {
-              "$ref": "#/definitions/cruxBucket"
-            }
-          }
-        }
-      }
+      "description": "The five content buckets and the buyer's questions. The shape lives in crux.schema.json, which this points to.",
+      "$ref": "crux.schema.json"
     },
-    "cruxBucket": {
+    "sourcedText": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "items",
-        "gaps"
+        "text",
+        "source"
       ],
       "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "text",
-              "source"
-            ],
-            "properties": {
-              "text": {
-                "type": "string",
-                "minLength": 1
-              },
-              "source": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          }
+        "text": {
+          "$ref": "#/definitions/text"
         },
-        "gaps": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": "What is missing from this bucket, as a question for the client."
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A source id from research/sources.json, or \"assumption\"."
         }
       }
     }

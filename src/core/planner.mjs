@@ -4,8 +4,8 @@ import { addTask, listTasks } from './board.mjs';
 import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { loadProject } from './project.mjs';
-import { ROOT, assertProjectExists } from './workspace.mjs';
-import { FILES, readiness, sectionUse, stageById } from '../design/spec.mjs';
+import { ROOT, assertProjectExists, writeJsonAtomic } from './workspace.mjs';
+import { FILES, readiness, sectionUse, stageById, WORKFLOW_VERSION } from '../design/spec.mjs';
 import { STUB_MARK } from '../qa/visual.mjs';
 import app03 from '../approaches/app03.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
@@ -25,6 +25,17 @@ const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 const base = (project, id) => ({ approach_modules: [], depends_on: [], evidence: [], status: 'pending', idempotency_key: `${project}:${id}:v1`, budget: { minutes: 20, retries: 1 } });
 
 const SCHEMA = 'design/reference/design-spec.schema.json';
+const CRUX_SCHEMA = 'design/reference/crux.schema.json';
+
+// The Truth Doc lines of the research contract (workflow 2): the facts every later stage is held to.
+// The harness renders them as research/truth-doc.md, and the operator confirms them before visual work.
+const TRUTH_DOC = [
+  'research/positioning.json "onliness": the one thing only this business can claim ("Only we ... for ... who ..."), with its source. If the client has not said it, give a "gap": the question to ask them',
+  'research/positioning.json "boundaries": what the product or service is ("whatItIs") and what it is not ("whatItIsNot"): the offers, places, people or promises the business does not make. Each line names its source, or "assumption"',
+  'research/positioning.json "personas": one per audience in the brief, with the same segment name: what they want, what they need, and the one action the site asks of them ("desiredAction"), each sourced',
+  'research/crux.json "buyerQuestions": the real questions buyers ask before they buy, at least one in each of the They Ask, You Answer Big 5: pricing (costs), problems (risks, what goes wrong), comparisons (against alternatives), reviews (what others say) and best (best-in-class guides), plus edge cases about the product. Each has the source where the business already answers it, or a "gap" saying what the client must tell us. Never answer one by inventing',
+  'For each competitor in research/positioning.json, say what to learn from it ("learn") and what to avoid ("avoid"). Where a browser is available, describe what each site looks like ("visual": layout, type, imagery, navigation) and keep screenshots under research/screenshots/',
+];
 const shape = (name) => `The file must match the "${name}" definition in ${SCHEMA}`;
 // The craft guide: how well the work must be done, judged the way Awwwards judges. Every design stage reads it.
 export const CRAFT = 'design/reference/craft/**';
@@ -123,7 +134,7 @@ const craftLines = (stage) =>
 const STAGE_TASKS = {
   research: (brief) => ({
     budget: { minutes: 25, retries: 1 },
-    inputs: ['intake/brief.json', 'intake/facts.json', 'intake/material/**', SCHEMA],
+    inputs: ['intake/brief.json', 'intake/facts.json', 'intake/material/**', SCHEMA, CRUX_SCHEMA],
     owns_files: ['research/summary.md', 'research/sources.json', 'research/positioning.json', 'research/crux.json'],
     must_not_touch: ['intake/**', 'content/**', 'site/**'],
     acceptance: [
@@ -133,7 +144,8 @@ const STAGE_TASKS = {
       `research/positioning.json states the business, audience insights, objectives and this business's unique positioning. ${shape('positioning')}`,
       'research/crux.json sorts every fact about the business into five buckets: about (story, team, mission, values, promise; put first what nobody else can claim), whatWeDo (services, capabilities, process), ourWork (case studies, proof, metrics, client logos), resourceHub (tools, FAQs, guides, downloads) and reachUs (calls to action, contact points). Each item names its source id from research/sources.json, or "assumption"',
       'A bucket with nothing real in it stays empty and lists in "gaps" what is missing, as a question for the client. Never fill a bucket by inventing proof, people or figures',
-      shape('crux'),
+      `research/crux.json matches ${CRUX_SCHEMA}`,
+      ...TRUTH_DOC,
       'Use WebSearch and WebFetch to study at least two real competitors and three real, well-designed sites worth learning from. For each, say what specifically to learn: a layout, a type treatment, a way of telling the story. If the web is unavailable, say so in researchLimits and do not invent URLs',
       'Do not state a fact about the business that is not in the brief or client material',
       ...businessAcceptance(brief, 'research'),
@@ -280,6 +292,7 @@ function copyReference(dir, approach) {
   const target = join(dir, 'design', 'reference');
   mkdirSync(target, { recursive: true });
   cpSync(join(ROOT, 'schemas', 'design-spec.schema.json'), join(target, 'design-spec.schema.json'));
+  cpSync(join(ROOT, 'schemas', 'crux.schema.json'), join(target, 'crux.schema.json'));
   cpSync(join(ROOT, 'registry', 'methodologies'), join(target, 'methodologies'), { recursive: true });
   mkdirSync(join(target, 'craft'), { recursive: true });
   cpSync(join(ROOT, 'registry', 'craft', 'awwwards.md'), join(target, 'craft', 'awwwards.md'));
@@ -498,6 +511,8 @@ export function planPhase(project, { phase, actor = 'lead-developer', ...opts } 
   const added = [];
   for (const t of plan(project, brief, { dir, opts })) {
     if (have.has(t.id)) continue;
+    // A project whose research is planned now follows the current workflow's rules from here on.
+    if (t.id === 'research') writeJsonAtomic(join(dir, FILES.workflow), { version: WORKFLOW_VERSION, plannedAt: new Date().toISOString() });
     added.push(addTask(project, t, opts));
   }
   if (added.length) ledger.append(project, { actor, type: 'note', data: { event: 'planned', phase: current, tasks: added.map((t) => t.id) } }, opts);
