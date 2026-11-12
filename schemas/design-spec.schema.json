@@ -533,6 +533,35 @@
               }
             }
           }
+        },
+        "identity": {
+          "description": "The brand identity locked at B2, before any copy is written: how the logo or mark sits in the design, the navigation bar's own style, the buttons, and the one signature move. Written before the operator chooses at B2, so the choice covers it.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "logo",
+            "navigation",
+            "buttons",
+            "signature"
+          ],
+          "properties": {
+            "logo": {
+              "$ref": "#/definitions/text",
+              "description": "How the logo or mark is integrated: placement, scale, how it relates to the type and the grid. A temporary wordmark says so."
+            },
+            "navigation": {
+              "$ref": "#/definitions/text",
+              "description": "The navigation bar's own style: shape, where it sits, how it behaves on scroll and on a phone. Not a default bar of links."
+            },
+            "buttons": {
+              "$ref": "#/definitions/text",
+              "description": "The button style: shape, weight, how primary and secondary differ, and what hover, press and focus do."
+            },
+            "signature": {
+              "$ref": "#/definitions/text",
+              "description": "The one visual move a visitor will remember, from outside web design (print, signage, packaging, film, maps)."
+            }
+          }
         }
       }
     },
@@ -728,6 +757,85 @@
         },
         "responsive": {
           "$ref": "#/definitions/breakpoints"
+        },
+        "components": {
+          "description": "The navigation bar and the buttons as built components, following the B2 identity.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "navigation",
+            "buttons"
+          ],
+          "properties": {
+            "navigation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "style",
+                "desktop",
+                "mobile",
+                "scroll"
+              ],
+              "properties": {
+                "style": {
+                  "$ref": "#/definitions/text"
+                },
+                "desktop": {
+                  "$ref": "#/definitions/text"
+                },
+                "mobile": {
+                  "$ref": "#/definitions/text"
+                },
+                "scroll": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "buttons": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "shape",
+                "primary",
+                "secondary",
+                "states"
+              ],
+              "properties": {
+                "shape": {
+                  "$ref": "#/definitions/text"
+                },
+                "primary": {
+                  "$ref": "#/definitions/text"
+                },
+                "secondary": {
+                  "$ref": "#/definitions/text"
+                },
+                "states": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "hover",
+                    "active",
+                    "focus"
+                  ],
+                  "properties": {
+                    "hover": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "active": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "focus": {
+                      "$ref": "#/definitions/text"
+                    },
+                    "disabled": {
+                      "$ref": "#/definitions/text"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -835,9 +943,53 @@
                         "none"
                       ],
                       "description": "Where the section sits in the visitor journey (AIDA). \"none\" is for utility sections, such as legal text."
+                    },
+                    "contentBucket": {
+                      "enum": [
+                        "about",
+                        "whatWeDo",
+                        "ourWork",
+                        "resourceHub",
+                        "reachUs"
+                      ],
+                      "description": "The crux bucket this section's facts come from."
+                    },
+                    "hierarchyStep": {
+                      "enum": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        "none"
+                      ],
+                      "description": "The six-step page hierarchy: 1 what it is and is not, 2 wants and needs, 3 the risk or cost of not acting, 4 advantages, 5 why better than others, 6 deep decision FAQs into the call to action. \"none\" is for utility sections."
+                    },
+                    "media": {
+                      "enum": [
+                        "photo",
+                        "video",
+                        "custom-authored",
+                        "x-factor-tool",
+                        "none"
+                      ],
+                      "description": "The section's visual format. custom-authored is SVG, CSS art or a shader made for the site; x-factor-tool is an interactive tool (calculator, audience switcher, comparison, deep FAQ)."
                     }
                   }
                 }
+              },
+              "flow": {
+                "enum": [
+                  "primary",
+                  "supporting",
+                  "utility"
+                ],
+                "description": "primary: a landing or product page that runs the six-step hierarchy in full; supporting: a page that never steps back in it; utility: legal or practical text."
+              },
+              "audienceView": {
+                "$ref": "#/definitions/text",
+                "description": "The audience this page is the path for, when the site has a path per visitor type (Residential or Commercial, Student or Parent)."
               }
             }
           }

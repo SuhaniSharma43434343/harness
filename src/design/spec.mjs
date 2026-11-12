@@ -231,6 +231,101 @@ export function funnelProblems(page) {
   return problems;
 }
 
+// Workflow 2, visual style first: the identity locked at B2 and the built components that follow it.
+// The cliches below are the ones that make a site look machine-made: a purple gradient, glass and
+// soft shadows as the whole language, buttons and a navigation bar no one designed.
+const hue = (hex) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
+  if (!m) return null;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  if (!d) return { h: 0, s: 0 };
+  const sat = d / (1 - Math.abs(max + min - 1));
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: (h * 60 + 360) % 360, s: sat };
+};
+const purple = (hex) => {
+  const c = hue(hex);
+  return Boolean(c && c.s > 0.35 && c.h >= 250 && c.h <= 300);
+};
+const DEFAULT_BUTTON = /^(a\s+)?(standard|default|simple|basic|plain|rounded|square|pill)(\s+(rectangle|rectangular|buttons?|shape))?\.?$/i;
+function identityProblems(d) {
+  if (!d.identity) return ['design/direction.json: lock the identity before B2 in "identity": how the logo sits, the navigation bar\'s own style, the buttons, and the one signature move'];
+  const problems = [];
+  for (const [key, label] of [['logo', 'how the logo or mark is integrated'], ['navigation', 'the navigation bar\'s own style'], ['buttons', 'the button style and its states'], ['signature', 'the signature move']]) {
+    if (words(d.identity[key]) < 8) problems.push(`design/direction.json: identity.${key} must describe ${label} in a full sentence`);
+  }
+  return problems;
+}
+function componentProblems(s) {
+  if (!s.components) return ['design/design-system.json: define the navigation bar and the buttons in "components", following the B2 identity'];
+  const problems = [];
+  const { navigation: nav, buttons } = s.components;
+  if (words(nav.style) < 6) problems.push('design/design-system.json: components.navigation.style must say what makes this navigation bar this brand\'s, not a row of links');
+  if (DEFAULT_BUTTON.test(buttons.shape.trim()) || words(buttons.shape) < 5) problems.push('design/design-system.json: components.buttons.shape is a default; say what makes the buttons this brand\'s');
+  const colours = [s.color.primary, s.color.secondary, s.color.accent].filter(Boolean);
+  const language = JSON.stringify([s.visualLanguage, s.surfaces, s.color.usage]).toLowerCase();
+  if (colours.some(purple) && /gradient/.test(language)) problems.push('design/design-system.json: a purple-violet gradient is the most common machine-made look; pick colours and a treatment from this business');
+  const glass = /glass|frosted|backdrop.?blur/.test(language);
+  const soft = /soft|diffuse|drop.?shadow/.test(String(s.surfaces.shadows).toLowerCase());
+  const round = /round|pill|circular/.test(String(s.surfaces.radius).toLowerCase());
+  if (glass && soft && round) problems.push('design/design-system.json: glass, soft shadows and rounded corners are the whole surface language; that is decoration, not a point of view');
+  return problems;
+}
+
+// Workflow 2, the six-step page hierarchy. A primary page runs all six steps in order; a supporting
+// page never steps back; every section names the crux bucket its facts come from and its media.
+export const HIERARCHY = { 1: 'what it is and is not', 2: 'wants and needs', 3: 'the risk or cost of not acting', 4: 'advantages', 5: 'why better than others', 6: 'deep decision FAQs' };
+const DECORATION = /\b(orbs?|blobs?|floating (shapes|spheres|bubbles|particles|objects)|decorative 3d|random 3d)\b/i;
+const MEDIA_KINDS = { photo: ['photo'], video: ['video', 'frames'], 'custom-authored': ['svg', 'illustration', 'css-art', 'shader', 'frames'] };
+export function hierarchyProblems(plan, { crux, assets = [] } = {}) {
+  const problems = [];
+  const kinds = new Map(assets.map((a) => [a.id, a.kind]));
+  const empty = new Set(Object.entries(crux?.buckets ?? {}).filter(([, b]) => !b.items.length).map(([k]) => k));
+  for (const page of pagesOf(plan)) {
+    if (!page.flow) problems.push(`${page.slug}: give the page a flow: primary (runs the six steps), supporting or utility`);
+    else if (page.slug === '/' && page.flow !== 'primary') problems.push('/: the home page is a primary page; it runs the six-step hierarchy');
+    for (const s of page.sections) {
+      const missing = ['contentBucket', 'hierarchyStep', 'media'].filter((k) => s[k] === undefined);
+      if (missing.length) problems.push(`${s.id}: name its ${missing.join(', ')}`);
+      if (s.contentBucket && empty.has(s.contentBucket) && s.hierarchyStep !== 'none' && !/\bgap\b/i.test(s.purpose)) problems.push(`${s.id}: the ${s.contentBucket} bucket has no facts in research/crux.json; plan around its gap (say so in the purpose) instead of a section that would need invented content`);
+      if (DECORATION.test(`${s.composition} ${s.background} ${s.purpose}`)) problems.push(`${s.id}: floating orbs, blobs and random 3D are decoration with no job; give the section a visual that says something about the business`);
+      const want = MEDIA_KINDS[s.media];
+      if (want && !s.assets.some((id) => want.includes(kinds.get(id)))) problems.push(`${s.id}: its media is ${s.media}, so it needs an asset of kind ${want.join(' or ')} in design/asset-plan.json`);
+    }
+    const steps = page.sections.map((s) => s.hierarchyStep).filter((x) => Number.isInteger(x));
+    if (page.flow === 'primary' || page.flow === 'supporting') {
+      const back = steps.findIndex((x, i) => i > 0 && x < steps[i - 1]);
+      if (back > 0) problems.push(`${page.slug}: step ${steps[back]} (${HIERARCHY[steps[back]]}) comes after step ${steps[back - 1]} (${HIERARCHY[steps[back - 1]]}); the hierarchy only moves forward`);
+    }
+    if (page.flow === 'primary') {
+      const absent = Object.keys(HIERARCHY).map(Number).filter((n) => !steps.includes(n));
+      if (absent.length) problems.push(`${page.slug}: a primary page runs all six steps; it is missing ${absent.map((n) => `${n} (${HIERARCHY[n]})`).join(', ')}`);
+    }
+  }
+  return problems;
+}
+
+// Step 6 is a deep FAQ: real decision questions (compatibility, price, edge cases), answered in full,
+// ending on the call to action. Three one-line answers are not a decision FAQ.
+function deepFaqProblems(c, plan) {
+  const problems = [];
+  const deep = new Set(sectionsOf(plan).filter((s) => s.hierarchyStep === 6).map((s) => s.id));
+  for (const page of c.pages) {
+    for (const s of page.sections) {
+      if (!deep.has(s.id)) continue;
+      const items = s.items ?? [];
+      if (items.length < 5) problems.push(`${s.id}: a deep decision FAQ answers at least five real buyer questions; it has ${items.length}`);
+      const thin = items.filter((it) => words(it.text) < 25);
+      if (thin.length) problems.push(`${s.id}: answer each question in full (25 words or more); too short: ${thin.map((it) => `"${it.title.slice(0, 40)}"`).join(', ')}`);
+      if (!s.cta?.label) problems.push(`${s.id}: the deep FAQ leads straight into the call to action; give it one`);
+    }
+  }
+  return problems;
+}
+
 export const CHECKS = {
   research(dir) {
     const [p, problems] = load(dir, 'positioning', 'positioning');
@@ -266,6 +361,7 @@ export const CHECKS = {
     }
     if (d.interpretation.philosophy.trim() === method.philosophy.trim()) problems.push('design/direction.json: the philosophy repeats the methodology word for word; interpret it for this business');
     if (words(d.concept) < 8) problems.push('design/direction.json: the concept must be a real idea in a full sentence');
+    if (workflowVersion(dir) >= 2) problems.push(...identityProblems(d));
     return problems;
   },
 
@@ -284,6 +380,7 @@ export const CHECKS = {
     if (!s.typography.body.includes(tokens.font.body.family)) problems.push(`design/design-system.json: the body face must be the B2 choice, ${tokens.font.body.family}`);
     if (s.visualLanguage.length < 3) problems.push('design/design-system.json: describe at least three rules of the visual language');
     if (same(s.responsive.desktop, s.responsive.mobile)) problems.push('design/design-system.json: mobile rules must differ from desktop rules');
+    if (workflowVersion(dir) >= 2) problems.push(...componentProblems(s));
     return problems;
   },
 
@@ -380,6 +477,7 @@ export const CHECKS = {
     }
     const heroSection = homePlan?.sections?.[0];
     if (heroSection && CENTRED_HERO.test(heroSection.composition) && !BROKEN_GRID.test(heroSection.composition)) problems.push('design/section-plan.json: the home hero is a centred layout with nothing overlapping or bleeding; give it scale contrast and one element that breaks the grid');
+    if (workflowVersion(dir) >= 2) problems.push(...hierarchyProblems(plan, { crux: read(dir, FILES.crux), assets: assets?.assets ?? [] }));
     return problems;
   },
 
@@ -415,6 +513,9 @@ export const CHECKS = {
     if (vd?.decision === 'chosen' && !a.assets.some((x) => x.id === mediaId('video', vd.id))) problems.push(`design/asset-plan.json: the supplied video needs the asset "${mediaId('video', vd.id)}" (kind video, file ${vd.mp4})`);
     const used = new Set(sectionsOf(plan).flatMap((s) => s.assets));
     if (plan) for (const x of a.assets) if (!used.has(x.id)) problems.push(`design/asset-plan.json: asset ${x.id} is not used by any section`);
+    if (workflowVersion(dir) >= 2) {
+      for (const x of a.assets) if (x.kind === '3d' && !(t3?.decision === 'chosen' && x.id === mediaId('model', t3.id))) problems.push(`design/asset-plan.json: ${x.id} is a 3D asset the operator did not choose; 3D appears only when the media step chose it`);
+    }
     for (const x of a.assets) {
       if (x.source !== 'authored' && !x.licence) problems.push(`design/asset-plan.json: asset ${x.id} needs a licence`);
       if (x.source !== 'authored' && !x.file) problems.push(`design/asset-plan.json: asset ${x.id} needs a file path under assets/public/`);
@@ -489,6 +590,7 @@ export const CHECKS = {
     if (name && !JSON.stringify(c).includes(name)) problems.push(`content/copy.json: never names ${name}`);
     for (const p of brief?.pages ?? []) if (!c.pages.some((x) => x.slug === p.slug)) problems.push(`content/copy.json: page ${p.slug} is missing`);
     problems.push(...contentRuleProblems(c, brief?.contentRules ?? []));
+    if (workflowVersion(dir) >= 2 && plan) problems.push(...deepFaqProblems(c, plan));
     return problems;
   },
 

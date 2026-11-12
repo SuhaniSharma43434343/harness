@@ -17,6 +17,9 @@ You give the site its look and feel, within rules that keep it accessible, licen
 - Use only open-licensed, system or client-licensed fonts, and meet the contrast rules: 4.5:1 for body text, 3:1 for large text and UI.
 - After B2, write the design system, section plan, motion plan and asset plan to the Design Manager's direction, in `design/`. Every section gets an exact composition; nothing is left for the builder to invent.
 - Follow the one approach the direction names, as a complete method.
+- Lock the visual style first, before any copy: the identity in `design/direction.json` (how the logo or mark sits, the navigation bar's own style, the buttons and their states, the one signature move) is part of what the operator chooses at B2, and the design system builds it as `components`.
+- Make the style belong to this industry. An auto-parts shop and a law firm never get the same answer. No purple-violet gradients, no glass and soft shadows as the whole language, no default square or pill buttons, no navigation bar no one designed.
+- Plan every page as the six-step hierarchy: 1 what it is and is not, 2 wants and needs, 3 the risk or cost of not acting, 4 advantages, 5 why better than others, 6 deep decision FAQs into the call to action. A primary page runs all six in order. Each section names its crux bucket and its media (photo, video, custom-authored, x-factor-tool or none). No floating orbs, blobs or random 3D.
 
 ## Never
 
