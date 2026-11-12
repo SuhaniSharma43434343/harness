@@ -8,6 +8,7 @@ import { getPlugin } from './plugins.mjs';
 import { PHASES, approvals, loadProject } from './project.mjs';
 import { redactText, scanPaths } from './redact.mjs';
 import { assertProjectExists } from './workspace.mjs';
+import { PARAMETERS } from '../qa/report.mjs';
 
 // Preview, deploy and report (P13 to P15). A built site is scanned for secrets before it is
 // served or deployed, every deploy is smoke-tested at its URL, and the result goes in the
@@ -108,10 +109,73 @@ export async function deploy(project, { target = 'preview', ...opts } = {}) {
     });
   }
   if (!smoke.ok) throw new Unavailable(`The ${target} deploy at ${out.url} failed its smoke test (status ${smoke.status ?? smoke.error})`);
-  return { ...out, target, smoke, forms: formsNote };
+  // A preview that passed is what the team walks through before B6.
+  const demo = target === 'preview' ? writePreviewDemo(project, { url: out.url, ...opts }).file : undefined;
+  return { ...out, target, smoke, forms: formsNote, ...(demo ? { demo } : {}) };
+}
+
+// reports/preview-demo.md: the team's walkthrough of the preview before B6. Built from the brief, the
+// section plan, the open defects and the latest gate results, so it says no more than they do.
+const DEMO_CHECKS = {
+  Usability: ['Every link, button and menu works, on a phone too', 'Each form sends, and shows its error state when something is missing', 'The pages open quickly on a phone connection'],
+  Design: ['It looks like the direction chosen at B2: colours, type, the navigation bar and the buttons', 'Text is easy to read, and keyboard focus is visible'],
+  Creativity: ['The first screen has a hook you would remember, not a template', 'The signature move is there and nothing is decoration for its own sake'],
+  Content: ['Every word matches the copy approved at B3, with no placeholder text', 'Every fact is true; anything unknown is left out, not guessed'],
+  Responsiveness: ['On a phone, a tablet and a laptop nothing is cut off or overlapping', 'Buttons and links are easy to tap'],
+};
+export function writePreviewDemo(project, { url, ...opts } = {}) {
+  const { dir } = assertProjectExists(project, opts);
+  const brief = readJson(join(dir, 'intake', 'brief.json')) ?? {};
+  const plan = readJson(join(dir, 'design', 'section-plan.json'));
+  const defects = (readJson(join(dir, 'reports', 'defects.json'))?.defects ?? []).filter((d) => d.status !== 'verified');
+  const results = new Map(latestGateResults(dir).map((r) => [r.gate, r.status]));
+  const pages = brief.pages ?? (plan?.pages ?? []).map((p) => ({ slug: p.slug }));
+  const base = String(url ?? '').replace(/\/$/, '');
+  const L = [`# Team review: ${brief.client?.name ?? project}`, ''];
+  L.push(`Preview: ${base || '(not deployed yet)'}`, '', 'Share this page and the link with the team. Walk through every page on a phone and on a laptop, then record the decision:', '');
+  L.push(`- Accept the preview: \`forge approve ${project} B6 --note "<who reviewed it>"\``, `- Turn it down: \`forge reject ${project} B6 --note "<what must change>"\` (the reason becomes a rule for the agent whose work it was)`, '');
+  L.push('## Pages to walk through', '', '| Page | Link | What it is for | Its call to action |', '| --- | --- | --- | --- |');
+  for (const p of pages) L.push(`| ${p.title ?? p.slug} | ${base}${p.slug} | ${p.purpose ?? ''} | ${p.cta ?? ''} |`);
+  L.push('');
+  L.push('## Check under the five parameters', '');
+  for (const param of PARAMETERS) {
+    const auto = param.gates.map((g) => `${g} ${results.get(g) ?? 'not run'}`).join(', ');
+    L.push(`### ${param.name}`, '', `Automated: ${auto}.`, '', ...DEMO_CHECKS[param.name].map((c) => `- [ ] ${c}`), '');
+  }
+  L.push('## Open defects', '');
+  L.push(...(defects.length ? defects.map((d) => `- ${d.id} (${d.status}, ${d.gate}): ${String(d.message).replace(/\s+/g, ' ').slice(0, 160)}`) : ['- None open.']), '');
+  const file = join(dir, 'reports', 'preview-demo.md');
+  mkdirSync(join(dir, 'reports'), { recursive: true });
+  writeFileSync(file, redactText(L.join('\n'), opts.secrets ? { secrets: opts.secrets } : undefined));
+  ledger.append(project, { actor: 'cli', type: 'note', data: { event: 'preview_demo', file: 'reports/preview-demo.md', url: base || null } }, opts);
+  return { file };
 }
 
 // forge report: reports/final-report.md, built from the ledger, the board and the evidence.
+// The They Ask, You Answer growth loop: traffic reaches the audience views, the Big 5 answers and the
+// tools turn visitors into qualified leads, and what is measured brings new buyer questions back to
+// the Truth Doc (Step 1). Each step lists what this site has for it, from the project records.
+function growthLoop(dir, brief, plan, crux) {
+  const positioning = readJson(join(dir, 'research', 'positioning.json'));
+  const sections = (plan?.pages ?? []).flatMap((p) => p.sections.map((s) => ({ ...s, slug: p.slug })));
+  const from = [...new Set((brief?.audience ?? []).flatMap((a) => a.arrivesFrom ?? []))];
+  const views = (plan?.pages ?? []).filter((p) => p.audienceView).map((p) => `${p.audienceView} (${p.slug})`);
+  const personas = (positioning?.personas ?? []).map((x) => `${x.segment}: ${x.desiredAction}`);
+  const answers = sections.filter((s) => s.hierarchyStep === 6 || s.media === 'x-factor-tool').map((s) => `\`${s.id}\` on ${s.slug}`);
+  const questions = crux?.buyerQuestions ?? [];
+  const answered = questions.filter((q) => q.source && !q.gap);
+  const open = questions.filter((q) => q.gap);
+  const L = ['## The growth loop (They Ask, You Answer)', ''];
+  L.push('Traffic -> audience views -> Big 5 answers and tools -> qualified leads -> measurement -> new buyer questions back into the Truth Doc.', '');
+  L.push(`1. **Traffic.** Visitors arrive from: ${from.length ? from.join(', ') : 'not recorded in the brief; find out from the analytics once it is installed'}.`);
+  L.push(`2. **Audience views.** ${views.length ? `Paths per visitor: ${views.join(', ')}.` : personas.length ? `One path per persona: ${personas.join('; ')}.` : 'No separate paths were planned.'}`);
+  L.push(`3. **Big 5 answers and tools.** ${answers.length ? `Where the site answers buyers: ${answers.join(', ')}.` : 'No deep-FAQ or tool sections were planned.'} ${answered.length} of ${questions.length} buyer question(s) are answered from a source.`);
+  L.push(`4. **Qualified leads.** ${(brief?.features?.forms ?? []).length ? `Forms: ${brief.features.forms.map((f) => f.purpose).join('; ')}.` : 'No form; leads come through the calls to action.'}`);
+  L.push('5. **Measurement feeds Step 1.** The questions people search for, type into forms or ask on calls are added to research/crux.json buyerQuestions; the Truth Doc is confirmed again (`forge facts <project> confirm`), and the next pages answer them.', '');
+  if (open.length) L.push('Write these first after launch: buyer questions the client has not answered yet.', '', ...open.map((q) => `- (${q.category}) ${q.question} Ask the client: ${q.gap}`), '');
+  return L;
+}
+
 // reports/gdd-roadmap.md: the site as the baseline for growth-driven design. Everything in it is
 // derived from the project's own records: what to measure comes from the interactive parts the plan
 // built, and the backlog from what is unfinished. Nothing is measured yet, and it says so.
@@ -141,6 +205,7 @@ export function writeGrowthRoadmap(project, opts = {}) {
   for (const f of (facts?.facts ?? []).filter((x) => x.assumption)) backlog.push(`- Confirm with the client: \`${f.field}\` was assumed (${f.reason})`);
   lines.push(...(backlog.length ? backlog : ['- Nothing open in the project records.']), '');
 
+  lines.push(...growthLoop(dir, brief, plan, crux));
   lines.push('## Month 2 and after', '');
   lines.push('Once there are a few weeks of visits: test the home headline against one alternative, move proof closer to the first call to action where visitors drop off, and add real case studies and testimonials as they arrive. Each change is decided by the numbers above, not by taste.', '');
   const file = join(dir, 'reports', 'gdd-roadmap.md');

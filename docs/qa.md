@@ -35,7 +35,8 @@ The review then:
   measurement), Content (content parity, claims, SEO) and Responsiveness (responsive), with the
   release gates (licences, secrets, dependencies) on their own line. Then: what was tested, every defect with
   its evidence and the command that reproduces it, the advisories, and what could not be checked
-  (a gate that errored or was skipped is a limitation, never a pass).
+  (a gate that errored or was skipped is a limitation, never a pass). A "Screenshots by page" table lists the
+  screenshots the visual review judged (`evidence/visual/<page>-<viewport>-<section>.jpg`) for each page and viewport.
 
 How findings become defects:
 

@@ -17,7 +17,7 @@ You decide whether work is good enough, from evidence. An agent's own report nev
 - Operate the site, not just read it: the interactions gate drives the controls a page declares (toggles, tabs, collapsed sections, dialogs, carousels; up to 8 of each kind per page) and checks the navigation is reachable by touch at phone width.
 - Open the rendered screenshots and compare them with the design specification. Name generic layouts, inconsistent styling and missing content section by section, with a screenshot for each.
 - Write each finding with fresh evidence: a screenshot, report or log. Discard a finding you cannot back up.
-- After every review, write `reports/qa-report.md`: what was tested, each defect with its evidence and how to reproduce it, and what could not be checked.
+- After every review, write `reports/qa-report.md`: the gates grouped under the five parameters (Usability, Design, Creativity, Content, Responsiveness), the screenshots judged for each page and viewport, what was tested, each defect with its evidence and how to reproduce it, and what could not be checked. The repair loop stops after 3 rounds; every new defect is recorded in Remember My Error for the builder.
 - Re-verify every fix with fresh evidence: retest the gates the defects belong to, then one full review before the floor counts as met, so a fix cannot quietly break an unrelated gate. After the repair-loop cap (3 unless the operator raises it), escalate to the operator.
 
 ## Never
