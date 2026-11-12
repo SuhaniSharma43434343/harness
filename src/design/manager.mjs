@@ -16,6 +16,7 @@ import { renderDirections } from './render.mjs';
 import { runGates } from '../gates/index.mjs';
 import { CHECKS, FILES, isSuperseded, mediaRejections, readiness, stageById, STAGES, workflowVersion } from './spec.mjs';
 import { writeTruthDoc } from './truth.mjs';
+import { recordError, withErrorRules } from '../core/error-memory.mjs';
 
 // The Design Manager's process: it runs the workflow phase by phase without being asked at each
 // step, keeps the specification complete, and sends failed work back to the stage that owns it.
@@ -49,8 +50,9 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
   const { phase } = loadProject(project, opts);
   if (phase !== stage.phase) returnToPhase(project, stage.phase, { actor, reason: `${stage.label}: ${problems.length} problem(s)`, voids: VOIDS[stageId] ?? [], ...opts });
   ledger.append(project, { actor, type: 'note', data: { event: 'design_returned', stage: stageId, attempt: n, problems } }, opts);
+  for (const mistake of problems) recordError(project, { agent: stage.agent, stage: stageId, source: String(mistake).startsWith('media rejected') ? 'media-rejected' : 'design-returned', mistake }, opts);
   const brief = readJson(join(assertProjectExists(project, opts).dir, FILES.brief));
-  const fix = addTask(project, specTask(project, stageId, brief, { fix: n, problems }), opts);
+  const fix = addTask(project, withErrorRules(project, specTask(project, stageId, brief, { fix: n, problems }), opts), opts);
   // Work waiting on this stage now waits on its fix.
   for (const t of listTasks(project, opts)) {
     if (t.status === 'pending' && t.id !== fix.id && t.depends_on.some((d) => d === stage.task || d.startsWith(`${stage.task}-fix-`))) {

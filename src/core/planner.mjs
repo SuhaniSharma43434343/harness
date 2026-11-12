@@ -1,6 +1,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { addTask, listTasks } from './board.mjs';
+import { withErrorRules } from './error-memory.mjs';
 import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { loadProject } from './project.mjs';
@@ -583,7 +584,7 @@ export function planPhase(project, { phase, actor = 'lead-developer', ...opts } 
     if (have.has(t.id)) continue;
     // A project whose research is planned now follows the current workflow's rules from here on.
     if (t.id === 'research') writeJsonAtomic(join(dir, FILES.workflow), { version: WORKFLOW_VERSION, plannedAt: new Date().toISOString() });
-    added.push(addTask(project, t, opts));
+    added.push(addTask(project, withErrorRules(project, t, opts), opts));
   }
   if (added.length) ledger.append(project, { actor, type: 'note', data: { event: 'planned', phase: current, tasks: added.map((t) => t.id) } }, opts);
   return added;

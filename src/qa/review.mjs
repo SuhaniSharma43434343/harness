@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { recordError } from '../core/error-memory.mjs';
 import { join } from 'node:path';
 import * as ledger from '../core/ledger.mjs';
 import { assertProjectExists, readJson, writeJsonAtomic } from '../core/workspace.mjs';
@@ -65,6 +66,7 @@ export async function qaReview(project, opts = {}) {
 
   const open = openDefects(report);
   const verified = report.defects.filter((d) => d.verifiedIn === number);
+  for (const d of report.defects.filter((x) => x.foundIn === number)) recordError(project, { agent: 'builder', stage: `qa ${d.gate}`, source: 'qa-defect', mistake: `${d.message}${d.location ? ` (${d.location})` : ''}` }, opts);
   for (const r of results) ledger.append(project, { actor: 'qa-verifier', type: 'gate_result', data: { gate: r.gate, status: r.status, findings: r.findings.length, evidence: `${evidenceDir}/${r.gate}.json`, review: number } }, opts);
   ledger.append(project, { actor: 'qa-verifier', type: 'note', data: { event: 'qa_review', review: number, floorMet: floor.met, gates: required, open: open.map((d) => d.id), verified: verified.map((d) => d.id) } }, opts);
   appendLog(paths.dir, report, results, verified, now(), required);

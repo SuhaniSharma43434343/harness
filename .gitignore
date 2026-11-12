@@ -5,6 +5,8 @@ node_modules/
 forge.config.json
 workspace/*
 !workspace/.gitkeep
+# Remember My Error: rules learned from client projects stay on this machine.
+memory/
 *.log
 dist/
 # The gate fixtures are built sites: their dist/ is source, not build output.

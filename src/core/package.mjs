@@ -29,6 +29,7 @@ const FORBIDDEN = [
   { id: 'node-modules', re: /(^|\/)node_modules(\/|$)/ },
   { id: 'env-file', re: /(^|\/)\.env(\.(?!example$)[^/]+)?$/ },
   { id: 'workspace-data', re: /^workspace\/(?!\.gitkeep$)/ },
+  { id: 'error-memory', re: /^memory\// },
   { id: 'git-history', re: /(^|\/)\.git(\/|$)/ },
   { id: 'log-file', re: /\.log$/ },
   { id: 'local-config', re: /^forge\.config\.json$/ },
