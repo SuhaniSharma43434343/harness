@@ -193,3 +193,67 @@ test('handoff writes a growth roadmap from the project records, and claims no me
   assert.ok(!text.includes('D-001'), 'verified defects are not backlog');
   assert.ok(ledger.read(p.project, p.opts).some((e) => e.data?.event === 'report' && e.data.roadmap === 'reports/gdd-roadmap.md'));
 });
+
+// Workflow 2, Stage 3 and 4: the team's walkthrough before B6, and the They Ask, You Answer growth loop.
+test('a preview that passes writes the team review page: the link, every page, the five parameters, open defects, B6', async () => {
+  process.env.FORGE_MOCK = '1';
+  const p = inPhase('PREVIEW_REPORT');
+  builtSite(p.dir);
+  writeJsonAtomic(join(p.dir, 'intake', 'brief.json'), { client: { name: 'Harbor Home' }, pages: [{ slug: '/', title: 'Home', purpose: 'Start an enquiry', cta: 'Book a visit' }, { slug: '/contact', title: 'Contact', purpose: 'Book the visit', cta: 'Send' }] });
+  writeJsonAtomic(join(p.dir, 'reports', 'defects.json'), { defects: [{ id: 'D-002', status: 'escalated', gate: 'performance', message: '/ Largest Contentful Paint is 3002 ms' }, { id: 'D-001', status: 'verified', gate: 'seo', message: 'fixed' }] });
+  writeGates(p.dir, { routes: 'pass', forms: 'pass', performance: 'fail', responsive: 'pass' });
+  approve(p.project, 'B5', p.opts);
+  const h = harnessRoot({ vercel: true, 'form-function': true });
+  const r = await deploy(p.project, { target: 'preview', ...p.opts, ...h, env: {} });
+  delete process.env.FORGE_MOCK;
+  assert.equal(r.demo.replace(/\\/g, '/').endsWith('reports/preview-demo.md'), true);
+  const text = readFileSync(join(p.dir, 'reports', 'preview-demo.md'), 'utf8');
+  const url = r.url.replace(/\/$/, '');
+  for (const s of [
+    '# Team review: Harbor Home', `Preview: ${url}`,
+    `| Home | ${url}/ | Start an enquiry | Book a visit |`, `| Contact | ${url}/contact | Book the visit | Send |`,
+    '### Usability', 'Automated: routes pass, forms pass, interactions not run, performance fail.', '- [ ] Each form sends',
+    '### Design', '### Creativity', '### Content', '### Responsiveness', 'Automated: responsive pass.',
+    '- D-002 (escalated, performance): / Largest Contentful Paint is 3002 ms',
+    `\`forge approve ${p.project} B6 --note`, `\`forge reject ${p.project} B6 --note`,
+  ]) assert.ok(text.includes(s), `the review page is missing: ${s}`);
+  assert.ok(!text.includes('D-001'), 'a verified defect is not open');
+  assert.ok(ledger.read(p.project, p.opts).some((e) => e.data?.event === 'preview_demo' && e.data.url === url));
+});
+
+test('the growth roadmap runs the They Ask, You Answer loop and sends unanswered buyer questions back to Step 1', () => {
+  const p = inPhase('HANDOFF');
+  writeJsonAtomic(join(p.dir, 'intake', 'brief.json'), { client: { name: 'Harbor Home' }, audience: [{ segment: 'Homeowners', need: 'A fair price', arrivesFrom: ['Instagram', 'search'] }], features: { forms: [{ id: 'visit', purpose: 'Book a home visit' }] } });
+  writeJsonAtomic(join(p.dir, 'design', 'section-plan.json'), { pages: [
+    { slug: '/', flow: 'primary', sections: [{ id: 'home-hero', pattern: 'statement', hierarchyStep: 1 }, { id: 'home-calculator', pattern: 'overlap', hierarchyStep: 4, media: 'x-factor-tool' }, { id: 'home-faq', pattern: 'list-editorial', hierarchyStep: 6 }] },
+    { slug: '/landlords', flow: 'primary', audienceView: 'Landlords', sections: [{ id: 'landlord-hero', pattern: 'statement', hierarchyStep: 1 }] },
+  ] });
+  writeJsonAtomic(join(p.dir, 'research', 'crux.json'), { buckets: { about: { items: [], gaps: [] }, whatWeDo: { items: [], gaps: [] }, ourWork: { items: [], gaps: [] }, resourceHub: { items: [], gaps: [] }, reachUs: { items: [], gaps: [] } }, buyerQuestions: [
+    { question: 'What does a kitchen cost?', category: 'pricing', gap: 'What is the usual price range?' },
+    { question: 'Is a fixed quote better?', category: 'comparisons', source: 'brief' },
+  ] });
+  const text = readFileSync(writeReport(p.project, p.opts).roadmap, 'utf8');
+  for (const s of [
+    '## The growth loop (They Ask, You Answer)',
+    'Traffic -> audience views -> Big 5 answers and tools -> qualified leads -> measurement -> new buyer questions back into the Truth Doc.',
+    '1. **Traffic.** Visitors arrive from: Instagram, search.',
+    '2. **Audience views.** Paths per visitor: Landlords (/landlords).',
+    '3. **Big 5 answers and tools.** Where the site answers buyers: `home-calculator` on /, `home-faq` on /. 1 of 2 buyer question(s) are answered from a source.',
+    '4. **Qualified leads.** Forms: Book a home visit.',
+    '5. **Measurement feeds Step 1.**', 'research/crux.json buyerQuestions', '`forge facts <project> confirm`',
+    '- (pricing) What does a kitchen cost? Ask the client: What is the usual price range?',
+  ]) assert.ok(text.includes(s), `the roadmap is missing: ${s}`);
+});
+
+test('the QA report lists the screenshots it judged, by page and viewport', async () => {
+  const { writeQaReport } = await import('../../src/qa/report.mjs');
+  const p = inPhase('QUALITY_REVIEW');
+  mkdirSync(join(p.dir, 'evidence', 'visual'), { recursive: true });
+  for (const f of ['home-desktop-hero.jpg', 'home-desktop-faq.jpg', 'home-mobile-hero.jpg', 'contact-mobile-form.jpg']) writeFileSync(join(p.dir, 'evidence', 'visual', f), 'x');
+  writeQaReport(p.dir, p.project, { review: 1, qualityFloor: { met: true, failing: [] }, defects: [] }, [gateResult('responsive', 'pass')], new Date('2026-11-12T00:00:00Z'));
+  const text = readFileSync(join(p.dir, 'reports', 'qa-report.md'), 'utf8');
+  assert.match(text, /## By parameter[\s\S]*\| Responsiveness \|/);
+  assert.match(text, /## Screenshots by page\n\n\| Page \| Viewport \| Screenshots \|/);
+  assert.ok(text.includes('| home | desktop | 2: evidence/visual/home-desktop-faq.jpg, evidence/visual/home-desktop-hero.jpg |'));
+  assert.ok(text.includes('| contact | mobile | 1: evidence/visual/contact-mobile-form.jpg |'));
+});
