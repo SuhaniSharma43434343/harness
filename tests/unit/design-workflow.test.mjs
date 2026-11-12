@@ -1144,3 +1144,129 @@ test('the contracts tell each stage about the identity, the six steps, the bucke
   assert.match(lines('asset-plan'), /"custom-authored" an svg/);
   assert.match(lines('copy'), /Step 6 sections are deep decision FAQs: at least five real buyer questions/);
 });
+
+// Workflow 2, Stage 2 tracks 4A and 4B, and the anti-slop gate before development.
+const PHOTO = { id: 'workshop', kind: 'photo', description: 'The site lead measuring a crooked doorframe in an old Portland kitchen', source: 'licensed', file: 'photos/workshop.jpg', licence: 'Unsplash', alt: 'A carpenter measuring an old doorframe' };
+const PROMPT = { section: 'quote-rule', asset: 'workshop', format: 'photo', aspect: '3:2',
+  prompt: 'A carpenter in a worn canvas apron measures a crooked painted doorframe in an old Portland kitchen, morning light from a sash window, warm paper tones, shot at eye level on a 35mm lens, shallow depth of field',
+  negative: 'AI artefacts, warped hands or text, plastic skin, purple light, stock-photo smiles' };
+const STYLE_LOCK = 'Warm paper and forest green, soft morning window light, 35mm documentary framing, fine film grain, calm and exact';
+function mediaProject(change = (x) => x) {
+  return v2Project((s) => {
+    s['design/asset-plan.json'].assets.push(PHOTO);
+    Object.assign(s['design/section-plan.json'].pages[0].sections.find((x) => x.id === 'quote-rule'), { media: 'photo', assets: ['kitchen', 'workshop'] });
+    s['design/media-prompts.json'] = { styleLock: STYLE_LOCK, prompts: [PROMPT] };
+    s['assets/public/photos/workshop.jpg'] = 'jpeg bytes';
+    s['design/media-review.json'] = { items: [{ asset: 'workshop', inspected: 'assets/public/photos/workshop.jpg', verdict: 'pass', issues: [] }] };
+    return change(s);
+  });
+}
+const LITMUS = {
+  couldBeAnyCompany: { answer: 'no', note: 'The ruled margin and the fixed-quote voice belong to this firm' },
+  worksWithoutDecoration: { answer: 'yes', note: 'The layout carries the story without the motion' },
+  everySectionHasAReason: { answer: 'yes', note: 'Each section is one of the six steps' },
+  claimsRealAndSourced: { answer: 'yes', note: 'Every claim is in content/claims.json' },
+  rhythmAndPointOfView: { answer: 'yes', note: 'Tight and generous sections alternate around one idea' },
+};
+
+test('the media tracks are workflow 2 only: an older project is never asked for prompts or a media check', () => {
+  const { dir } = fullProject();
+  assert.deepEqual(CHECKS['media-prompts'](dir), []);
+  assert.deepEqual(CHECKS['media-review'](dir), []);
+  assert.deepEqual(CHECKS.review(dir), [], 'and its review needs no litmus');
+});
+
+test('Track 4B prompts: one per photo or video, locked to the B2 look, detailed, with a negative prompt', () => {
+  assert.deepEqual(CHECKS['media-prompts'](mediaProject().dir), []);
+  assert.match(CHECKS['media-prompts'](mediaProject((s) => { delete s['design/media-prompts.json']; return s; }).dir).join('\n'), /design\/media-prompts.json is missing/);
+  assert.match(CHECKS['media-prompts'](mediaProject((s) => { s['design/media-prompts.json'].prompts = []; return s; }).dir).join('\n'), /quote-rule needs a prompt for workshop/);
+  const bad = mediaProject((s) => {
+    s['design/media-prompts.json'] = { styleLock: 'Warm', prompts: [{ ...PROMPT, format: 'video', prompt: 'A kitchen with floating orbs of purple light', negative: 'none' }] };
+    return s;
+  });
+  const p = CHECKS['media-prompts'](bad.dir).join('\n');
+  assert.match(p, /the styleLock must state the B2 look/);
+  assert.match(p, /the prompt for workshop is a video, but the asset is a photo/);
+  assert.match(p, /the prompt for workshop is too thin/);
+  assert.match(p, /needs a negative prompt/);
+  assert.match(p, /asks for decoration or a stock look/);
+});
+
+test('Track 4B check: every file is looked at, a video only through an image, and a rejection needs its reasons', () => {
+  assert.deepEqual(CHECKS['media-review'](mediaProject().dir), []);
+  assert.match(CHECKS['media-review'](mediaProject((s) => { s['design/media-review.json'].items = []; return s; }).dir).join('\n'), /workshop was not looked at/);
+  const video = mediaProject((s) => {
+    s['design/asset-plan.json'].assets.push({ id: 'site-walk', kind: 'video', description: 'A slow walk through a finished kitchen at dusk', source: 'client', file: 'video/site-walk.mp4', licence: 'Supplied by the client', alt: 'A walk through a kitchen' });
+    s['design/section-plan.json'].pages[0].sections[2].assets.push('site-walk');
+    s['design/media-review.json'].items.push({ asset: 'site-walk', inspected: 'assets/public/video/site-walk.mp4', verdict: 'pass', issues: [] });
+    return s;
+  });
+  assert.match(CHECKS['media-review'](video.dir).join('\n'), /site-walk was judged from assets\/public\/video\/site-walk.mp4; open an image \(for a video, its poster or an extracted frame\), never the video file/);
+  const poster = mediaProject((s) => { s['design/media-review.json'].items[0].inspected = 'assets/public/photos/missing.jpg'; return s; });
+  assert.match(CHECKS['media-review'](poster.dir).join('\n'), /assets\/public\/photos\/missing.jpg, inspected for workshop, does not exist/);
+  const silent = mediaProject((s) => { s['design/media-review.json'].items[0].verdict = 'reject'; return s; });
+  assert.match(CHECKS['media-review'](silent.dir).join('\n'), /say why workshop was rejected/);
+});
+
+test('a rejected photo stops the assets phase and sends the asset plan back, then the check runs again', async () => {
+  const { project, opts, dir } = mediaProject((s) => { delete s['design/media-review.json']; return s; });
+  setPhase(dir, 'ASSETS_LICENSING');
+  const worker = async ({ task, projectDir }) => {
+    if (task.id === 'media-review') write(projectDir, 'design/media-review.json', { items: [{ asset: 'workshop', inspected: 'assets/public/photos/workshop.jpg', verdict: 'reject', issues: ['The hands are warped and the text on the tape measure is melted'] }] });
+    return { evidence: ['x'] };
+  };
+  const planned = planPhase(project, opts).map((t) => t.id);
+  assert.ok(planned.includes('media-review'), 'workflow 2 plans the media check in the assets phase');
+  assert.match(exitBlockers(project, opts).join('\n'), /task media-review is pending/);
+  const r = await runDesignWorkflow(project, { ...opts, worker, verifier: async () => ({ ok: true, code: 0, output: 'ok' }), stopBefore: 'UX_DESIGN_SYSTEM' });
+  assert.equal(r.reason, 'reached');
+  const fix = listTasks(project, opts).find((t) => t.id.startsWith('asset-plan-fix'));
+  assert.ok(fix, 'the asset plan was sent back');
+  assert.match(fix.acceptance.join('\n'), /media rejected: workshop \(assets\/public\/photos\/workshop.jpg\): The hands are warped/);
+  assert.ok(!existsSync(join(dir, 'design/media-review.json')), 'the old verdict is gone, so the new files are looked at');
+  assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_returned' && e.data.stage === 'asset-plan'));
+});
+
+test('copy and the media prompts start together after the plans, and the review reads them both', () => {
+  const v2 = mediaProject();
+  setPhase(v2.dir, 'CONTENT');
+  const content = planPhase(v2.project, v2.opts);
+  assert.deepEqual(content.map((t) => t.id), ['copy', 'media-prompts', 'asset-register']);
+  for (const t of content.slice(0, 2)) assert.deepEqual(t.depends_on, ['section-plan', 'asset-plan'], t.id);
+  assert.equal(content[1].agent, 'asset-rights');
+  assert.match(content[1].acceptance.join('\n'), /Creative Director's eye[\s\S]*"styleLock"[\s\S]*"negative"/);
+  rmSync(join(v2.dir, 'design/review.json'));
+  setPhase(v2.dir, 'TECHNICAL_PLAN');
+  const [review] = planPhase(v2.project, v2.opts).filter((t) => t.id.startsWith('design-review'));
+  assert.ok(review.inputs.includes('design/media-prompts.json') && review.inputs.includes('design/media-review.json') && review.inputs.includes('content/copy.json'), 'the review sees layout, copy and media together');
+  assert.match(review.acceptance.join('\n'), /everything is a card; purple gradients; random floating orbs[\s\S]*couldBeAnyCompany/);
+  // The phases run copy and media before the review: CONTENT and ASSETS_LICENSING come before TECHNICAL_PLAN.
+  const order = PHASES.map((p) => p.name);
+  assert.ok(order.indexOf('CONTENT') < order.indexOf('TECHNICAL_PLAN') && order.indexOf('ASSETS_LICENSING') < order.indexOf('TECHNICAL_PLAN'));
+
+  const v1 = fullProject();
+  setPhase(v1.dir, 'CONTENT');
+  assert.deepEqual(planPhase(v1.project, v1.opts).map((t) => t.id), ['copy', 'asset-register'], 'an older project plans what it always did');
+});
+
+test('the anti-slop gate: the review answers the five litmus questions, and a failing answer cannot be ready', () => {
+  const review = (r) => mediaProject((s) => ({ ...s, 'design/review.json': r })).dir;
+  const base = { verdict: 'ready', summary: 'The site holds together', findings: [] };
+  assert.match(CHECKS.review(review(base)).join('\n'), /answer the five litmus questions/);
+  assert.deepEqual(CHECKS.review(review({ ...base, litmus: LITMUS })), []);
+  const generic = { ...base, litmus: { ...LITMUS, couldBeAnyCompany: { answer: 'yes', note: 'Swap the name and it is any builder' }, worksWithoutDecoration: { answer: 'no', note: 'Without the gradients it is empty' } } };
+  assert.match(CHECKS.review(review(generic)).join('\n'), /the litmus fails \(couldBeAnyCompany, worksWithoutDecoration\), so the verdict must be "changes"/);
+  assert.deepEqual(CHECKS.review(review({ ...generic, verdict: 'changes', findings: [{ stage: 'design-system', severity: 'blocking', message: 'Give the surfaces a point of view' }] })), []);
+});
+
+test('copy with no voice is refused: stock headlines and the same three-layer stack everywhere', () => {
+  const { dir } = mediaProject((s) => {
+    const sections = s['content/copy.json'].pages[0].sections;
+    sections[0].headline = 'Elevate your home with seamless renovations';
+    for (const x of sections) Object.assign(x, { eyebrow: 'Harbor Home', subheadline: 'A plain promise about the work' });
+    return s;
+  });
+  const p = CHECKS.copy(dir).join('\n');
+  assert.match(p, /promise: "Elevate your home with seamless renovations" has no marketing voice/);
+  assert.match(p, /5 of 6 sections repeat the same eyebrow, headline, subheadline and body stack/);
+});

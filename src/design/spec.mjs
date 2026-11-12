@@ -37,6 +37,8 @@ export const FILES = {
   sources: 'research/sources.json',
   truthDoc: 'research/truth-doc.md',
   workflow: 'design/reference/workflow.json',
+  mediaPrompts: 'design/media-prompts.json',
+  mediaReview: 'design/media-review.json',
 };
 
 // The workflow version a project was planned under. The planner writes design/reference/workflow.json
@@ -326,6 +328,72 @@ function deepFaqProblems(c, plan) {
   return problems;
 }
 
+// Workflow 2, Track 4B: the photos and videos. Every photo or video asset a section uses gets a
+// prompt locked to the B2 direction; every file on hand is looked at, and a video by its poster or an
+// extracted frame, never the video file. A rejected file sends the asset plan back.
+const IMAGE = /\.(jpe?g|png|webp|avif|gif)$/i;
+const VISUAL_KINDS = new Set(['photo', 'video', 'frames']);
+function mediaPromptProblems(dir) {
+  const [m, problems] = load(dir, 'mediaPrompts', 'mediaPrompts');
+  if (!m) return problems;
+  const plan = read(dir, FILES.sectionPlan);
+  const assets = new Map((read(dir, FILES.assetPlan)?.assets ?? []).map((a) => [a.id, a]));
+  if (words(m.styleLock) < 12) problems.push('design/media-prompts.json: the styleLock must state the B2 look every prompt shares: palette, light, lens, grain and mood');
+  for (const s of sectionsOf(plan)) {
+    if (s.media !== 'photo' && s.media !== 'video') continue;
+    for (const id of s.assets.filter((x) => ['photo', 'video'].includes(assets.get(x)?.kind))) {
+      const p = m.prompts.find((x) => x.asset === id && x.section === s.id);
+      if (!p) problems.push(`design/media-prompts.json: ${s.id} needs a prompt for ${id}`);
+      else if (p.format !== assets.get(id).kind) problems.push(`design/media-prompts.json: the prompt for ${id} is a ${p.format}, but the asset is a ${assets.get(id).kind}`);
+    }
+  }
+  for (const p of m.prompts) {
+    if (words(p.prompt) < 25) problems.push(`design/media-prompts.json: the prompt for ${p.asset} is too thin to make a believable image; describe the subject, place, light and composition (25 words or more)`);
+    if (words(p.negative) < 4) problems.push(`design/media-prompts.json: the prompt for ${p.asset} needs a negative prompt: AI artefacts, warped hands or text, plastic skin, off-brand colours`);
+    if (DECORATION.test(p.prompt) || /\bpurple|violet\b/i.test(p.prompt)) problems.push(`design/media-prompts.json: the prompt for ${p.asset} asks for decoration or a stock look (orbs, blobs, purple light); describe the real business instead`);
+  }
+  return problems;
+}
+function mediaReviewProblems(dir) {
+  const [r, problems] = load(dir, 'mediaReview', 'mediaReview');
+  if (!r) return problems;
+  const assets = (read(dir, FILES.assetPlan)?.assets ?? []).filter((a) => VISUAL_KINDS.has(a.kind) && a.source !== 'authored');
+  for (const a of assets) {
+    const item = r.items.find((x) => x.asset === a.id);
+    if (!item) {
+      problems.push(`design/media-review.json: ${a.id} was not looked at`);
+      continue;
+    }
+    if (!IMAGE.test(item.inspected)) problems.push(`design/media-review.json: ${a.id} was judged from ${item.inspected}; open an image (for a video, its poster or an extracted frame), never the video file`);
+    else if (!existsSync(join(dir, item.inspected))) problems.push(`design/media-review.json: ${item.inspected}, inspected for ${a.id}, does not exist`);
+    if (item.verdict === 'reject' && !item.issues.length) problems.push(`design/media-review.json: say why ${a.id} was rejected`);
+  }
+  return problems;
+}
+// The rejected files, as findings against the asset plan.
+export function mediaRejections(dir) {
+  return (read(dir, FILES.mediaReview)?.items ?? []).filter((x) => x.verdict === 'reject').map((x) => `media rejected: ${x.asset} (${x.inspected}): ${x.issues.join('; ')}. Choose another file, an authored visual, or a new generated one from design/media-prompts.json`);
+}
+
+// Workflow 2, the anti-slop gate before development: the copy has a voice, and the Design Manager
+// answers the five litmus questions. A failing answer cannot sit with a "ready" verdict.
+const VOICELESS = [/^(unlock|elevate|discover|transform|empower|experience|explore)\b/i, /^welcome to\b/i, /\b(seamless(ly)?|next[- ]level|cutting[- ]edge|world[- ]class|state[- ]of[- ]the[- ]art|revolutioni[sz]e|game[- ]chang\w*|unparalleled)\b/i, /\byour (journey|one-stop)\b/i];
+function voiceProblems(c) {
+  const problems = [];
+  const sections = c.pages.flatMap((p) => p.sections);
+  for (const s of sections) if (VOICELESS.some((re) => re.test(s.headline ?? ''))) problems.push(`${s.id}: "${s.headline}" has no marketing voice; say something only this business would say`);
+  const stacked = sections.filter((s) => s.eyebrow && s.subheadline && (s.body ?? []).length);
+  if (sections.length >= 5 && stacked.length / sections.length >= 0.6) problems.push(`content/copy.json: ${stacked.length} of ${sections.length} sections repeat the same eyebrow, headline, subheadline and body stack; vary how sections speak`);
+  return problems;
+}
+const LITMUS_FAILS = { couldBeAnyCompany: 'yes', worksWithoutDecoration: 'no', everySectionHasAReason: 'no', claimsRealAndSourced: 'no', rhythmAndPointOfView: 'no' };
+function litmusProblems(r) {
+  if (!r.litmus) return ['design/review.json: answer the five litmus questions in "litmus": could this belong to any company, does it work without gradients and animation, does every section have a reason, are all claims real and sourced, does the page have rhythm and a point of view'];
+  const failing = Object.entries(LITMUS_FAILS).filter(([k, bad]) => r.litmus[k].answer === bad).map(([k]) => k);
+  if (failing.length && r.verdict === 'ready') return [`design/review.json: the litmus fails (${failing.join(', ')}), so the verdict must be "changes", with a blocking finding for each`];
+  return [];
+}
+
 export const CHECKS = {
   research(dir) {
     const [p, problems] = load(dir, 'positioning', 'positioning');
@@ -590,7 +658,7 @@ export const CHECKS = {
     if (name && !JSON.stringify(c).includes(name)) problems.push(`content/copy.json: never names ${name}`);
     for (const p of brief?.pages ?? []) if (!c.pages.some((x) => x.slug === p.slug)) problems.push(`content/copy.json: page ${p.slug} is missing`);
     problems.push(...contentRuleProblems(c, brief?.contentRules ?? []));
-    if (workflowVersion(dir) >= 2 && plan) problems.push(...deepFaqProblems(c, plan));
+    if (workflowVersion(dir) >= 2 && plan) problems.push(...deepFaqProblems(c, plan), ...voiceProblems(c));
     return problems;
   },
 
@@ -599,7 +667,17 @@ export const CHECKS = {
     if (!r) return problems;
     const blocking = r.findings.filter((f) => f.severity === 'blocking');
     if (r.verdict === 'ready' && blocking.length) problems.push('design/review.json: the verdict is ready, but there are blocking findings');
+    if (workflowVersion(dir) >= 2) problems.push(...litmusProblems(r));
     return problems;
+  },
+
+  // Workflow 2 only: an older project has neither file and is not asked for them.
+  'media-prompts'(dir) {
+    return workflowVersion(dir) >= 2 ? mediaPromptProblems(dir) : [];
+  },
+
+  'media-review'(dir) {
+    return workflowVersion(dir) >= 2 ? mediaReviewProblems(dir) : [];
   },
 };
 
@@ -612,7 +690,9 @@ export const STAGES = [
   { id: 'motion-plan', phase: 'UX_DESIGN_SYSTEM', task: 'motion-plan', agent: 'creative-director', owns: ['design/motion-plan.json'], label: 'Animation and interaction' },
   { id: 'asset-plan', phase: 'UX_DESIGN_SYSTEM', task: 'asset-plan', agent: 'creative-director', owns: ['design/asset-plan.json'], label: 'Visual asset requirements' },
   { id: 'copy', phase: 'CONTENT', task: 'copy', agent: 'content-ux', owns: ['content/copy.json', 'content/claims.json'], label: 'Actual section content' },
+  { id: 'media-prompts', phase: 'CONTENT', task: 'media-prompts', agent: 'asset-rights', owns: ['design/media-prompts.json'], label: 'Photo and video prompts' },
   { id: 'asset-files', phase: 'ASSETS_LICENSING', task: null, agent: 'asset-rights', owns: ['assets/register.json'], label: 'Asset files on hand' },
+  { id: 'media-review', phase: 'ASSETS_LICENSING', task: 'media-review', agent: 'asset-rights', owns: ['design/media-review.json'], label: 'Photo and video quality check' },
 ];
 
 export const stageById = (id) => STAGES.find((s) => s.id === id);
