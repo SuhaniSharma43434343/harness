@@ -222,10 +222,11 @@ export function retryStage(project, stageId, { note, ...opts }) {
 }
 
 // runDesignWorkflow(project, opts) => { stoppedAt, reason, spentUsd, log }
-// opts: { worker, verifier?, workspace, stopBefore?, maxUsd?, onStep? (called after each phase) }
+// opts: { worker, verifier?, workspace, stopBefore?, maxUsd?, onStep? (called after each phase),
+//   pauseEachPhase? (stop after every phase move, with reason "step" and { moved }) }
 // Runs from the current phase until an approval is needed, a stage escalates, or the project
 // reaches stopBefore (QUALITY_REVIEW by default: QA has its own loop).
-export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY_REVIEW', maxUsd = Infinity, budgetExhausted = () => false, onStep = () => {}, ...opts } = {}) {
+export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY_REVIEW', maxUsd = Infinity, budgetExhausted = () => false, onStep = () => {}, pauseEachPhase = false, ...opts } = {}) {
   let spent = 0;
   const log = [];
   const counted = async (job) => {
@@ -300,6 +301,7 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
     if (blockers.length) return stop('needs', { blockers });
     const moved = advanceProject(project, opts);
     log.push({ moved });
+    if (pauseEachPhase) return stop('step', { moved });
   }
   return stop('too-many-steps');
 }

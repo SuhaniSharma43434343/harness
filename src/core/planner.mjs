@@ -415,7 +415,14 @@ const assetRegister = (project) => (
 
 const PLANS = {
   RESEARCH: stageTask('research'),
-  APPROACH_SELECTION: stageTask('direction'),
+  // Workflow 2: the direction waits for the operator's approach choice, and is held to it.
+  APPROACH_SELECTION: (project, brief, { dir }) => {
+    if (workflowVersion(dir) < 2) return [specTask(project, 'direction', brief)];
+    const choice = existsSync(join(dir, FILES.approachChoice)) ? readJson(join(dir, FILES.approachChoice)) : null;
+    if (!choice) return [];
+    const t = specTask(project, 'direction', brief);
+    return [{ ...t, inputs: [...t.inputs, FILES.approachChoice], acceptance: [`The operator chose ${choice.approach} (${choice.name}) at the approach pause: "${choice.note}". It is the primaryApproach; interpret it as a complete method, and say why the others were not chosen`, ...t.acceptance] }];
+  },
 
   UX_DESIGN_SYSTEM: (project, brief) => {
     const tasks = ['design-system', 'section-plan', 'motion-plan', 'asset-plan'].map((s) => specTask(project, s, brief));

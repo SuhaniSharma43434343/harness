@@ -12,6 +12,7 @@ import { check } from './schemas.mjs';
 import { assertProjectExists } from './workspace.mjs';
 import { CHECKS as SPEC, FILES, isSuperseded, mediaRejections, readiness } from '../design/spec.mjs';
 import { factsBlockers } from '../design/truth.mjs';
+import { approachBlockers } from '../design/approach-guide.mjs';
 
 // Phase exits (the plan's workflow table). advanceProject moves a project to its next phase
 // only when the phase's exit gate holds: its evidence (below), its tasks finished, and its exit
@@ -52,9 +53,12 @@ const EVIDENCE = {
     const v = validateBrief(brief, facts);
     return [...v.errors.map((e) => `brief: ${e}`), ...v.missing.map((m) => `brief field still unknown: ${m}`)];
   },
-  APPROACH_SELECTION: (dir) => {
+  APPROACH_SELECTION: (dir, project) => {
     const d = readJson(join(dir, 'design', 'approach-decision.json'));
     if (!d) return ['design/approach-decision.json (run forge directions or forge select)'];
+    // Under workflow 2 the operator chooses the approach before the direction is written.
+    const waiting = mockRun() ? [] : approachBlockers(project, dir);
+    if (waiting.length) return waiting;
     return [...check('approachDecision', d).errors.map((e) => `approach decision: ${e}`), ...stageEvidence(dir, 'direction')];
   },
   CREATIVE_DIRECTIONS: (dir) => {

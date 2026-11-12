@@ -6,6 +6,8 @@ import { approve, createProject, loadProject, PHASES } from '../core/project.mjs
 import { readJson } from '../core/workspace.mjs';
 import { chooseDirection, readDirections } from '../design/choose.mjs';
 import { confirmFacts } from '../design/truth.mjs';
+import { approachOptions, chooseApproach, describeOptions } from '../design/approach-guide.mjs';
+import { phaseSummary, summaryLines } from '../design/summary.mjs';
 import { runDesignWorkflow } from '../design/manager.mjs';
 import { ESSENTIAL_FIELDS, extractFromPrompt, expressAsk } from '../intake/express.mjs';
 import { runIntake } from '../intake/run.mjs';
@@ -18,7 +20,7 @@ import { openDefects } from '../qa/defects.mjs';
 import { createClaudeCodeWorker } from '../workers/claude-code.mjs';
 import { DESIGN_QA_GATES } from './design.mjs';
 
-const USAGE = 'Usage: forge go <project> "<what the website is for>" [--answers <file.json>] [--approve B1,FACTS,B3] [--direction <id>] [--deep] [--max-usd <n>] [--model <m>]';
+const USAGE = 'Usage: forge go <project> "<what the website is for>" [--answers <file.json>] [--approve B1,FACTS,B3] [--approach APP-0N] [--direction <id>] [--auto | --steps] [--deep] [--max-usd <n>] [--model <m>]';
 
 // What the operator is agreeing to, in plain words, shown before each approval.
 export const APPROVAL_COVERS = {
@@ -40,6 +42,7 @@ export function classifyBlockers(blockers) {
     else if (approval) decisions.push({ kind: 'approval', code: approval[1] });
     else if (b.startsWith('licence not cleared')) decisions.push({ kind: 'licence', detail: b });
     else if (b.startsWith('facts confirmation')) decisions.push({ kind: 'facts', detail: b });
+    else if (b.startsWith('approach choice')) decisions.push({ kind: 'approach', detail: b });
     else other.push(b);
   }
   return { decisions, other };
@@ -74,7 +77,7 @@ export function summarise(brief, estimate) {
 //   status 'needs-answers'  intake could not finish: { missing }
 export async function runGo(project, opts = {}) {
   const {
-    workspace, prompt, answers = {}, approve: approveCodes = [], direction, deep = false, decide, askOperator,
+    workspace, prompt, answers = {}, approve: approveCodes = [], direction, approach, steps = false, deep = false, decide, askOperator,
     worker, maxUsd = Infinity, media = {}, fetch: fetchImpl, say = () => {}, designRun = runDesignWorkflow, repair = runRepairLoop, registry = loadRegistry(),
   } = opts;
   const ctx = { workspace };
@@ -122,6 +125,15 @@ export async function runGo(project, opts = {}) {
       say(`${need.code} recorded.`);
       return null;
     }
+    if (need.kind === 'approach') {
+      // The operator chooses the approach the site is built around, after a plain explanation.
+      const options = approachOptions(dir);
+      const pick = approach ?? (await decide?.({ kind: 'approach', options }));
+      if (!pick) return { kind: 'approach', options, hint: `Choose with: forge go ${project} --approach APP-0N   (or forge design approach ${project} APP-0N --note "<why>")` };
+      chooseApproach(project, pick, { ...ctx, note: approach ? 'Chosen by the operator (forge go --approach)' : 'Chosen by the operator at the approach pause (forge go)' });
+      say(`Approach chosen: ${pick}`);
+      return null;
+    }
     if (need.kind === 'facts') {
       // The Truth Doc is the operator's to check: forge go only records a confirmation they gave.
       const yes = approveCodes.includes('FACTS') || (await decide?.({ kind: 'facts', file: join(dir, 'research', 'truth-doc.md') })) === true;
@@ -142,8 +154,16 @@ export async function runGo(project, opts = {}) {
   for (let step = 0; step < 30; step++) {
     // The phase after B1 needs the approval before the workflow can leave INTAKE.
     const awaitingMedia = mediaPending();
-    const r = await designRun(project, { ...ctx, worker, maxUsd: maxUsd - spent, ...(awaitingMedia ? { stopBefore: 'APPROACH_SELECTION' } : {}), onStep: (s) => say(`${s.phase}: ${s.done?.length ?? 0} task(s) done`) });
+    const r = await designRun(project, { ...ctx, worker, maxUsd: maxUsd - spent, pauseEachPhase: steps, ...(awaitingMedia ? { stopBefore: 'APPROACH_SELECTION' } : {}), onStep: (s) => say(`${s.phase}: ${s.done?.length ?? 0} task(s) done`) });
     spent += r.spentUsd ?? 0;
+    // Step by step: after each phase, say in plain words what happened, and go on only on a yes.
+    if (r.reason === 'step') {
+      const summary = phaseSummary(dir, r.moved.from);
+      for (const l of summaryLines(summary)) say(l);
+      const yes = (await decide?.({ kind: 'step', from: r.moved.from, to: r.moved.to, summary })) === true;
+      if (!yes) return { status: 'waiting', needs: { kind: 'step', from: r.moved.from, to: r.moved.to, summary, hint: `Run forge go ${project} again to go on to ${r.moved.to}.` }, stoppedAt: r.stoppedAt, spentUsd: spent };
+      continue;
+    }
     if (r.reason === 'reached' && awaitingMedia) {
       const brief = readJson(join(dir, 'intake', 'brief.json'));
       const playbook = registry.industries.find((p) => p.id === brief.business?.industryId);
@@ -163,6 +183,7 @@ export async function runGo(project, opts = {}) {
 
   say('Reviewing the built site...');
   const qa = await repair(project, { ...ctx, worker, gates: DESIGN_QA_GATES });
+  for (const l of summaryLines(phaseSummary(dir, 'QUALITY_REVIEW'))) say(l);
   return { status: 'ready', qa: { outcome: qa.outcome, loops: qa.loops, open: openDefects(qa.report).length }, spentUsd: spent };
 }
 
@@ -217,6 +238,13 @@ export async function cmdGo(root, args) {
   const decide = rl
     ? async (need) => {
         if (need.kind.startsWith('media-')) return askMedia(rl, need);
+        if (need.kind === 'step') return /^y(es)?$/i.test((await rl.question(`Go on to ${need.to.toLowerCase().replace(/_/g, ' ')}? (yes/no) > `)).trim());
+        if (need.kind === 'approach') {
+          console.log('\nChoose how the site is built. Each approach, in plain words:');
+          for (const l of describeOptions(need.options)) console.log(`  ${l}`);
+          const id = (await rl.question('Approach (for example APP-01) > ')).trim().toUpperCase();
+          return need.options.some((o) => o.id === id && o.status !== 'excluded') ? id : undefined;
+        }
         if (need.kind === 'facts') {
           console.log(`\nResearch is done. Read ${need.file}: every fact, what the business is and is not, and the buyer questions.`);
           return /^y(es)?$/i.test((await rl.question('Are these facts real? (yes/no) > ')).trim());
@@ -239,6 +267,9 @@ export async function cmdGo(root, args) {
       answers: answersFile ? readJson(resolve(answersFile)) : {},
       approve: (flag(args, '--approve') ?? '').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean),
       direction: flag(args, '--direction'),
+      approach: flag(args, '--approach')?.toUpperCase(),
+      // Step by step at a terminal unless --auto; --steps asks for it anywhere.
+      steps: !args.includes('--auto') && (Boolean(rl) || args.includes('--steps')),
       deep: args.includes('--deep'),
       maxUsd: Number(flag(args, '--max-usd') ?? 25),
       media: {
@@ -273,7 +304,14 @@ function report(project, r) {
     const n = r.needs;
     console.log(`\nWaiting for you at ${r.stoppedAt}.`);
     if (n.kind === 'approval') console.log(`${n.code} covers: ${n.covers}\nApprove with: ${rerun} --approve ${n.code}   (or forge approve ${project} ${n.code})`);
-    else if (n.kind === 'media-pick') {
+    else if (n.kind === 'step') {
+      for (const l of summaryLines(n.summary)) console.log(l);
+      console.log(n.hint);
+    } else if (n.kind === 'approach') {
+      console.log('Choose how the site is built:');
+      for (const l of describeOptions(n.options)) console.log(`  ${l}`);
+      console.log(n.hint);
+    } else if (n.kind === 'media-pick') {
       console.log(`Pick a ${n.what}:`);
       n.candidates.forEach((c, i) => console.log(`  ${i + 1}. ${c.id}: ${c.title} by ${c.creator} (${c.licence}) ${c.url}`));
       console.log(`Choose with: ${rerun} --pick <id>   (or skip with --3d no)`);

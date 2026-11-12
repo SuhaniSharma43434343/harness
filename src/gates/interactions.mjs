@@ -268,6 +268,112 @@ async function phoneChecks(context, base, route, add, metrics, t) {
   }
 }
 
+// The visible state of a control: what hover and keyboard focus are expected to change.
+function stateOf(el) {
+  const st = getComputedStyle(el);
+  return [st.outlineStyle, st.outlineWidth, st.outlineColor, st.boxShadow, st.borderColor, st.backgroundColor, st.color, st.textDecorationLine, st.transform, st.opacity].join('|');
+}
+
+// Buttons and button-like links must show keyboard focus (WCAG 2.4.7) and react to the pointer.
+// Up to 8 per page, desktop width. Keyboard focus is checked the way a keyboard user gets it: Tab
+// first, so the browser shows focus-visible styles, then focus on each control in turn.
+async function stateChecks(context, base, route, add, metrics) {
+  const page = await context.newPage();
+  const at = location(route, DESKTOP);
+  try {
+    await page.goto(base + route, { waitUntil: 'load' });
+    const count = await page.evaluate(() => {
+      const looksLikeButton = (el) => {
+        if (el.matches('button, [role="button"], input[type="submit"]')) return true;
+        const st = getComputedStyle(el);
+        return el.matches('a[href]') && (st.backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(st.borderTopWidth) > 0) && parseFloat(st.paddingLeft) >= 8;
+      };
+      const found = [...document.querySelectorAll('a[href], button, [role="button"], input[type="submit"]')].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && !el.disabled && getComputedStyle(el).visibility !== 'hidden' && looksLikeButton(el);
+      }).slice(0, 8);
+      // A native browser button draws its own hover, which computed styles do not show; only
+      // controls the site styled itself are held to a visible hover.
+      found.forEach((el, i) => {
+        el.setAttribute('data-forge-state', String(i));
+        if (el.matches('button, input[type="submit"]') && getComputedStyle(el).appearance !== 'none') el.setAttribute('data-forge-native', '1');
+      });
+      return found.length;
+    });
+    await page.keyboard.press('Tab');
+    for (let i = 0; i < count; i++) {
+      const sel = `[data-forge-state="${i}"]`;
+      const name = await page.$eval(sel, (el) => ((el.getAttribute('aria-label') ?? el.textContent) || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 30)).catch(() => null);
+      if (name === null) continue;
+      metrics.states++;
+      await page.$eval(sel, (el) => el.blur()).catch(() => {});
+      await page.mouse.move(0, 0);
+      await page.waitForTimeout(80);
+      const rest = await page.$eval(sel, stateOf).catch(() => null);
+      await page.$eval(sel, (el) => el.focus()).catch(() => {});
+      await page.waitForTimeout(80);
+      const focused = await page.$eval(sel, stateOf).catch(() => null);
+      if (rest && focused && rest === focused) add('focus-invisible', 'serious', `${route}: "${name}" shows no visible focus when reached by keyboard`, at);
+      await page.$eval(sel, (el) => el.blur()).catch(() => {});
+      if (await page.$eval(sel, (el) => el.hasAttribute('data-forge-native')).catch(() => true)) continue;
+      // A control something else covers cannot be hovered; the layout check reports it instead.
+      const onTop = await page.$eval(sel, (el) => {
+        el.scrollIntoView({ block: 'center' });
+        const b = el.getBoundingClientRect();
+        const top = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+        return Boolean(top && (top === el || el.contains(top)));
+      }).catch(() => false);
+      if (!onTop) continue;
+      await page.hover(sel, { timeout: 1000, force: true }).catch(() => {});
+      await page.waitForTimeout(350);
+      const hovered = await page.$eval(sel, stateOf).catch(() => null);
+      if (rest && hovered && rest === hovered) add('hover-dead', 'moderate', `${route}: "${name}" does not change when the pointer is over it`, at);
+    }
+  } catch (err) {
+    add('interaction-check-error', 'serious', `${route}: the button state checks broke: ${String(err.message).slice(0, 160)}`, at);
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
+// Text cut off by its box, and controls on the first screen covered by something else.
+async function layoutChecks(context, base, route, add, width) {
+  const page = await context.newPage();
+  const at = location(route, width);
+  try {
+    await page.goto(base + route, { waitUntil: 'load' });
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(() => {
+      const label = (el) => ((el.getAttribute('aria-label') ?? el.textContent) || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 40);
+      const clipped = [];
+      for (const el of document.querySelectorAll('h1, h2, h3, h4, p, li, a, button, label, span, td, th')) {
+        if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+        const st = getComputedStyle(el);
+        const r = el.getBoundingClientRect();
+        if (r.width <= 2 || r.height <= 2 || st.visibility === 'hidden') continue;
+        const hides = /hidden|clip/.test(st.overflowX + st.overflowY);
+        const meant = st.textOverflow === 'ellipsis' || (st.webkitLineClamp && st.webkitLineClamp !== 'none');
+        if (hides && !meant && (el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2)) clipped.push(label(el));
+      }
+      const covered = [];
+      for (const el of document.querySelectorAll('a[href], button, input, select, textarea, [role="button"]')) {
+        const b = el.getBoundingClientRect();
+        const st = getComputedStyle(el);
+        if (b.width < 4 || b.height < 4 || st.visibility === 'hidden' || st.pointerEvents === 'none' || b.top < 0 || b.bottom > innerHeight || b.left < 0 || b.right > innerWidth) continue;
+        const top = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+        if (top && top !== el && !el.contains(top) && !top.contains(el) && !(el.labels && [...el.labels].some((l) => l.contains(top)))) covered.push(`${label(el)} (under ${top.tagName.toLowerCase()}${top.className && typeof top.className === 'string' ? `.${top.className.split(' ')[0]}` : ''})`);
+      }
+      return { clipped: clipped.slice(0, 3), covered: covered.slice(0, 3) };
+    });
+    for (const c of r.clipped) add('text-clipped', 'serious', `${route}: text is cut off by its box at ${width}px: "${c}"`, at);
+    for (const c of r.covered) add('control-covered', 'serious', `${route}: a control is covered by another element at ${width}px: ${c}`, at);
+  } catch (err) {
+    add('interaction-check-error', 'serious', `${route}: the layout checks broke: ${String(err.message).slice(0, 160)}`, at);
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
 export default {
   name: 'interactions',
   version: '0.1.0',
@@ -276,13 +382,16 @@ export default {
     return withSite(ctx, async ({ browser, base }) => {
       const findings = [];
       const add = (id, severity, message, loc) => findings.push({ id, severity, message, location: loc });
-      const metrics = { toggles: 0, details: 0, tabs: 0, dialogs: 0, carousels: 0, navChecks: 0 };
+      const metrics = { toggles: 0, details: 0, tabs: 0, dialogs: 0, carousels: 0, navChecks: 0, states: 0 };
       const desktop = await browser.newContext({ viewport: { width: DESKTOP, height: 900 }, reducedMotion: 'reduce' });
       const phone = await browser.newContext({ viewport: { width: PHONE, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
       try {
         for (const route of ctx.routes()) {
           await driveWidgets(desktop, base, route, add, metrics);
           await phoneChecks(phone, base, route, add, metrics, t);
+          await stateChecks(desktop, base, route, add, metrics);
+          await layoutChecks(desktop, base, route, add, DESKTOP);
+          await layoutChecks(phone, base, route, add, PHONE);
         }
       } finally {
         await desktop.close();

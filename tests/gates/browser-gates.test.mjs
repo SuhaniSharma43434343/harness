@@ -250,7 +250,7 @@ test('interactions: working widgets pass, so the gate only flags controls that d
 </body></html>`);
   const r = await runGate('interactions', siteDir, { browser });
   assert.equal(r.status, 'pass', JSON.stringify(r.findings, null, 2));
-  assert.deepEqual({ ...r.metrics, navChecks: 0 }, { toggles: 1, details: 1, tabs: 1, dialogs: 1, carousels: 1, navChecks: 0 });
+  assert.deepEqual({ ...r.metrics, navChecks: 0 }, { toggles: 1, details: 1, tabs: 1, dialogs: 1, carousels: 1, navChecks: 0, states: 5 });
 });
 
 test('interactions: real-world patterns produce no false verdicts', { skip, timeout: 120_000 }, async () => {
@@ -323,4 +323,36 @@ test('every browser plugin has a valid manifest', async () => {
     assert.ok(existsSync(file), id);
     assertValid('plugin', JSON.parse(readFileSync(file, 'utf8')), id);
   }
+});
+
+test('interactions: a styled button with no focus or hover state, clipped text and a covered control are caught', { skip }, async () => {
+  const { mkdirSync, mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const siteDir = join(mkdtempSync(join(tmpdir(), 'forge-states-')), 'site');
+  mkdirSync(join(siteDir, 'dist'), { recursive: true });
+  writeFileSync(join(siteDir, 'dist', 'index.html'), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>States</title><style>
+  .btn { appearance: none; display: inline-block; padding: 14px 22px; background: #1f4e79; color: #fff; border: 0; min-width: 48px; min-height: 48px }
+  .flat:focus, .flat:focus-visible { outline: none }
+  .good:hover { background: #163a5a } .good:focus-visible { outline: 3px solid #f2a65a; outline-offset: 2px }
+  .clip { width: 80px; overflow: hidden; white-space: nowrap }
+  .ellipsis { width: 80px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+  .cover { position: absolute; top: 200px; left: 0; width: 300px; height: 80px; background: rgba(255,255,255,.9) }
+</style></head>
+<body><main>
+  <h1>Button states</h1>
+  <button class="btn flat" type="button">Dead button</button>
+  <a class="btn good" href="#">Good link</a>
+  <p class="clip">This sentence is far too long for its narrow box</p>
+  <p class="ellipsis">This one is cut on purpose, with an ellipsis</p>
+  <div style="position:relative;height:300px"><button class="btn good" style="position:absolute;top:210px;left:10px" type="button">Hidden</button><div class="cover"></div></div>
+</main></body></html>`);
+  const r = await runGate('interactions', siteDir, { browser });
+  const found = (id) => r.findings.filter((f) => f.id === id).map((f) => f.message);
+  assert.deepEqual(found('focus-invisible'), ['/: "Dead button" shows no visible focus when reached by keyboard']);
+  assert.deepEqual(found('hover-dead'), ['/: "Dead button" does not change when the pointer is over it']);
+  assert.ok(found('text-clipped').some((m) => /This sentence is far too long/.test(m)), JSON.stringify(r.findings));
+  assert.ok(!found('text-clipped').some((m) => /ellipsis/.test(m)), 'an ellipsis is meant');
+  assert.ok(found('control-covered').some((m) => /Hidden \(under div\.cover\)/.test(m)), JSON.stringify(r.findings));
+  assert.equal(r.status, 'fail', 'invisible focus, clipped text and covered controls block');
 });
