@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { GATE_ORDER } from '../gates/index.mjs';
 
@@ -35,6 +35,21 @@ function parameterRows(results) {
   };
   return [...PARAMETERS, { name: 'Release safety', gates: RELEASE_GATES, basis: 'measured' }].map((p) => `| ${p.name} | ${verdict(p.gates)} | ${p.gates.join(', ')} | ${p.basis === 'judgement' ? 'A model reviewing screenshots: judgement, not measurement' : 'Automated gates'} |`);
 }
+// The screenshots the visual review compared with the plan, by page and viewport
+// (evidence/visual/<page>-<viewport>-<section>.jpg), so a reader can open the ones for each page.
+function screenshotLines(dir) {
+  const visual = join(dir, 'evidence', 'visual');
+  if (!existsSync(visual)) return [];
+  const groups = new Map();
+  for (const f of readdirSync(visual).filter((x) => /\.(jpe?g|png|webp)$/i.test(x)).sort()) {
+    const m = /^(.+?)-(desktop|tablet|mobile)-/.exec(f);
+    const key = m ? `${m[1]} | ${m[2]}` : 'other | -';
+    groups.set(key, [...(groups.get(key) ?? []), f]);
+  }
+  if (!groups.size) return [];
+  return ['## Screenshots by page', '', '| Page | Viewport | Screenshots |', '| --- | --- | --- |', ...[...groups].map(([k, fs]) => `| ${k} | ${fs.length}: ${fs.slice(0, 3).map((f) => `evidence/visual/${f}`).join(', ')}${fs.length > 3 ? ', ...' : ''} |`), ''];
+}
+
 // Page text reaches defect messages (console errors, headings); one line each, no table breaks.
 const clean = (t) => String(t).replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim();
 
@@ -51,6 +66,7 @@ export function writeQaReport(dir, project, report, results, at = new Date()) {
   lines.push('## By parameter', '');
   lines.push('| Parameter | Result | Gates | Basis |', '| --- | --- | --- | --- |', ...parameterRows(results), '');
 
+  lines.push(...screenshotLines(dir));
   lines.push('## What was tested', '');
   lines.push('| Gate | Status | Findings | Evidence |', '| --- | --- | --- | --- |');
   for (const r of results) lines.push(`| ${r.gate} | ${r.status} | ${r.findings.length} | evidence/qa/review-${report.review}/${r.gate}.json |`);

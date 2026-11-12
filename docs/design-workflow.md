@@ -83,6 +83,14 @@ The Design Manager's review (P8) runs after both tracks, so it judges the layout
 
 A failing answer cannot sit with a ready verdict. The copy check also refuses stock headlines ("Elevate your…", "seamless") and the same eyebrow, headline, subheadline and body stack in most sections.
 
+**The team demo and the growth loop.** A preview deploy that passes its smoke test writes `reports/preview-demo.md`, the page the team walks through before B6. It has:
+- the preview link and every page with its link, purpose and call to action;
+- a checklist under the five parameters, each with its automated gate results;
+- the open defects;
+- the commands to accept (`forge approve <project> B6`) or turn it down (`forge reject <project> B6 --note`).
+
+At handoff, `reports/gdd-roadmap.md` adds the They Ask, You Answer loop: traffic (where visitors arrive from) → audience views → Big 5 answers and tools (the deep-FAQ and x-factor sections) → qualified leads (the forms) → measurement. The questions people search for, type into forms or ask on calls go back into `research/crux.json` buyerQuestions, and the Truth Doc is confirmed again. Buyer questions the client has not answered yet are listed as the first content to write after launch.
+
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
 **The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.
