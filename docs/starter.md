@@ -13,7 +13,7 @@ This is decision 4 of the [M1 freeze](interfaces.md#decisions-at-the-freeze), in
 | Design tokens | `src/styles/tokens.json` | `forge site`, from `design/tokens.json` or the chosen direction (Creative Director, B2) | `schemas/tokens.schema.json` |
 | Site settings | `src/site.json` | `forge site`, from the brief; the form plugin fills each form's `action` | `schemas/site-config.schema.json` |
 | Page content | `src/content/pages/<slug>.md` (`index.md` is `/`) | `forge site` scaffold, replaced by locked content from `content/pages/` (Content & UX, B3) | Markdown with the frontmatter below |
-| Sections | `src/sections/<approach>/<Name>.astro` | Builders; APP-01 ships Hero, Prose, Features, CtaBand and Form | Astro component |
+| Sections | `src/sections/<approach>/<Name>.astro` | Builders; APP-01 ships Hero, Prose, Features, Split, Steps, Stats, Gallery, Testimonials, Faq, CtaBand and Form, plus the five x-factor tools: SavingsCalculator, AudienceViewSwitcher, LeadMagnetModal, DeepFaqAccordion and ComparisonMatrix | Astro component |
 | Font imports | `src/styles/fonts.css` | `forge site`, one `@import` per Fontsource weight | CSS |
 
 Builders do not edit `tokens.json` after B2 or page content after B3 without a new approval (plan, agent table).
@@ -66,6 +66,73 @@ Before every build, `scripts/sync-content.mjs` pulls in `content/pages/` and the
 
 Each brief form is placed on the page whose slug or purpose matches it (contact, book, register, volunteer and similar), or on the home page. Every page's call to action points at the first form. Fields get input types and autocomplete from their names, and `name` and `email` are required. Until the form plugin sets `action`, a submission validates, then says the form is not connected yet, so a missing endpoint shows up in QA.
 
+### X-factor tools
+
+Five APP-01 sections for the sections a plan tags `x-factor-tool`: the pieces that answer a buyer's real questions (They Ask, You Answer) and turn a visit into a lead. Each is plain Astro with at most one small script (under 2 KB each, bundled only on pages that use it), is styled only with the token custom properties, has visible focus styles and tap targets of at least 44 px, and drops its motion under `prefers-reduced-motion`. A page that uses all five stays far inside the 150 KB budget and passes the accessibility and interactions gates (the build test checks both).
+
+**SavingsCalculator**: an ROI or savings calculator. The formula is a sum of products of input names and plain numbers (`[["hours", "rate", 52, 0.5]]` is hours x rate x 52 x 0.5; a negative number subtracts a term). The result for the default values is worked out at build time and the formula is written out in words, so without JavaScript it is a worked example; the script makes the inputs live and announces each result in an `aria-live` region. A formula naming an input that does not exist fails the build. The arithmetic is `src/lib/calculator.mjs`.
+
+```yaml
+  - use: "APP-01/SavingsCalculator"
+    heading: "What could you save?"
+    inputs:
+      - { name: "hours", label: "Hours spent on admin each week", unit: "hours", value: 5, min: 0, step: 0.5 }
+      - { name: "rate", label: "What an hour of your time is worth", unit: "GBP", value: 40, min: 0 }
+    formula: [["hours", "rate", 52, 0.5]]
+    result: { label: "Estimated saving a year", prefix: "£", decimals: 0 }
+    note: "Assumes the tool halves the time you spend on admin."   # the assumption, stated
+    cta: { label: "Book a call", href: "/contact" }                 # optional
+```
+
+**AudienceViewSwitcher**: one path per kind of visitor. ARIA tabs (arrow keys, Home, End, automatic activation); each view ends on a link to its own path (its `cta`, or the page's). Without JavaScript the tabs hide and every view shows, stacked.
+
+```yaml
+  - use: "APP-01/AudienceViewSwitcher"
+    heading: "Who is it for?"
+    views:
+      - { label: "Residential", heading: "For your home", text: "...", points: ["Fixed price"], cta: { label: "Home services", href: "/residential" } }
+      - { label: "Commercial", heading: "For your business", text: "...", cta: { label: "Business services", href: "/commercial" } }
+```
+
+**LeadMagnetModal**: a button opens a native modal `<dialog>` with a short form. Escape and a click on the backdrop close it, focus starts on the first field and returns to the button on close. The form posts to the form's `action` in `src/site.json` when the form plugin has set one, otherwise to `/api/form?form=<id>`, the form plugin's endpoint. Its fields are those of `forms.<id>` in `site.json` when the form is defined there, otherwise name and email. The button uses the native invoker commands (`commandfor`), so the dialog opens without JavaScript in current browsers; the script covers older ones and sends the form in place.
+
+```yaml
+  - use: "APP-01/LeadMagnetModal"
+    form: "buyers-guide"
+    heading: "The buyer's guide"
+    text: "Twelve pages on what to ask before you buy."
+    button: "Get the free guide"
+    success: "Thank you. The guide is on its way to your inbox."   # optional
+    privacy: "We send the guide and nothing else."                  # optional
+```
+
+**DeepFaqAccordion**: the long, honest answers, each one or several paragraphs, in native `<details>` (no JavaScript), ending on a call to action (the page's unless `cta` is given). Each question has an anchor (`id`, or `faq-<n>`) so other pages can link straight to it.
+
+```yaml
+  - use: "APP-01/DeepFaqAccordion"
+    heading: "Everything you wanted to ask"
+    items:
+      - q: "How much does it cost?"
+        a: ["It depends on three things: ...", "For a typical home that comes to ..."]
+      - { q: "How long does it take?", a: "Most jobs take one day.", id: "how-long" }
+    ctaHeading: "Still have a question?"
+```
+
+**ComparisonMatrix**: the client against the alternatives, as a real `<table>` with a `<caption>` and `scope` headers. A value is `true`, `false` or text; `highlight` marks the client's column. Where the table's container is narrower than 40rem each row becomes a card and each cell shows its column's name, so it reads on a phone without horizontal scrolling.
+
+```yaml
+  - use: "APP-01/ComparisonMatrix"
+    heading: "How we compare"
+    caption: "Us against the usual alternatives"
+    columns: ["Us", "A typical agency", "Doing it yourself"]
+    highlight: 0
+    rows:
+      - { feature: "Fixed price", values: [true, false, true] }
+      - { feature: "Time to launch", values: ["2 weeks", "3 months", "It depends"] }
+```
+
+Numbers, prices and comparisons in these tools are claims like any other: each needs a source in `content/claims.json`.
+
 ## Budgets
 
 APP-01 targets mobile LCP at most 2.5 s and base JavaScript at most 150 KB gzip. The starter ships no framework runtime; a sample site's JavaScript is the form script, under 1 KB gzip. `siteReport(dist)` in `src/site/build.mjs` reports routes and JavaScript size, and `forge site --build` fails over budget. Lighthouse, axe and the other gates arrive with T21 and T22.
@@ -73,4 +140,5 @@ APP-01 targets mobile LCP at most 2.5 s and base JavaScript at most 150 KB gzip.
 ## Tests
 
 - `tests/unit/site-tokens.test.mjs` and `tests/unit/site-content.test.mjs`: token derivation and contrast, the CSS output, the brief-to-pages plan for every sample brief, frontmatter quoting, `scaffoldSite`, and the prebuild's per-page routes (each imports exactly its own sections, a removed page loses its route, a hand-written route wins, a missing section fails).
-- `tests/build/starter-build.test.mjs`: every sample brief builds, with one route per page, one `h1`, a title, a description and its call to action on every page, working internal links and anchors, labelled form fields and JavaScript inside the budget, and each page loading only its own sections' CSS. They need the starter's dependencies (`scripts/setup.sh` installs them) and are skipped, with the reason, without them.
+- `tests/build/starter-build.test.mjs`: every sample brief builds, with one route per page, one `h1`, a title, a description and its call to action on every page, working internal links and anchors, labelled form fields and JavaScript inside the budget, and each page loading only its own sections' CSS. A page with all five x-factor tools builds inside the budget with each tool's script under 2 KB and no hard-coded colour or font, passes the accessibility and interactions gates, and works by keyboard (the calculator's result updates, arrow keys switch views, Escape closes the dialog and returns focus) with no horizontal scroll at 360 px.
+- `tests/unit/site-calculator.test.mjs`: the savings calculator's formula, formatting, explanation and checks. They need the starter's dependencies (`scripts/setup.sh` installs them) and are skipped, with the reason, without them.

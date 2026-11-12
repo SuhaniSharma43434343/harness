@@ -46,6 +46,8 @@ h1 { letter-spacing: -0.02em; }
   transition: transform var(--motion-duration) ease-out;
 }
 .button:hover { transform: translateY(calc(var(--motion-distance) * -0.25)); }
+.button:active { transform: translateY(0) scale(0.98); }
+.button:disabled { cursor: progress; opacity: 0.7; transform: none; }
 .button--accent { background: var(--color-accent); color: var(--color-on-accent); }
 
 .site-header { border-bottom: 1px solid var(--color-border); }

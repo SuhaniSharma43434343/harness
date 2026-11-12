@@ -1,0 +1,71 @@
+---
+// Deep FAQs (an x-factor tool): the long, honest answers buyers search for, ending on a call to
+// action. Props: heading, intro, items ([{ q, a, id }]; `a` is one paragraph or a list of them;
+// `id` gives the question a linkable anchor, defaulting to faq-<n>), cta (defaults to the
+// page's), ctaHeading, ctaText. Native <details>/<summary>, so it needs no JavaScript; where the
+// browser can animate to `auto` the answers slide open, and not at all with motion reduced.
+// Renders nothing until it has items, so the scaffold never shows an invented answer.
+const { page, heading = 'Questions, answered in full', intro, items = [], cta = page.data.cta, ctaHeading = 'Still have a question?', ctaText, index = 0 } = Astro.props;
+const id = `faq-${index}`;
+const paragraphs = (a) => (Array.isArray(a) ? a : [a]).filter(Boolean);
+---
+{items.length > 0 && (
+  <section class="section deep-faq" aria-labelledby={`${id}-title`}>
+    <div class="wrap deep-faq__inner">
+      <h2 id={`${id}-title`}>{heading}</h2>
+      {intro && <p class="lead">{intro}</p>}
+      <div class="deep-faq__list">
+        {items.map((item, i) => (
+          <details id={item.id ?? `${id}-${i + 1}`}>
+            <summary>
+              <span>{item.q}</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" /></svg>
+            </summary>
+            <div class="deep-faq__answer">
+              {paragraphs(item.a).map((p) => <p>{p}</p>)}
+            </div>
+          </details>
+        ))}
+      </div>
+      {cta && (
+        <div class="deep-faq__cta">
+          <p class="deep-faq__cta-heading">{ctaHeading}</p>
+          {ctaText && <p>{ctaText}</p>}
+          <a class="button" href={cta.href}>{cta.label}</a>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+<style>
+  .deep-faq__inner > * { max-width: 52rem; }
+  .deep-faq__list { margin-top: calc(var(--space) * 1.5); border-top: 1px solid var(--color-border); interpolate-size: allow-keywords; }
+  .deep-faq details { border-bottom: 1px solid var(--color-border); }
+  .deep-faq summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space);
+    min-height: 44px;
+    padding-block: var(--space);
+    font-weight: 700;
+    font-size: var(--step-1);
+    line-height: 1.3;
+    list-style: none;
+    cursor: pointer;
+  }
+  .deep-faq summary::-webkit-details-marker { display: none; }
+  .deep-faq summary:hover span { text-decoration: underline; text-underline-offset: 0.15em; }
+  .deep-faq summary svg { flex: none; transition: rotate var(--motion-duration) ease-out; }
+  .deep-faq details[open] > summary svg { rotate: 180deg; }
+  .deep-faq details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size var(--motion-duration) ease-out, content-visibility var(--motion-duration) allow-discrete;
+  }
+  .deep-faq details[open]::details-content { block-size: auto; }
+  .deep-faq__answer { padding-bottom: var(--space); }
+  .deep-faq__answer p:last-child { margin-bottom: 0; }
+  .deep-faq__cta { margin-top: calc(var(--space) * 2); padding: calc(var(--space) * 1.5); border-radius: calc(var(--radius) * 2); background: var(--color-surface); }
+  .deep-faq__cta-heading { font-family: var(--font-display); font-weight: var(--weight-display); font-size: var(--step-2); line-height: 1.2; margin-bottom: 0.5em; }
+</style>
