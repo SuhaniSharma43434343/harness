@@ -133,6 +133,8 @@ The direction is then planned and held to the choice. `forge go` shows the same 
     - `chrome-drift`: the header or footer is not the planned archetype;
     - `text-covered`: a solid box laid over a heading or text. Images over type, and anything marked `data-overlap`, are compositions, not mistakes.
 
+**Rewrite, not patch, after an approach change.** A fix task normally keeps what is right and changes only what the findings name. When the approach changes, that keeps a plan written for the wrong approach. On the forge-site rebuild, the motion plan stayed the old game plan through two fixes. So changing the approach at the pause marks the plans written for the old one in `design/reference/stale.json` (design system, section plan, motion plan, asset plan, media prompts), and each one's next fix rewrites it from scratch. The operator can ask for the same with `forge design retry <project> <stage> --note "<why>" --fresh`.
+
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
 **The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.

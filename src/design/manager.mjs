@@ -37,7 +37,19 @@ function returnsOf(project, stage, opts) {
 
 // sendBack(project, stageId, problems) moves the project back to the stage's phase and adds a
 // fix task carrying the findings. Returns { returned: true } or, over the limit, { escalated: true }.
-export function sendBack(project, stageId, problems, { actor = 'design-manager', ...opts } = {}) {
+// The stages written for an approach: when the approach changes they are stale, and their next fix
+// rewrites them instead of patching (design/reference/stale.json, written by chooseApproach).
+export const APPROACH_STAGES = ['design-system', 'section-plan', 'motion-plan', 'asset-plan', 'media-prompts'];
+const staleFile = (dir) => join(dir, 'design', 'reference', 'stale.json');
+function takeStale(dir, stageId) {
+  if (!existsSync(staleFile(dir))) return false;
+  const s = JSON.parse(readFileSync(staleFile(dir), 'utf8'));
+  if (!s.stages.includes(stageId)) return false;
+  writeJsonAtomic(staleFile(dir), { ...s, stages: s.stages.filter((x) => x !== stageId) });
+  return true;
+}
+
+export function sendBack(project, stageId, problems, { actor = 'design-manager', fresh: asked = false, ...opts } = {}) {
   const stage = stageById(stageId);
   const { total, sinceRetry } = returnsOf(project, stageId, opts);
   const n = total + 1;
@@ -52,7 +64,9 @@ export function sendBack(project, stageId, problems, { actor = 'design-manager',
   ledger.append(project, { actor, type: 'note', data: { event: 'design_returned', stage: stageId, attempt: n, problems } }, opts);
   for (const mistake of problems) recordError(project, { agent: stage.agent, stage: stageId, source: String(mistake).startsWith('media rejected') ? 'media-rejected' : 'design-returned', mistake }, opts);
   const brief = readJson(join(assertProjectExists(project, opts).dir, FILES.brief));
-  const fix = addTask(project, withErrorRules(project, specTask(project, stageId, brief, { fix: n, problems }), opts), opts);
+  const fresh = takeStale(assertProjectExists(project, opts).dir, stageId) || asked;
+  if (fresh) ledger.append(project, { actor, type: 'note', data: { event: 'design_rewrite', stage: stageId, attempt: n } }, opts);
+  const fix = addTask(project, withErrorRules(project, specTask(project, stageId, brief, { fix: n, problems, fresh }), opts), opts);
   // Work waiting on this stage now waits on its fix.
   for (const t of listTasks(project, opts)) {
     if (t.status === 'pending' && t.id !== fix.id && t.depends_on.some((d) => d === stage.task || d.startsWith(`${stage.task}-fix-`))) {
@@ -208,7 +222,7 @@ export function retryBuildTask(project, base, { note, ...opts }) {
   return { task: id };
 }
 
-export function retryStage(project, stageId, { note, ...opts }) {
+export function retryStage(project, stageId, { note, fresh = false, ...opts }) {
   const stage = stageById(stageId);
   if (!stage?.task) throw new PermissionDenied(`"${stageId}" is not a stage an agent works on`, { hint: `Stages: ${STAGES.filter((s) => s.task).map((s) => s.id).join(', ')}` });
   if (!note) throw new PermissionDenied('A retry needs the operator\'s reason as its note');
@@ -218,7 +232,7 @@ export function retryStage(project, stageId, { note, ...opts }) {
     if (t.status === 'blocked' && (t.id === stage.task || t.id.startsWith(`${stage.task}-fix-`))) saveTask(project, { ...t, blocked_reason: reason }, opts);
     if (stageId === 'copy' && t.status === 'pending' && t.id.startsWith('section-plan-sync-')) transitionTask(project, t.id, 'blocked', { actor: 'design-manager', reason, ...opts });
   }
-  return sendBack(project, stageId, [note, ...CHECKS[stageId](assertProjectExists(project, opts).dir)], opts);
+  return sendBack(project, stageId, [note, ...CHECKS[stageId](assertProjectExists(project, opts).dir)], { ...opts, fresh });
 }
 
 // runDesignWorkflow(project, opts) => { stoppedAt, reason, spentUsd, log }
