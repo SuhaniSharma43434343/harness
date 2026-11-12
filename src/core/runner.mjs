@@ -1,13 +1,22 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { getTask, listTasks, saveTask, transitionTask } from './board.mjs';
 import { loadConfig } from './config.mjs';
 import { ConfigMissing, PermissionDenied, SchemaInvalid, Unavailable } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { acquireFileLocks, acquireRunLock, patternsOverlap, releaseFileLocks, releaseRunLock } from './locks.mjs';
+import { recordError, withErrorRules } from './error-memory.mjs';
 import { redactText } from './redact.mjs';
 import { ROOT, assertProjectExists } from './workspace.mjs';
+
+// Remember My Error: a task that ran out of attempts is recorded against its agent. When its verify
+// check printed findings ("- ..." lines in the last verify log), each finding becomes a rule.
+function rememberBlocked(project, task, why, dir, ctx) {
+  const log = join(dir, 'evidence', 'tasks', task.id, `attempt-${task.attempts ?? 0}-verify.log`);
+  const findings = existsSync(log) ? readFileSync(log, 'utf8').split('\n').filter((l) => l.startsWith('- ')).map((l) => l.slice(2)).slice(0, 5) : [];
+  for (const mistake of findings.length ? findings : [why]) recordError(project, { agent: task.agent, stage: task.id, source: 'task-blocked', mistake }, ctx);
+}
 
 // Errors a retry cannot fix: the task is blocked straight away so the operator sees it.
 const NON_RETRYABLE = new Set(['CONFIG_MISSING', 'CONFIG_INVALID', 'AUTH_FAILED', 'PERMISSION_DENIED', 'NOT_IMPLEMENTED']);
@@ -112,7 +121,9 @@ export async function runTask(project, taskId, options = {}) {
       return transitionTask(project, taskId, 'retry', { actor, reason, ...ctx });
     }
     const why = retryable ? `${reason} (after ${t.attempts} attempts)` : reason;
-    return transitionTask(project, taskId, 'blocked', { actor, reason: why, patch: { blocked_reason: why }, ...ctx });
+    const blocked = transitionTask(project, taskId, 'blocked', { actor, reason: why, patch: { blocked_reason: why }, ...ctx });
+    rememberBlocked(project, t, why, paths.dir, ctx);
+    return blocked;
   };
 
   try {
@@ -137,7 +148,7 @@ export async function runTask(project, taskId, options = {}) {
           const out = await abortable(
             Promise.resolve(
               worker({
-                task,
+                task: withErrorRules(project, task, ctx),
                 project,
                 projectDir: paths.dir,
                 attempt,

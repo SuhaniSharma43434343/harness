@@ -16,6 +16,7 @@ import { cmdDesign } from './design.mjs';
 import { cmdApprove, cmdNew, cmdResume, cmdRun, cmdStatus } from './project.mjs';
 import { cmdDirections } from './directions.mjs';
 import { cmdFacts } from './facts.mjs';
+import { cmdErrors, cmdReject } from './errors.mjs';
 import { cmdGates } from './gates.mjs';
 import { cmdGo } from './go.mjs';
 import { cmdIntake } from './intake.mjs';
@@ -52,6 +53,8 @@ const COMMANDS = {
   new: { summary: 'Create a project: forge new <project> [--brief <file>]', run: (args) => cmdNew(ROOT, args) },
   approve: { summary: 'Record an operator approval: forge approve <project> <B1-B7>', run: (args) => cmdApprove(ROOT, args) },
   status: { summary: 'Show phase, approvals and tasks: forge status <project> [--json]', run: (args) => cmdStatus(ROOT, args) },
+  reject: { summary: 'Turn down an approval and teach the agent why: forge reject <project> <B1-B7|FACTS> --note <reason>', run: (args) => cmdReject(ROOT, args) },
+  errors: { summary: 'The rules agents learned from past mistakes: forge errors [list [agent] | add <agent> --rule <text> | clear [agent] --yes]', run: (args) => cmdErrors(ROOT, args) },
   facts: { summary: 'Write the Truth Doc after research, or confirm its facts are real: forge facts <project> [confirm --note <text>]', run: (args) => cmdFacts(ROOT, args) },
   run: { summary: 'Run the tasks that can start: forge run <project> [--replay <dir>] [--model <m>]', run: (args) => cmdRun(ROOT, args) },
   agents: { summary: 'List agents by phase, or generate/check the Claude Code and Cursor files: forge agents [list|generate|check]', run: (args) => cmdAgents(args) },
