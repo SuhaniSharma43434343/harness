@@ -1,0 +1,117 @@
+---
+// An ROI or savings calculator (an x-factor tool). Props: heading, intro, inputs
+// ([{ name, label, unit, value, min, max, step }]), formula (a sum of products of input names
+// and plain numbers: [["hours", "rate", 52, 0.5]] is hours x rate x 52 x 0.5), result
+// ({ label, prefix, suffix, decimals }), note (the assumption behind the numbers), cta.
+// The result for the default values is worked out at build time, so without JavaScript the
+// section is a worked example with its formula in words; the script makes the inputs live and
+// announces each new result through an aria-live region. A formula naming an unknown input
+// fails the build, so a typo is never a wrong number.
+import { check, compute, explain, format } from '../../lib/calculator.mjs';
+import site from '../../site.json';
+
+const { heading, intro, inputs = [], formula = [], result = {}, note, cta, index = 0 } = Astro.props;
+const problems = inputs.length ? check(formula, inputs) : [];
+if (problems.length) throw new Error(`APP-01/SavingsCalculator: ${problems.join('; ')}`);
+const id = `calc-${index}`;
+const value = inputs.length ? format(compute(formula, Object.fromEntries(inputs.map((i) => [i.name, i.value ?? 0]))), result, site.lang) : '';
+---
+{inputs.length > 0 && (
+  <section class="section calc" aria-labelledby={heading ? `${id}-title` : undefined}>
+    <div class="wrap calc__grid">
+      <div class="calc__copy">
+        {heading && <h2 id={`${id}-title`}>{heading}</h2>}
+        {intro && <p class="lead">{intro}</p>}
+        <p class="calc__how"><strong>How it is worked out:</strong> {explain(formula, inputs)}.</p>
+        {note && <p class="section-note">{note}</p>}
+      </div>
+      <div class="calc__card" role="group" aria-label={heading ?? result.label ?? 'Calculator'} data-calc data-formula={JSON.stringify(formula)} data-result={JSON.stringify(result)}>
+        {inputs.map((input) => (
+          <div class="field">
+            <label for={`${id}-${input.name}`}>{input.label}</label>
+            <div class="calc__input">
+              <input
+                id={`${id}-${input.name}`}
+                name={input.name}
+                type="number"
+                inputmode="decimal"
+                value={input.value ?? 0}
+                min={input.min}
+                max={input.max}
+                step={input.step ?? 'any'}
+                readonly
+                aria-describedby={input.unit ? `${id}-${input.name}-unit` : undefined}
+              />
+              {input.unit && <span class="calc__unit" id={`${id}-${input.name}-unit`}>{input.unit}</span>}
+            </div>
+          </div>
+        ))}
+        <p class="calc__result" aria-live="polite" aria-atomic="true">
+          <span class="calc__label">{result.label ?? 'Result'}</span>
+          <output class="calc__value" for={inputs.map((i) => `${id}-${i.name}`).join(' ')}>{value}</output>
+        </p>
+        {cta && <a class="button calc__cta" href={cta.href}>{cta.label}</a>}
+      </div>
+    </div>
+  </section>
+)}
+<style>
+  .calc__grid { display: grid; gap: calc(var(--space) * 2.5); align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+  .calc__how { font-size: var(--step-n1); }
+  .calc__card {
+    display: grid;
+    gap: calc(var(--space) * 1.25);
+    padding: calc(var(--space) * 1.5);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--radius) * 2);
+    background: var(--color-surface);
+  }
+  .calc__input { display: flex; align-items: stretch; }
+  .calc__input input { flex: 1 1 auto; min-width: 0; border-start-end-radius: 0; border-end-end-radius: 0; font-variant-numeric: tabular-nums; }
+  .calc__input input[readonly] { background: var(--color-surface); }
+  .calc__unit {
+    display: flex;
+    align-items: center;
+    padding-inline: 0.75em;
+    border: 1px solid var(--color-muted);
+    border-inline-start: 0;
+    border-start-end-radius: var(--radius);
+    border-end-end-radius: var(--radius);
+    background: var(--color-bg);
+    font-size: var(--step-n1);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .calc__input input:only-child { border-radius: var(--radius); }
+  .calc__result { display: grid; gap: 0.25em; margin: 0; padding-top: var(--space); border-top: 1px solid var(--color-border); }
+  .calc__label { font-weight: 700; }
+  .calc__value {
+    font-family: var(--font-display);
+    font-weight: var(--weight-display);
+    font-size: var(--step-4);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .calc__cta { justify-self: start; }
+</style>
+
+<script>
+  import { compute, format } from '../../lib/calculator.mjs';
+
+  // Makes each calculator live: every edit recomputes the result in the aria-live region.
+  for (const el of document.querySelectorAll<HTMLElement>('[data-calc]')) {
+    const formula = JSON.parse(el.dataset.formula!);
+    const result = JSON.parse(el.dataset.result!);
+    const out = el.querySelector('output')!;
+    const inputs = [...el.querySelectorAll('input')];
+    const update = () => {
+      const n = compute(formula, Object.fromEntries(inputs.map((i) => [i.name, i.value === '' ? NaN : i.valueAsNumber])));
+      out.textContent = Number.isFinite(n) ? format(n, result, document.documentElement.lang || 'en') : 'Enter a number in each box';
+    };
+    for (const input of inputs) {
+      input.readOnly = false;
+      input.addEventListener('input', update);
+    }
+  }
+</script>

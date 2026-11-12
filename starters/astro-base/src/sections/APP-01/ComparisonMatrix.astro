@@ -1,0 +1,85 @@
+---
+// A comparison matrix (an x-factor tool): how the client compares with the alternatives a buyer
+// weighs. Props: heading, intro, caption (defaults to the heading), columns (the options
+// compared), rows ([{ feature, values }]; a value is true, false or text), highlight (the index
+// of the client's column), featureLabel (the first column's name, "Feature" by default),
+// footnote, cta. A real <table> with a caption and scoped headers. Where its container is
+// narrower than 40rem each row becomes a card and every cell carries its column's name, so it
+// stays readable on a phone without horizontal scrolling; the explicit table roles keep the
+// table semantics when the cells are laid out as blocks.
+const { heading, intro, caption = heading, columns = [], rows = [], highlight, featureLabel = 'Feature', footnote, cta, index = 0 } = Astro.props;
+const id = `matrix-${index}`;
+const mark = (c) => (c === highlight ? 'is-highlight' : undefined);
+---
+{columns.length > 0 && rows.length > 0 && (
+  <section class="section matrix-section" aria-labelledby={heading ? `${id}-title` : undefined}>
+    <div class="wrap">
+      {heading && <h2 id={`${id}-title`}>{heading}</h2>}
+      {intro && <p class="lead">{intro}</p>}
+      <div class="matrix-frame">
+        <table class="matrix" role="table">
+          {caption && <caption>{caption}</caption>}
+          <thead role="rowgroup">
+            <tr role="row">
+              <th scope="col" role="columnheader"><span class="matrix__sr">{featureLabel}</span></th>
+              {columns.map((col, c) => <th scope="col" role="columnheader" class={mark(c)}>{col}</th>)}
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
+            {rows.map((row) => (
+              <tr role="row">
+                <th scope="row" role="rowheader">{row.feature}</th>
+                {columns.map((col, c) => {
+                  const v = row.values?.[c];
+                  return (
+                    <td role="cell" data-label={col} class={mark(c)}>
+                      {v === true ? (
+                        <span class="matrix__yes"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" /></svg><span class="matrix__sr">Yes</span></span>
+                      ) : v === false || v == null ? (
+                        <span class="matrix__no"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M7 12h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none" /></svg><span class="matrix__sr">No</span></span>
+                      ) : (
+                        <span>{v}</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {footnote && <p class="section-note">{footnote}</p>}
+      {cta && <a class="button matrix__cta" href={cta.href}>{cta.label}</a>}
+    </div>
+  </section>
+)}
+<style>
+  .matrix-frame { container-type: inline-size; margin-top: calc(var(--space) * 1.5); }
+  .matrix { width: 100%; border-collapse: collapse; font-size: var(--step-0); }
+  .matrix caption { caption-side: top; text-align: start; font-weight: 700; padding-bottom: var(--space); }
+  .matrix th, .matrix td { padding: 0.75em var(--space); border-bottom: 1px solid var(--color-border); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+  .matrix thead th { font-size: var(--step-n1); text-transform: uppercase; letter-spacing: 0.04em; vertical-align: bottom; }
+  .matrix tbody th { font-weight: 700; }
+  .matrix thead th.is-highlight { background: var(--color-primary); color: var(--color-on-primary); border-start-start-radius: var(--radius); border-start-end-radius: var(--radius); }
+  .matrix td.is-highlight { border-inline: 2px solid var(--color-primary); font-weight: 700; }
+  .matrix tbody tr:last-child td.is-highlight { border-bottom: 2px solid var(--color-primary); }
+  .matrix__yes, .matrix__no { display: inline-flex; align-items: center; }
+  .matrix__yes { color: var(--color-primary); }
+  .matrix__no { color: var(--color-muted); }
+  .matrix__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .matrix__cta { margin-top: calc(var(--space) * 1.5); }
+
+  /* A narrow container: each row is a card, and each cell names its column. */
+  @container (max-width: 40rem) {
+    .matrix, .matrix tbody, .matrix tr, .matrix th, .matrix td { display: block; }
+    .matrix caption { display: block; }
+    .matrix thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .matrix tbody tr { margin-bottom: var(--space); border: 1px solid var(--color-border); border-radius: calc(var(--radius) * 2); overflow: hidden; }
+    .matrix tbody th { background: var(--color-surface); }
+    .matrix td { display: flex; justify-content: space-between; align-items: center; gap: var(--space); }
+    .matrix td::before { content: attr(data-label) / ''; font-weight: 400; color: var(--color-fg); }
+    .matrix tbody tr > :last-child { border-bottom: 0; }
+    .matrix td.is-highlight, .matrix tbody tr:last-child td.is-highlight { border: 0; border-inline-start: 4px solid var(--color-primary); border-bottom: 1px solid var(--color-border); }
+    .matrix tbody tr > td.is-highlight:last-child { border-bottom: 0; }
+  }
+</style>
