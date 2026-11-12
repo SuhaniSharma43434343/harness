@@ -38,7 +38,7 @@ body{margin:0;font-family:Verdana}h1,h2{font-family:Georgia}
 #rise{transition:transform .2s}.in#rise{transform:translateY(-20px)}
 #glow{transition:background-color .1s}#glow:hover{background-color:rgb(200,0,0)}
 </style></head><body>
-<div data-section="promise"><h1>The price we quote is the price you pay</h1><p>Text</p>
+<div data-section="promise"><h1>The price we quote is the price you pay</h1><p>Text</p><a href="#proof" style="display:inline-block;padding:12px 20px;background:#222;color:#fff">Book a visit</a>
 <svg data-asset="beam" width="300" height="300"><rect width="300" height="300"/></svg><div style="height:1000px"></div>
 <div id="rise" data-motion="rise">Rises</div></div>
 <div style="height:900px"></div>
@@ -157,4 +157,35 @@ test('the visual review gate needs a current review of this very build', async (
   writeFileSync(join(dir, 'site', 'dist', 'index.html'), `${GOOD}<!-- changed -->`);
   assert.deepEqual(ids(await gate()), ['stale-visual-review']);
   assert.ok(readFileSync(join(dir, 'site', 'dist', 'index.html'), 'utf8').includes('changed'));
+});
+
+test('the first screen needs a call to action: advice for an older project, a defect under workflow 2', { skip }, async () => {
+  const noAction = GOOD.replace(/<a href="#proof"[^>]*>Book a visit<\/a>/, '');
+  assert.notEqual(noAction, GOOD);
+  const old = await fidelity(project(noAction));
+  assert.deepEqual(old.findings.filter((f) => f.id === 'hero-no-action').map((f) => f.severity), ['moderate', 'moderate']);
+  assert.equal(old.status, 'pass', 'advice does not block an older project');
+  const v2 = await fidelity(project(noAction, { 'design/reference/workflow.json': { version: 2 } }));
+  assert.deepEqual(v2.findings.filter((f) => f.id === 'hero-no-action').map((f) => f.location), ['/ @ desktop', '/ @ mobile']);
+  assert.equal(v2.status, 'fail');
+});
+
+test('sections with no room to breathe, and a page where every section has the same spacing, are reported', { skip }, async () => {
+  const ids = ['one', 'two', 'three', 'four', 'five'];
+  const plan = { pages: [{ slug: '/', sections: ids.map((id) => section(id, 'statement', [], [])) }] };
+  const copy = { pages: [{ slug: '/', sections: ids.map((id) => ({ id, headline: `Heading ${id}` })) }] };
+  const html = `<!doctype html><html lang="en"><head><title>t</title><style>
+body{margin:0;font-family:Verdana}h1,h2{font-family:Georgia;margin:0}p{margin:0}
+[data-section]{display:block;padding:0;height:300px;overflow:hidden}
+</style></head><body><a href="#one" style="display:inline-block;padding:12px">Start</a>
+${ids.map((id) => `<div data-section="${id}"><h2>Heading ${id}</h2><p style="height:260px">Text</p><p>End</p></div>`).join('')}
+</body></html>`;
+  const r = await fidelity(project(html, { 'design/section-plan.json': plan, 'content/copy.json': copy }));
+  const cramped = r.findings.filter((f) => f.id === 'cramped-section');
+  assert.equal(cramped.length, 5, JSON.stringify(r.findings.map((f) => f.id)));
+  assert.match(cramped[0].message, /Section one has no room to breathe: 0px above its content and 0px below/);
+  assert.match(r.findings.find((f) => f.id === 'flat-rhythm').message, /Every section on \/ has the same spacing \(0px above its content\)/);
+  // The good fixture breathes and varies.
+  const good = await fidelity(project(GOOD));
+  assert.ok(!good.findings.some((f) => ['cramped-section', 'flat-rhythm', 'hero-no-action'].includes(f.id)));
 });

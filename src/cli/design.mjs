@@ -4,6 +4,7 @@ import { loadConfig } from '../core/config.mjs';
 import * as ledger from '../core/ledger.mjs';
 import { approve, loadProject } from '../core/project.mjs';
 import { chooseDirection } from '../design/choose.mjs';
+import { approachOptions, chooseApproach, describeOptions } from '../design/approach-guide.mjs';
 import { releaseChecks } from '../design/release.mjs';
 import { designStatus, retryBuildTask, retryStage, runDesignWorkflow } from '../design/manager.mjs';
 import { openDefects } from '../qa/defects.mjs';
@@ -16,7 +17,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage or build task> --note <the decision>';
+const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design approach <project> [<APP-0N> --note <why>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage or build task> --note <the decision>';
 
 // The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
 // something only the operator has, and are reported by forge design release.
@@ -27,12 +28,14 @@ export const DESIGN_QA_GATES = ['content-parity', 'claims', 'routes', 'accessibi
 //   run     runs every phase up to visual QA; stops only for an approval or an escalation
 //   qa      the render, review and repair loop, up to the retry limit
 //   release every gate on the finished site: passed, failed, blocked or not applicable
+//   approach the operator's approach pause (workflow 2): lists the approaches in plain words, or
+//           records the one the site is built around
 //   choose  the operator's B2: records the approval and the chosen direction
 //   retry   the operator's answer to an escalation: the stage, or a build task (build-page-<page>,
 //           build-foundation) that used up its retries, gets a fresh fix task
 export async function cmdDesign(root, args) {
   const [action, project] = args;
-  if (!project || !['status', 'run', 'qa', 'release', 'choose', 'accept-licence', 'retry'].includes(action)) {
+  if (!project || !['status', 'run', 'qa', 'release', 'approach', 'choose', 'accept-licence', 'retry'].includes(action)) {
     console.error(USAGE);
     return 2;
   }
@@ -47,6 +50,25 @@ export async function cmdDesign(root, args) {
       for (const p of st.problems) console.log(`          - ${p}`);
     }
     return s.ready ? 0 : 1;
+  }
+
+  if (action === 'approach') {
+    const dir = join(workspace, project);
+    const id = args[2] && !args[2].startsWith('--') ? args[2] : undefined;
+    try {
+      if (!id) {
+        console.log(`How ${project} can be built. Each approach, in plain words:`);
+        for (const l of describeOptions(approachOptions(dir))) console.log(`  ${l}`);
+        console.log(`Choose with: forge design approach ${project} <APP-0N> --note "<why>"`);
+        return 0;
+      }
+      const choice = chooseApproach(project, id, { workspace, note: flag(args, '--note') });
+      console.log(`Recorded the approach for ${project}: ${choice.approach} (${choice.name}).`);
+      return 0;
+    } catch (err) {
+      console.error(err.message);
+      return 2;
+    }
   }
 
   if (action === 'choose') {

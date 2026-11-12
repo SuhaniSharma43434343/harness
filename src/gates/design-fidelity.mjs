@@ -57,6 +57,10 @@ function probePage({ ids, minVisible }) {
     const lefts = new Set(blocks.map((b) => Math.round(b.getBoundingClientRect().left / 48)));
     const inner = el.firstElementChild ?? el;
     const heading = el.querySelector('h1, h2');
+    // Room to breathe: the space between the section's edges and its first and last content.
+    const content = [...el.querySelectorAll('h1, h2, h3, h4, p, li, img, svg, video, canvas, form, a, button')].map((b) => b.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+    // Content that spills past the edge has no room at all: 0, not a negative gap.
+    const space = content.length ? { top: Math.max(0, Math.round(Math.min(...content.map((r) => r.top)) - box.top)), bottom: Math.max(0, Math.round(box.bottom - Math.max(...content.map((r) => r.bottom)))) } : null;
     out.sections[id] = {
       height: Math.round(box.height),
       width: Math.round(box.width),
@@ -70,8 +74,17 @@ function probePage({ ids, minVisible }) {
       motions: [...el.querySelectorAll('[data-motion]')].map((a) => a.getAttribute('data-motion')),
       signature: `${[...lefts].sort((a, b) => a - b).join(',')}|${getComputedStyle(inner).backgroundColor}|${heading ? getComputedStyle(heading).textAlign : ''}`,
       headingFont: heading ? getComputedStyle(heading).fontFamily : null,
+      space,
     };
   }
+  // The first screen's calls to action: visible links and buttons above the fold, outside the
+  // navigation menu (a header button counts, a menu link does not).
+  out.firstScreenActions = [...document.querySelectorAll('a[href], button, [role="button"], input[type="submit"]')].filter((a) => {
+    if (a.closest('nav')) return false;
+    const r = a.getBoundingClientRect();
+    const st = getComputedStyle(a);
+    return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 && st.visibility !== 'hidden' && st.opacity !== '0';
+  }).length;
   const body = document.querySelector('p');
   out.bodyFont = body ? getComputedStyle(body).fontFamily : null;
   out.background = getComputedStyle(document.body).backgroundColor;
@@ -150,7 +163,7 @@ async function motionWorks(page, id, kind) {
 export default {
   name: 'design-fidelity',
   version: '0.1.0',
-  thresholds: { maxCardShare: 0.25, minSectionHeight: 120, minVisualShare: 0.4 },
+  thresholds: { maxCardShare: 0.25, minSectionHeight: 120, minVisualShare: 0.4, minBreathPx: 24, flatRhythmPx: 4 },
   run(ctx, t) {
     const dir = ctx.projectDir;
     const plan = readSpec(dir, 'design/section-plan.json');
@@ -160,6 +173,7 @@ export default {
     const direction = readSpec(dir, 'design/direction.json');
     const system = readSpec(dir, 'design/design-system.json');
     const pagesDir = join(dir, 'content', 'pages');
+    const v2 = (readSpec(dir, 'design/reference/workflow.json')?.version ?? 1) >= 2;
     if (!plan || !copy || !direction) {
       return { findings: [{ id: 'no-design-spec', severity: 'critical', message: 'The site has no approved design specification (direction, section plan and copy), so it cannot be a designed site' }] };
     }
@@ -224,6 +238,18 @@ export default {
             const first = Object.values(probe.sections)[0];
             if (first?.headingFont && display && !first.headingFont.toLowerCase().includes(family(display).toLowerCase())) add('font-mismatch', 'serious', `Headings use ${first.headingFont}, not the system's ${family(display)}`, where);
             if (probe.bodyFont && body && !probe.bodyFont.toLowerCase().includes(family(body).toLowerCase())) add('font-mismatch', 'serious', `Body text uses ${probe.bodyFont}, not the system's ${family(body)}`, where);
+          }
+
+          // The home page's first screen gives the visitor something to do. Under workflow 2 a hero
+          // without one is a defect; for an older project it is reported as advice.
+          if (route === '/' && probe.firstScreenActions === 0) add('hero-no-action', v2 ? 'serious' : 'moderate', `The first screen of the home page has no call to action (no button or link outside the menu) at ${vp.name}`, where);
+          if (vp.name === 'desktop') {
+            const spaced = pagePlan.sections.map((p) => probe.sections[p.id]).filter((s) => s?.space && s.height >= 200);
+            for (const [i, s] of spaced.entries()) {
+              if (s.space.top < t.minBreathPx && s.space.bottom < t.minBreathPx) add('cramped-section', 'moderate', `Section ${pagePlan.sections.filter((p) => probe.sections[p.id]?.space && probe.sections[p.id].height >= 200)[i].id} has no room to breathe: ${s.space.top}px above its content and ${s.space.bottom}px below`, where);
+            }
+            const tops = spaced.map((s) => s.space.top);
+            if (tops.length >= 5 && Math.max(...tops) - Math.min(...tops) <= t.flatRhythmPx) add('flat-rhythm', 'moderate', `Every section on ${route} has the same spacing (${Math.round(tops[0])}px above its content); vary it so the page has a rhythm`, where);
           }
 
           let run = 1;

@@ -91,6 +91,19 @@ A failing answer cannot sit with a ready verdict. The copy check also refuses st
 
 At handoff, `reports/gdd-roadmap.md` adds the They Ask, You Answer loop: traffic (where visitors arrive from) → audience views → Big 5 answers and tools (the deep-FAQ and x-factor sections) → qualified leads (the forms) → measurement. The questions people search for, type into forms or ask on calls go back into `research/crux.json` buyerQuestions, and the Truth Doc is confirmed again. Buyer questions the client has not answered yet are listed as the first content to write after launch.
 
+**The approach pause (workflow 2).** The registry still decides which approaches a brief qualifies for (`src/registry/select.mjs`). Most business briefs qualify only for APP-01, because each of APP-02 to APP-08 needs a signal in the brief:
+- a project type (launch, flagship);
+- a premium tone;
+- an interactive feature (3D, Spline, shader, game, frame sequence).
+
+The operator now chooses. After research the workflow stops at the approach phase, and `forge design approach <project>` lists all eight in plain words: what each looks like, what it fits, and whether this brief qualifies (recommended), could have it, or excludes it. `forge design approach <project> <APP-0N> --note "<why>"` records the choice:
+- an approach the brief did not qualify for is marked selected with the operator's reason, and an experimental one needs B2;
+- an excluded one is refused.
+
+The direction is then planned and held to the choice. `forge go` shows the same list, or takes `--approach APP-0N`.
+
+**Step by step.** At a terminal, `forge go` stops after every phase. It prints a short plain-language summary of what happened and which files hold it (`src/design/summary.mjs`), and goes on only on a yes. `--auto` turns this off; `--steps` turns it on where there is no terminal, and each run of `forge go` then goes one phase further. `runDesignWorkflow` takes `pauseEachPhase` for the same.
+
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
 **The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.
@@ -137,7 +150,7 @@ Sections mark their planned assets with `data-asset` and motion with `data-motio
 
 Two gates join the quality floor:
 
-- **`design-fidelity`** (`src/gates/design-fidelity.mjs`): renders every page at 1440 and 390 and fails on missing sections, headlines or assets, broken images, placeholder art, wrong fonts, overflow, motion that does not respond when scrolled or hovered, text hidden under reduced motion, three alike layouts in a row, too many card grids, too few visuals, or the wrong approach. It saves a screenshot per section to `evidence/visual/`.
+- **`design-fidelity`** (`src/gates/design-fidelity.mjs`): renders every page at 1440 and 390 and fails on missing sections, headlines or assets, broken images, placeholder art, wrong fonts, overflow, motion that does not respond when scrolled or hovered, text hidden under reduced motion, three alike layouts in a row, too many card grids, too few visuals, or the wrong approach. It saves a screenshot per section to `evidence/visual/`. It also reports a section with no room to breathe (`cramped-section`: under 24px between its edges and its content, top and bottom), a page where every section has the same spacing (`flat-rhythm`, five sections or more), both moderate, and a home page whose first screen offers no call to action outside the menu (`hero-no-action`: serious under workflow 2, moderate for an older project).
 - **`visual-review`** (`src/qa/visual.mjs`): the QA Verifier opens those screenshots and compares them with the specification, writing `reports/visual-review.json` with scores and findings. The gate fails with no review, a review of an older build (it records a hash of the build), a score under 3.5, or a serious finding.
 
 Findings become defects in `reports/defects.json`, then one builder repair task with the screenshots. The loop re-renders and re-reviews up to 3 times, then escalates through the existing repair loop.
