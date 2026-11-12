@@ -561,8 +561,11 @@ export const CHECKS = {
     for (const [role, token] of [['primary', 'primary'], ['accent', 'accent'], ['background', 'bg'], ['surface', 'surface'], ['text', 'fg'], ['muted', 'muted']]) {
       if (!same(s.color[role], tokens.color[token])) problems.push(`design/design-system.json: color.${role} must be the B2 token ${tokens.color[token]}, not ${s.color[role]}`);
     }
-    if (!s.typography.display.includes(tokens.font.display.family)) problems.push(`design/design-system.json: the display face must be the B2 choice, ${tokens.font.display.family}`);
-    if (!s.typography.body.includes(tokens.font.body.family)) problems.push(`design/design-system.json: the body face must be the B2 choice, ${tokens.font.body.family}`);
+    // The face is the name the text starts with ("Inter (OFL-1.1, ...) set at 700"), so a text that names
+    // another family and only mentions the B2 one ("Barlow Condensed ... replaces Inter") is refused.
+    const face = (text) => String(text).split(/[(,;:]| - | set | at /)[0].trim().toLowerCase();
+    if (face(s.typography.display) !== tokens.font.display.family.toLowerCase()) problems.push(`design/design-system.json: the display face must be the B2 choice, ${tokens.font.display.family}, named first (it names "${face(s.typography.display)}")`);
+    if (face(s.typography.body) !== tokens.font.body.family.toLowerCase()) problems.push(`design/design-system.json: the body face must be the B2 choice, ${tokens.font.body.family}, named first (it names "${face(s.typography.body)}")`);
     if (s.visualLanguage.length < 3) problems.push('design/design-system.json: describe at least three rules of the visual language');
     if (same(s.responsive.desktop, s.responsive.mobile)) problems.push('design/design-system.json: mobile rules must differ from desktop rules');
     if (workflowVersion(dir) >= 2) {

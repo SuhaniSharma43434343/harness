@@ -1592,3 +1592,21 @@ test('build tasks finished before the specification changed are planned again as
   for (const t of again) saveTask(project, { ...listTasks(project, opts).find((x) => x.id === t.id), status: 'done', evidence: ['x'] }, opts);
   assert.deepEqual(planPhase(project, opts), []);
 });
+
+test('the design system names the B2 faces first: a text that only mentions them is a swap', () => {
+  const ds = (typography) => fullProject({ 'design/design-system.json': { ...spec()['design/design-system.json'], typography: { ...spec()['design/design-system.json'].typography, ...typography } } }).dir;
+  assert.deepEqual(CHECKS['design-system'](ds({ display: 'Fraunces (OFL-1.1, via Fontsource) set at 700 with tight tracking' })).filter((p) => /face/.test(p)), []);
+  const swapped = CHECKS['design-system'](ds({ display: 'Barlow Condensed (OFL-1.1) set heavy and condensed, replacing Fraunces for the signage look', body: 'Source Sans 3, a calm sans; Lora is kept for nothing' })).join('\n');
+  assert.match(swapped, /the display face must be the B2 choice, Fraunces, named first \(it names "barlow condensed"\)/);
+  assert.match(swapped, /the body face must be the B2 choice, Lora, named first \(it names "source sans 3"\)/);
+});
+
+test('a workflow that cannot take the run lock plans nothing', async () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'UX_DESIGN_SYSTEM');
+  // Another live process holds the lock: this test process's parent, which is alive while the test runs.
+  write(dir, 'locks/run.lock', { pid: process.ppid, host: (await import('node:os')).hostname(), startedAt: new Date().toISOString() });
+  const before = listTasks(project, opts).length;
+  await assert.rejects(runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }) }), /already being run by process/);
+  assert.equal(listTasks(project, opts).length, before, 'no task was planned');
+});
