@@ -14,7 +14,7 @@ import { loadApproaches } from '../registry/load.mjs';
 import { proposeDirections } from './propose.mjs';
 import { renderDirections } from './render.mjs';
 import { runGates } from '../gates/index.mjs';
-import { CHECKS, FILES, isSuperseded, readiness, stageById, STAGES, workflowVersion } from './spec.mjs';
+import { CHECKS, FILES, isSuperseded, mediaRejections, readiness, stageById, STAGES, workflowVersion } from './spec.mjs';
 import { writeTruthDoc } from './truth.mjs';
 
 // The Design Manager's process: it runs the workflow phase by phase without being asked at each
@@ -156,6 +156,16 @@ function reviewOutcome(project, opts) {
   return null;
 }
 
+// Rejected photos and videos (workflow 2), as findings for the asset plan. The review file is removed,
+// so the media check is planned again and looks at the files the new plan names.
+function mediaReviewOutcome(project, opts) {
+  const { dir } = assertProjectExists(project, opts);
+  const problems = mediaRejections(dir);
+  if (!problems.length) return null;
+  rmSync(join(dir, FILES.mediaReview), { force: true });
+  return { problems };
+}
+
 // Steps a phase needs that are forge commands, not agent tasks.
 async function commandStep(project, phase, opts) {
   const { dir } = assertProjectExists(project, opts);
@@ -261,6 +271,16 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
       const out = sendBack(project, failed.stage.id, failed.problems, opts);
       if (out.escalated) return stop('escalated', out);
       continue;
+    }
+    // Track 4B: a photo or video the media check rejected sends the asset plan back, and the check
+    // runs again on the new files.
+    if (phase === 'ASSETS_LICENSING') {
+      const issue = mediaReviewOutcome(project, opts);
+      if (issue) {
+        const out = sendBack(project, 'asset-plan', issue.problems, opts);
+        if (out.escalated) return stop('escalated', out);
+        continue;
+      }
     }
     if (phase === 'TECHNICAL_PLAN') {
       const issue = reviewOutcome(project, opts);

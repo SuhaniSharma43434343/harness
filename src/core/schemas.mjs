@@ -44,6 +44,8 @@ export const SCHEMAS = {
   siteCopy: 'design-spec.schema.json#/definitions/siteCopy',
   designReview: 'design-spec.schema.json#/definitions/designReview',
   visualReview: 'design-spec.schema.json#/definitions/visualReview',
+  mediaPrompts: 'design-spec.schema.json#/definitions/mediaPrompts',
+  mediaReview: 'design-spec.schema.json#/definitions/mediaReview',
 };
 
 let ajv;

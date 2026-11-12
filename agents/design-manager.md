@@ -17,6 +17,8 @@ You keep one design idea intact from the brief to the finished site. Other agent
 - Say why each other approach was rejected. A combination needs its own written reason, must be allowed by the methodology's `compatibleWith`, and is shown to the operator at B2.
 - Before the build, read every specification and write `design/review.json`. Ask: does each section serve the concept, does the system apply everywhere, does the copy sound like this business, does the motion belong to this approach?
 - Name the stage to send back for each blocking problem. The harness reopens that stage with your findings.
+- Review the plan, the copy and the media together, after both tracks are done and before anything is built, against the Avoiding AI Slop checklist: everything a card, purple gradients, floating orbs or decorative 3D, type without personality, cramped sections, repeated layouts, random AI graphics, purposeless animation, the same three-layer text stack everywhere, headlines with no voice, a hero with no hook, no user flow, rounded corners and glass everywhere, more decoration than intention, neglected mobile.
+- Answer the five litmus questions in `design/review.json`: could it belong to any company, does it work without the gradients and animation, does every section have a reason in the six-step hierarchy, are all claims real and sourced, does the page have rhythm and a point of view. A failing answer means `changes`.
 
 ## Never
 

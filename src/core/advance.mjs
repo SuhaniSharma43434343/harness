@@ -10,7 +10,7 @@ import { patternsOverlap } from './locks.mjs';
 import { PHASES, advancePhase, hasApproval, loadProject, nextPhases } from './project.mjs';
 import { check } from './schemas.mjs';
 import { assertProjectExists } from './workspace.mjs';
-import { CHECKS as SPEC, FILES, isSuperseded, readiness } from '../design/spec.mjs';
+import { CHECKS as SPEC, FILES, isSuperseded, mediaRejections, readiness } from '../design/spec.mjs';
 import { factsBlockers } from '../design/truth.mjs';
 
 // Phase exits (the plan's workflow table). advanceProject moves a project to its next phase
@@ -44,7 +44,7 @@ const EVIDENCE = {
   // Under workflow 2 research also needs the operator to confirm the Truth Doc's facts are real.
   RESEARCH: (dir, project, opts) => [...stageEvidence(dir, 'research'), ...(mockRun() ? [] : factsBlockers(project, dir, opts))],
   UX_DESIGN_SYSTEM: (dir) => stageEvidence(dir, 'design-system', 'section-plan', 'motion-plan', 'asset-plan'),
-  CONTENT: (dir) => stageEvidence(dir, 'copy'),
+  CONTENT: (dir) => stageEvidence(dir, 'copy', 'media-prompts'),
   INTAKE: (dir) => {
     const brief = readJson(join(dir, 'intake', 'brief.json'));
     const facts = readJson(join(dir, 'intake', 'facts.json'));
@@ -64,10 +64,11 @@ const EVIDENCE = {
     if (d.status !== 'chosen') errors.push('a chosen direction in design/directions.json');
     return errors;
   },
+  // Under workflow 2 the media check must pass too, and a rejected file stops the phase.
   ASSETS_LICENSING: (dir) => {
     const r = readJson(join(dir, 'assets', 'register.json'));
     if (!r) return ['assets/register.json (the licence register)'];
-    return [...(r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.file ?? a.path ?? a.package} (${a.status})`), ...stageEvidence(dir, 'asset-files')];
+    return [...(r.assets ?? []).filter((a) => a.status !== 'cleared').map((a) => `licence not cleared: ${a.file ?? a.path ?? a.package} (${a.status})`), ...stageEvidence(dir, 'asset-files', 'media-review'), ...(mockRun() ? [] : mediaRejections(dir))];
   },
   TECHNICAL_PLAN: (dir, project, opts) => {
     const tasks = listTasks(project, opts);
