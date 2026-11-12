@@ -173,3 +173,69 @@ test('what the owner says is unique (truths) reaches the design stages; the visi
   const none = { ...b, truths: [] };
   assert.ok(!businessAcceptance(none, 'direction').join(' ').includes('no competitor can claim'), 'an unknown is never presented as a fact');
 });
+
+// Step by step: after every phase go says in plain words what happened and waits for a yes.
+function steppingFlow() {
+  let i = 0;
+  return async (project, opts) => {
+    assert.equal(opts.pauseEachPhase, true, 'go asks the workflow to stop after every phase');
+    i++;
+    return i === 1 ? { reason: 'step', moved: { from: 'INTAKE', to: 'RESEARCH' }, stoppedAt: 'RESEARCH', spentUsd: 0 } : { reason: 'reached', spentUsd: 0 };
+  };
+}
+
+test('step by step: go prints what the phase did and waits; with no way to ask it stops and says how to go on', async () => {
+  const ws = workspace();
+  const said = [];
+  const r = await runGo('skyline', { workspace: ws, prompt: PROMPT, approve: ['B1'], steps: true, designRun: steppingFlow(), repair, say: (s) => said.push(s) });
+  assert.equal(r.status, 'waiting');
+  assert.equal(r.needs.kind, 'step');
+  assert.equal(r.needs.summary.title, 'Intake: what the site is for');
+  assert.match(r.needs.summary.lines[0], /The brief for Skyline Homes is written: 11 pages/);
+  assert.match(r.needs.hint, /Run forge go skyline again to go on to RESEARCH/);
+  assert.ok(said.includes('== Intake: what the site is for'));
+});
+
+test('step by step: a yes goes on to the next phase', async () => {
+  const ws = workspace();
+  const asked = [];
+  const decide = async (need) => {
+    asked.push(need.kind);
+    return need.kind === 'step' ? true : need.kind === 'approval';
+  };
+  const r = await runGo('skyline', { workspace: ws, prompt: PROMPT, steps: true, decide, media: { skip: true }, designRun: steppingFlow(), repair });
+  assert.equal(r.status, 'ready');
+  assert.deepEqual(asked, ['step']);
+});
+
+test('the approach pause in go: options in plain words, or the operator\'s --approach', async () => {
+  const { loadRegistry } = await import('../../src/registry/load.mjs');
+  const { selectApproaches } = await import('../../src/registry/select.mjs');
+  const flow = (ws) => {
+    let i = 0;
+    return async () => {
+      if (i++ === 0) {
+        const dir = join(ws, 'skyline');
+        const brief = JSON.parse(readFileSync(join(dir, 'intake', 'brief.json'), 'utf8'));
+        const reg = loadRegistry();
+        mkdirSync(join(dir, 'design', 'reference'), { recursive: true });
+        writeFileSync(join(dir, 'design', 'approach-decision.json'), JSON.stringify(selectApproaches(brief, reg.approaches, reg.matrix)));
+        writeFileSync(join(dir, 'design', 'reference', 'workflow.json'), JSON.stringify({ version: 2 }));
+        return { reason: 'needs', blockers: ['approach choice: see the options with forge design approach skyline, then choose with forge design approach skyline <APP-0N> --note "<why>"'], stoppedAt: 'APPROACH_SELECTION', spentUsd: 0 };
+      }
+      return { reason: 'reached', spentUsd: 0 };
+    };
+  };
+  const ws = workspace();
+  const waiting = await runGo('skyline', { workspace: ws, prompt: PROMPT, designRun: flow(ws), repair });
+  assert.equal(waiting.needs.kind, 'approach');
+  assert.equal(waiting.needs.options.length, 8);
+  assert.ok(waiting.needs.options.find((o) => o.recommended));
+  assert.match(waiting.needs.hint, /forge go skyline --approach APP-0N/);
+
+  const ws2 = workspace();
+  const done = await runGo('skyline', { workspace: ws2, prompt: PROMPT, approach: 'APP-02', designRun: flow(ws2), repair });
+  assert.equal(done.status, 'ready');
+  assert.equal(JSON.parse(readFileSync(join(ws2, 'skyline', 'design', 'approach-choice.json'), 'utf8')).approach, 'APP-02');
+  assert.deepEqual(classifyBlockers(['approach choice: see the options']).decisions.map((d) => d.kind), ['approach']);
+});

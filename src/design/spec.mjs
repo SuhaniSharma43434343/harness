@@ -39,6 +39,7 @@ export const FILES = {
   workflow: 'design/reference/workflow.json',
   mediaPrompts: 'design/media-prompts.json',
   mediaReview: 'design/media-review.json',
+  approachChoice: 'design/approach-choice.json',
 };
 
 // The workflow version a project was planned under. The planner writes design/reference/workflow.json
@@ -430,6 +431,8 @@ export const CHECKS = {
     if (d.interpretation.philosophy.trim() === method.philosophy.trim()) problems.push('design/direction.json: the philosophy repeats the methodology word for word; interpret it for this business');
     if (words(d.concept) < 8) problems.push('design/direction.json: the concept must be a real idea in a full sentence');
     if (workflowVersion(dir) >= 2) problems.push(...identityProblems(d));
+    const chosen = read(dir, FILES.approachChoice)?.approach;
+    if (chosen && d.primaryApproach !== chosen) problems.push(`design/direction.json: the operator chose ${chosen} at the approach pause; the primary approach must be ${chosen}, not ${d.primaryApproach}`);
     return problems;
   },
 

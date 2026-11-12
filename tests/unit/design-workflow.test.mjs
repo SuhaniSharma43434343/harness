@@ -1270,3 +1270,87 @@ test('copy with no voice is refused: stock headlines and the same three-layer st
   assert.match(p, /promise: "Elevate your home with seamless renovations" has no marketing voice/);
   assert.match(p, /5 of 6 sections repeat the same eyebrow, headline, subheadline and body stack/);
 });
+
+// The approach pause (workflow 2): the operator chooses the approach after a plain explanation.
+async function approachProject({ v2 = true } = {}) {
+  const { loadRegistry } = await import('../../src/registry/load.mjs');
+  const { selectApproaches } = await import('../../src/registry/select.mjs');
+  const r = loadRegistry();
+  const p = fullProject({ 'design/approach-decision.json': selectApproaches(BRIEF, r.approaches, r.matrix), ...(v2 ? { 'design/reference/workflow.json': { version: 2 } } : {}) });
+  rmSync(join(p.dir, 'design/direction.json'));
+  setPhase(p.dir, 'APPROACH_SELECTION');
+  return p;
+}
+
+test('the approach options explain every approach in plain words, with what this brief qualifies for', async () => {
+  const { approachOptions, describeOptions } = await import('../../src/design/approach-guide.mjs');
+  const { dir } = await approachProject();
+  const options = approachOptions(dir);
+  assert.equal(options.length, 8);
+  const byId = Object.fromEntries(options.map((o) => [o.id, o]));
+  assert.equal(byId['APP-01'].status, 'selected');
+  assert.equal(byId['APP-01'].recommended, true, 'a plain business brief qualifies only for APP-01, so it is the recommendation');
+  assert.equal(byId['APP-02'].status, 'possible');
+  assert.equal(byId['APP-06'].status, 'excluded');
+  for (const o of options) assert.ok(o.looks.length > 40 && o.fits.length > 20, `${o.id} is explained`);
+  const lines = describeOptions(options).join('\n');
+  assert.match(lines, /APP-01 AI to Full Website \(recommended\): A clean, fast multi-page site[\s\S]*\[fits this brief\]/);
+  assert.match(lines, /APP-02 Cinematic Scroll Website: The page tells a story as you scroll[\s\S]*\[possible if you want it\]/);
+  assert.match(lines, /APP-06 Game-Like Website[^\n]*\[not for this kind of project\]/);
+});
+
+test('the approach pause stops a workflow 2 project until the operator chooses, and holds the direction to the choice', async () => {
+  const { approachBlockers, chooseApproach } = await import('../../src/design/approach-guide.mjs');
+  const { project, opts, dir } = await approachProject();
+  assert.deepEqual(planPhase(project, opts), [], 'no direction is planned before the choice');
+  assert.match(exitBlockers(project, opts).join('\n'), /approach choice: see the options with forge design approach demo/);
+  assert.throws(() => chooseApproach(project, 'APP-06', { note: 'fun', ...opts }), /excluded for this kind of project/);
+  assert.throws(() => chooseApproach(project, 'APP-02', opts), /needs your note/);
+  const choice = chooseApproach(project, 'app-02', { note: 'The client has strong photos and wants a story', ...opts });
+  assert.equal(choice.approach, 'APP-02');
+  assert.deepEqual(approachBlockers(project, dir), []);
+  const decision = JSON.parse(readFileSync(join(dir, 'design/approach-decision.json'), 'utf8'));
+  assert.deepEqual(check('approachDecision', decision).errors, [], 'the record stays valid');
+  const app02 = decision.decisions.find((d) => d.approach === 'APP-02');
+  assert.equal(app02.selected, true);
+  assert.match(app02.reason, /Chosen by the operator at the approach pause: The client has strong photos/);
+  assert.ok(app02.fallback.description);
+  assert.ok(ledger.read(project, opts).some((e) => e.actor === 'operator' && e.data?.event === 'approach_chosen' && e.data.approach === 'APP-02'));
+  const [direction] = planPhase(project, opts);
+  assert.equal(direction.id, 'direction');
+  assert.ok(direction.inputs.includes('design/approach-choice.json'));
+  assert.match(direction.acceptance[0], /The operator chose APP-02 \(Cinematic Scroll Website\) at the approach pause/);
+  write(dir, 'design/direction.json', spec()['design/direction.json']);
+  assert.match(CHECKS.direction(dir).join('\n'), /the operator chose APP-02 at the approach pause; the primary approach must be APP-02, not APP-01/);
+});
+
+test('an older project is not stopped for an approach choice', async () => {
+  const { project, opts } = await approachProject({ v2: false });
+  assert.deepEqual(planPhase(project, opts).map((t) => t.id), ['direction']);
+  assert.ok(!exitBlockers(project, opts).some((b) => b.startsWith('approach choice')));
+});
+
+test('the workflow can stop after every phase, with what moved', async () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'ASSETS_LICENSING');
+  const r = await runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }), verifier: async () => ({ ok: true, code: 0, output: 'ok' }), pauseEachPhase: true });
+  assert.equal(r.reason, 'step', JSON.stringify(r.blockers ?? r));
+  assert.deepEqual(r.moved, { from: 'ASSETS_LICENSING', to: 'TECHNICAL_PLAN' });
+  assert.equal(loadProject(project, opts).phase, 'TECHNICAL_PLAN', 'it stopped right after the move');
+  const on = await runDesignWorkflow(project, { ...opts, worker: async () => ({ evidence: ['x'] }), verifier: async () => ({ ok: true, code: 0, output: 'ok' }), stopBefore: 'BUILD' });
+  assert.notEqual(on.reason, 'step', 'without the option it runs on as before');
+});
+
+test('each phase has a plain summary of what happened and which files hold it', async () => {
+  const { phaseSummary, summaryLines } = await import('../../src/design/summary.mjs');
+  const { dir } = fullProject();
+  const plan = phaseSummary(dir, 'UX_DESIGN_SYSTEM');
+  assert.equal(plan.title, 'Page plans: every section, laid out');
+  assert.match(plan.lines[0], /^1 page planned, with 5 sections in 5 different layouts\.$/);
+  assert.ok(plan.files.includes('design/section-plan.json'));
+  const content = summaryLines(phaseSummary(dir, 'CONTENT')).join('\n');
+  assert.match(content, /== Words: the copy for every section\n {3}About \d+ words across 1 page, in the voice: Plain and exact\./);
+  assert.match(summaryLines(phaseSummary(dir, 'TECHNICAL_PLAN')).join('\n'), /ready to build/);
+  assert.match(phaseSummary(dir, 'PREVIEW_REPORT').lines[0], /The preview report step is done/);
+  for (const line of Object.keys(PHASES).length ? summaryLines(phaseSummary(dir, 'RESEARCH')) : []) assert.ok(line.length < 260, 'lines stay short');
+});
