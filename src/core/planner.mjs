@@ -5,7 +5,7 @@ import { ConfigMissing, PermissionDenied } from './errors.mjs';
 import * as ledger from './ledger.mjs';
 import { loadProject } from './project.mjs';
 import { ROOT, assertProjectExists, writeJsonAtomic } from './workspace.mjs';
-import { FILES, readiness, sectionUse, stageById, WORKFLOW_VERSION } from '../design/spec.mjs';
+import { FILES, readiness, sectionUse, stageById, WORKFLOW_VERSION, workflowVersion } from '../design/spec.mjs';
 import { STUB_MARK } from '../qa/visual.mjs';
 import app03 from '../approaches/app03.mjs';
 import { scaffoldSite } from '../site/scaffold.mjs';
@@ -152,6 +152,40 @@ const VISUAL_FIRST = {
   copy: [
     'Write each section for its hierarchy step. Step 6 sections are deep decision FAQs: at least five real buyer questions from research/crux.json buyerQuestions (price, compatibility, edge cases), each answered in full in 25 words or more, then the call to action. An unanswered buyer question is not answered by guessing: leave it out and keep it as a gap',
   ],
+};
+
+// Workflow 2, the anti-slop gate: the Design Manager reads the plan, the copy and the media together
+// before anything is built, against the Avoiding AI Slop checklist, and answers the five litmus questions.
+const SLOP_REVIEW = [
+  'Judge the plan, the copy (content/copy.json), the media prompts (design/media-prompts.json) and the media check (design/media-review.json) together, as one site, before any of it is built',
+  'Each of these is a blocking finding against the stage that owns it: everything is a card; purple gradients; random floating orbs or decorative 3D; typography without personality; cramped sections with no room to breathe; the same layout repeated across sections; random AI graphics; animation with no purpose; the same three-layer text stack in every section; generic headlines with no marketing voice; a hero with no memorable focal point or hook; no user flow between sections and pages; rounded corners, shadows and glass used everywhere; more decoration than intention; a mobile layout that is only the desktop stacked',
+  'Answer the five litmus questions in "litmus", each "yes" or "no" with a note: couldBeAnyCompany (could this site belong to any company?), worksWithoutDecoration (if the gradients and animations disappeared, would the design still work?), everySectionHasAReason (does every section have a clear reason to exist in the six-step hierarchy?), claimsRealAndSourced (are all claims real and sourced?), rhythmAndPointOfView (does the page have rhythm, hierarchy and a memorable point of view?). Any failing answer (yes to the first, no to the others) means verdict "changes", with a blocking finding naming the stage and the exact change',
+];
+
+const MEDIA_STAGES = {
+  'media-prompts': () => ({
+    budget: { minutes: 20, retries: 1 },
+    inputs: [...SPEC_INPUTS, 'design/directions.json', 'design/direction.json', 'design/direction.md', 'design/design-system.json', 'design/section-plan.json', 'design/asset-plan.json', CRAFT],
+    owns_files: ['design/media-prompts.json'],
+    must_not_touch: ['design/direction.json', 'design/design-system.json', 'design/section-plan.json', 'design/asset-plan.json', 'content/**', 'site/**', 'intake/**', 'research/**'],
+    acceptance: [
+      'You write with the Creative Director\'s eye. Read the B2 direction (design/directions.json, the chosen one, and design/direction.md) and the design system first: every prompt is locked to that look',
+      'design/media-prompts.json "styleLock" states the look every prompt shares: palette (the B2 colours by name), light, lens, grain and mood, in a sentence or two',
+      'For every section whose media is "photo" or "video", write one prompt for each photo or video asset it uses: the subject, the place, the light, the composition and the crop, as this real business would be photographed, in 25 words or more. Give its "aspect" (such as 3:2) and, for a video, "durationSeconds"',
+      'Each prompt has a "negative": AI artefacts, warped hands or text, plastic skin, uncanny faces, off-brand colours, stock-photo cliches. Never ask for orbs, blobs, purple light or decorative 3D, and never show the client\'s product, people or premises as if they were real photographs of them',
+    ],
+  }),
+  'media-review': () => ({
+    budget: { minutes: 15, retries: 1 },
+    inputs: ['design/directions.json', 'design/direction.md', 'design/design-system.json', 'design/asset-plan.json', 'design/media-prompts.json', 'assets/public/**'],
+    owns_files: ['design/media-review.json'],
+    must_not_touch: ['design/asset-plan.json', 'design/media-prompts.json', 'content/**', 'site/**', 'assets/**'],
+    acceptance: [
+      'Open every photo and video file the asset plan uses (source "client" or "licensed", under assets/public/) with the Read tool and look at it. For a video, open its poster image or a frame extracted from it (an image beside it, or one you extract with ffmpeg into assets/public/), never the video file itself',
+      'design/media-review.json has one item per file: the asset id, "inspected" (the image you opened, relative to the project folder), "verdict" pass or reject, and the "issues"',
+      'Reject AI artefacts (warped hands, melted text, extra limbs), uncanny or plastic people, blurred or low-resolution files, images that are off the B2 palette and mood, and stock pictures that would pass as the client\'s own work. Say exactly what is wrong; a rejected file sends the asset plan back',
+    ],
+  }),
 };
 
 // Each stage's contract. A contract states what good looks like, because it is the agent's brief.
@@ -305,7 +339,7 @@ function truthsLine(brief) {
 export function specTask(project, stageId, brief, { fix, problems = [] } = {}) {
   const stage = stageById(stageId);
   const id = fix ? `${stage.task}-fix-${fix}` : stage.task;
-  const t = STAGE_TASKS[stageId](brief);
+  const t = (STAGE_TASKS[stageId] ?? MEDIA_STAGES[stageId])(brief);
   return {
     ...base(project, id),
     id,
@@ -353,6 +387,9 @@ function placeMedia(dir, brief) {
 
 const stageTask = (stage) => (project, brief) => [specTask(project, stage, brief)];
 
+// Track 4A (copy) and Track 4B (media prompts) start together once the section and asset plans are done.
+const AFTER_PLANS = ['section-plan', 'asset-plan'];
+
 // The licence register needs only the asset plan, which is finished before the copy, so it runs
 // alongside the copy task and while the operator reviews the copy at B3. The asset phase then
 // has nothing left to wait for.
@@ -387,9 +424,12 @@ const PLANS = {
     return tasks;
   },
 
-  CONTENT: (project, brief) => [specTask(project, 'copy', brief), assetRegister(project)],
+  CONTENT: (project, brief, { dir }) => {
+    if (workflowVersion(dir) < 2) return [specTask(project, 'copy', brief), assetRegister(project)];
+    return [{ ...specTask(project, 'copy', brief), depends_on: AFTER_PLANS }, { ...specTask(project, 'media-prompts', brief), depends_on: AFTER_PLANS }, assetRegister(project)];
+  },
 
-  ASSETS_LICENSING: (project) => [assetRegister(project)],
+  ASSETS_LICENSING: (project, brief, { dir }) => [assetRegister(project), ...(workflowVersion(dir) >= 2 ? [specTask(project, 'media-review', brief)] : [])],
 
   // The specification review: a fresh task after each return, because the file it judges changed.
   TECHNICAL_PLAN: (project, brief, { dir, opts }) => {
@@ -401,7 +441,7 @@ const PLANS = {
         ...base(project, id),
         id,
         agent: 'design-manager',
-        inputs: [...SPEC_INPUTS, ...SPEC, 'design/directions.json', 'content/copy.json', 'design/reference/methodologies/**', CRAFT],
+        inputs: [...SPEC_INPUTS, ...SPEC, 'design/directions.json', 'content/copy.json', 'design/reference/methodologies/**', CRAFT, ...(workflowVersion(dir) >= 2 ? [FILES.mediaPrompts, FILES.mediaReview] : [])],
         owns_files: [FILES.review],
         must_not_touch: [...SPEC, 'content/**', 'site/**'],
         acceptance: [
@@ -412,6 +452,7 @@ const PLANS = {
           'verdict "ready" if there are no blocking findings, even with notes. Otherwise verdict "changes"',
           `Read ${CRAFT_FILE}. Score the specification 1 to 10 for Design, Usability, Creativity and Content as Awwwards would. A score under 7 on any is a blocking finding naming the stage that owns it and the exact change. A centred hero, equal cards and fade-up motion on everything is a 4`,
           ...businessAcceptance(brief, 'review'),
+          ...(workflowVersion(dir) >= 2 ? SLOP_REVIEW : []),
           shape('designReview'),
         ],
         verify: verify('review'),

@@ -1341,7 +1341,9 @@
                   "section-plan",
                   "motion-plan",
                   "asset-plan",
-                  "copy"
+                  "copy",
+                  "media-prompts",
+                  "media-review"
                 ]
               },
               "severity": {
@@ -1353,6 +1355,120 @@
               "message": {
                 "$ref": "#/definitions/text"
               }
+            }
+          }
+        },
+        "litmus": {
+          "description": "The five litmus questions, each answered yes or no with a note. A failing answer means the verdict is changes.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "couldBeAnyCompany",
+            "worksWithoutDecoration",
+            "everySectionHasAReason",
+            "claimsRealAndSourced",
+            "rhythmAndPointOfView"
+          ],
+          "properties": {
+            "couldBeAnyCompany": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "Could this website belong to any company? yes fails."
+            },
+            "worksWithoutDecoration": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "If the gradients and animations disappeared, would the design still work? no fails."
+            },
+            "everySectionHasAReason": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "Does every section have a clear reason to exist in the six-step hierarchy? no fails."
+            },
+            "claimsRealAndSourced": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "Are all claims real and sourced? no fails."
+            },
+            "rhythmAndPointOfView": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "Does the page have rhythm, hierarchy and a memorable point of view? no fails."
             }
           }
         }
@@ -1477,6 +1593,117 @@
           "type": "string",
           "minLength": 1,
           "description": "A source id from research/sources.json, or \"assumption\"."
+        }
+      }
+    },
+    "mediaPrompts": {
+      "description": "Track 4B: a generation prompt for every photo and video the section plan needs, locked to the B2 visual direction and the real business.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "styleLock",
+        "prompts"
+      ],
+      "properties": {
+        "styleLock": {
+          "$ref": "#/definitions/text",
+          "description": "The visual direction every prompt shares: palette, light, lens, grain, mood, from design/direction.md and the design system."
+        },
+        "prompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "section",
+              "asset",
+              "format",
+              "prompt",
+              "negative",
+              "aspect"
+            ],
+            "properties": {
+              "section": {
+                "type": "string",
+                "minLength": 1
+              },
+              "asset": {
+                "type": "string",
+                "minLength": 1
+              },
+              "format": {
+                "enum": [
+                  "photo",
+                  "video"
+                ]
+              },
+              "prompt": {
+                "$ref": "#/definitions/text"
+              },
+              "negative": {
+                "$ref": "#/definitions/text",
+                "description": "What must not appear: AI artefacts, extra fingers, warped text, plastic skin, off-brand colours, stock-photo cliches."
+              },
+              "aspect": {
+                "type": "string",
+                "pattern": "^[0-9]+:[0-9]+$"
+              },
+              "durationSeconds": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 60
+              },
+              "notes": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "mediaReview": {
+      "description": "Track 4B quality check: every photo and video file looked at, with a verdict. For a video, the image inspected is its poster or an extracted frame, never the video file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "asset",
+              "inspected",
+              "verdict",
+              "issues"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string",
+                "minLength": 1
+              },
+              "inspected": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The image file that was opened, relative to the project folder."
+              },
+              "verdict": {
+                "enum": [
+                  "pass",
+                  "reject"
+                ]
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            }
+          }
         }
       }
     }

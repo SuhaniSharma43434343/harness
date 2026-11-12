@@ -26,8 +26,10 @@ forge design retry <project> <stage or build task> --note <decision>   # the ope
 | P5 Motion | `design/motion-plan.json` | Creative Director | No hover; no pin where the approach requires one, a pin where it forbids one; a motion with no purpose or no section |
 | P5 Assets | `design/asset-plan.json` | Creative Director | Unused assets; licensed files with no licence or path. Under workflow 2 also: a 3D asset the media step did not choose |
 | P6 Copy | `content/copy.json` | Content & UX | Sections with no copy; label headlines; repeated headlines; stock phrases; thin pages. Passing writes the locked `content/pages/`. Under workflow 2 also: a step 6 deep FAQ with fewer than five questions, an answer under 25 words, or no call to action |
+| P6 Media prompts (workflow 2) | `design/media-prompts.json` | Asset Rights with the Creative Director's eye, in parallel with the copy | A photo or video asset with no prompt; a prompt of the wrong format, under 25 words, without a negative prompt, or asking for orbs or purple light; no style lock |
 | P7 Assets | `assets/register.json` | Asset Rights, alongside the copy in P6 (it needs only the asset plan), so P7 has nothing left to wait for after B3 | Uncleared licences; planned files that are not on hand |
-| P8 Review | `design/review.json` | Design Manager | Its own judgement of the whole specification |
+| P7 Media check (workflow 2) | `design/media-review.json` | Asset Rights | A file not looked at; a video judged from the video file rather than its poster or a frame; an inspected image that does not exist; a rejection with no reason. A rejected file sends the asset plan back |
+| P8 Review | `design/review.json` | Design Manager | Its own judgement of the whole specification. Under workflow 2 also: no litmus, or a failing litmus answer with a ready verdict |
 | P9 Build | `site/` | Builder | See below |
 
 Each stage's rules live in `src/design/spec.mjs`, and its contract, which is the agent's brief, in `src/core/planner.mjs`.
@@ -65,6 +67,21 @@ A supporting page never steps back. Every section also names:
 - its `media`: photo, video, custom-authored, x-factor-tool or none. It needs a matching asset, and orbs, blobs and random 3D are refused.
 
 The step 6 copy answers at least five real buyer questions, each in 25 words or more, then gives the call to action. The AIDA funnel stage stays alongside.
+
+**The two tracks and the anti-slop gate (workflow 2).** Once the section and asset plans are done, two tracks start together:
+- **Track 4A, the copy:** written for each section's hierarchy step, with step 6 answering the real buyer questions.
+- **Track 4B, the media prompts:** a generation prompt for every photo and video, locked to the B2 look, with a negative prompt.
+
+B3 approves both. In the assets phase, every photo and video file is looked at: a video through its poster or an extracted frame, never the video file. A rejected file sends the asset plan back, and the files are looked at again.
+
+The Design Manager's review (P8) runs after both tracks, so it judges the layout, copy and media together. It works through the Avoiding AI Slop checklist and answers five litmus questions:
+1. Could the site belong to any company?
+2. Would it still work without the gradients and animation?
+3. Does every section have a reason in the six-step hierarchy?
+4. Are all claims real and sourced?
+5. Does the page have rhythm and a point of view?
+
+A failing answer cannot sit with a ready verdict. The copy check also refuses stock headlines ("Elevate your…", "seamless") and the same eyebrow, headline, subheadline and body stack in most sections.
 
 **Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
