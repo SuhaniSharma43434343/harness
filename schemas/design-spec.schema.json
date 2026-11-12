@@ -562,6 +562,185 @@
               "description": "The one visual move a visitor will remember, from outside web design (print, signage, packaging, film, maps)."
             }
           }
+        },
+        "artDirection": {
+          "description": "The art direction: how the site looks and moves, decided before B2 so the operator's choice covers it.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "visualConcept",
+            "storytelling",
+            "typography",
+            "layout",
+            "hero",
+            "navigation",
+            "footer",
+            "transitions",
+            "imageTreatment",
+            "gallery",
+            "background",
+            "shader",
+            "threeD",
+            "icons",
+            "microInteractions"
+          ],
+          "properties": {
+            "visualConcept": {
+              "$ref": "#/definitions/text"
+            },
+            "storytelling": {
+              "$ref": "#/definitions/text"
+            },
+            "typography": {
+              "$ref": "#/definitions/text"
+            },
+            "layout": {
+              "$ref": "#/definitions/text"
+            },
+            "hero": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archetype",
+                "description"
+              ],
+              "properties": {
+                "archetype": {
+                  "$ref": "#/definitions/archetype"
+                },
+                "description": {
+                  "$ref": "#/definitions/text"
+                },
+                "reason": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "navigation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archetype",
+                "description"
+              ],
+              "properties": {
+                "archetype": {
+                  "$ref": "#/definitions/archetype"
+                },
+                "description": {
+                  "$ref": "#/definitions/text"
+                },
+                "reason": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "footer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archetype",
+                "description"
+              ],
+              "properties": {
+                "archetype": {
+                  "$ref": "#/definitions/archetype"
+                },
+                "description": {
+                  "$ref": "#/definitions/text"
+                },
+                "reason": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "transitions": {
+              "$ref": "#/definitions/text"
+            },
+            "imageTreatment": {
+              "$ref": "#/definitions/text"
+            },
+            "gallery": {
+              "$ref": "#/definitions/text"
+            },
+            "background": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "effect",
+                "technique"
+              ],
+              "properties": {
+                "effect": {
+                  "$ref": "#/definitions/text"
+                },
+                "technique": {
+                  "type": "string",
+                  "minLength": 2
+                }
+              }
+            },
+            "shader": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "use",
+                "why"
+              ],
+              "properties": {
+                "use": {
+                  "type": "boolean"
+                },
+                "where": {
+                  "$ref": "#/definitions/text"
+                },
+                "why": {
+                  "$ref": "#/definitions/text"
+                },
+                "technique": {
+                  "type": "string"
+                },
+                "fallback": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "threeD": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "use",
+                "why"
+              ],
+              "properties": {
+                "use": {
+                  "type": "boolean"
+                },
+                "where": {
+                  "$ref": "#/definitions/text"
+                },
+                "why": {
+                  "$ref": "#/definitions/text"
+                },
+                "technique": {
+                  "type": "string"
+                },
+                "fallback": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "icons": {
+              "$ref": "#/definitions/text"
+            },
+            "microInteractions": {
+              "type": "array",
+              "minItems": 3,
+              "items": {
+                "$ref": "#/definitions/text"
+              }
+            }
+          }
         }
       }
     },
@@ -836,6 +1015,228 @@
               }
             }
           }
+        },
+        "atmosphere": {
+          "description": "The surfaces, borders, radius, depth, gradients, light, texture and motion the site is built with, all derived from the B2 colours. The harness writes them as CSS custom properties (site/src/styles/atmosphere.css).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "surfaces",
+            "borders",
+            "radius",
+            "elevation",
+            "gradients",
+            "lighting",
+            "texture",
+            "motion"
+          ],
+          "properties": {
+            "surfaces": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "base",
+                "raised",
+                "sunken",
+                "glass"
+              ],
+              "properties": {
+                "base": {
+                  "$ref": "#/definitions/cssColor"
+                },
+                "raised": {
+                  "$ref": "#/definitions/cssColor"
+                },
+                "sunken": {
+                  "$ref": "#/definitions/cssColor"
+                },
+                "glass": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "fill",
+                    "blur",
+                    "border",
+                    "use"
+                  ],
+                  "properties": {
+                    "fill": {
+                      "$ref": "#/definitions/cssColor"
+                    },
+                    "blur": {
+                      "$ref": "#/definitions/cssLength"
+                    },
+                    "border": {
+                      "$ref": "#/definitions/cssColor"
+                    },
+                    "use": {
+                      "$ref": "#/definitions/text"
+                    }
+                  }
+                }
+              }
+            },
+            "borders": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "subtle",
+                "strong",
+                "glow"
+              ],
+              "properties": {
+                "subtle": {
+                  "$ref": "#/definitions/cssColor"
+                },
+                "strong": {
+                  "$ref": "#/definitions/cssColor"
+                },
+                "glow": {
+                  "$ref": "#/definitions/cssColor"
+                }
+              }
+            },
+            "radius": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "sm",
+                "md",
+                "lg"
+              ],
+              "properties": {
+                "sm": {
+                  "$ref": "#/definitions/cssLength"
+                },
+                "md": {
+                  "$ref": "#/definitions/cssLength"
+                },
+                "lg": {
+                  "$ref": "#/definitions/cssLength"
+                }
+              }
+            },
+            "elevation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "low",
+                "mid",
+                "high"
+              ],
+              "properties": {
+                "low": {
+                  "type": "string",
+                  "minLength": 4,
+                  "description": "A CSS box-shadow, or \"none\"."
+                },
+                "mid": {
+                  "type": "string",
+                  "minLength": 4
+                },
+                "high": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              }
+            },
+            "gradients": {
+              "type": "array",
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "kind",
+                  "stops",
+                  "use"
+                ],
+                "properties": {
+                  "name": {
+                    "$ref": "#/definitions/kebab"
+                  },
+                  "kind": {
+                    "enum": [
+                      "mesh",
+                      "radial",
+                      "linear",
+                      "conic"
+                    ]
+                  },
+                  "stops": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 5,
+                    "items": {
+                      "$ref": "#/definitions/hex"
+                    }
+                  },
+                  "use": {
+                    "$ref": "#/definitions/text"
+                  }
+                }
+              }
+            },
+            "lighting": {
+              "$ref": "#/definitions/text"
+            },
+            "texture": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "opacity"
+              ],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "grain",
+                    "noise",
+                    "paper",
+                    "none"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.2
+                }
+              }
+            },
+            "motion": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "easeOut",
+                "fast",
+                "base",
+                "slow"
+              ],
+              "properties": {
+                "easeOut": {
+                  "type": "string",
+                  "minLength": 4
+                },
+                "easeSpring": {
+                  "type": "string",
+                  "minLength": 4
+                },
+                "fast": {
+                  "type": "string",
+                  "pattern": "^[0-9]+ms$"
+                },
+                "base": {
+                  "type": "string",
+                  "pattern": "^[0-9]+ms$"
+                },
+                "slow": {
+                  "type": "string",
+                  "pattern": "^[0-9]+ms$"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -975,6 +1376,60 @@
                         "none"
                       ],
                       "description": "The section's visual format. custom-authored is SVG, CSS art or a shader made for the site; x-factor-tool is an interactive tool (calculator, audience switcher, comparison, deep FAQ)."
+                    },
+                    "visual": {
+                      "description": "How the section looks: its archetype, focal point, layers, image treatment, interaction, entrance and phone composition.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "archetype",
+                        "focalPoint",
+                        "layers",
+                        "imageTreatment",
+                        "interaction",
+                        "transitionIn",
+                        "mobileComposition"
+                      ],
+                      "properties": {
+                        "archetype": {
+                          "$ref": "#/definitions/archetype"
+                        },
+                        "focalPoint": {
+                          "$ref": "#/definitions/text"
+                        },
+                        "layers": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "back",
+                            "mid",
+                            "front"
+                          ],
+                          "properties": {
+                            "back": {
+                              "$ref": "#/definitions/text"
+                            },
+                            "mid": {
+                              "$ref": "#/definitions/text"
+                            },
+                            "front": {
+                              "$ref": "#/definitions/text"
+                            }
+                          }
+                        },
+                        "imageTreatment": {
+                          "$ref": "#/definitions/text"
+                        },
+                        "interaction": {
+                          "$ref": "#/definitions/text"
+                        },
+                        "transitionIn": {
+                          "$ref": "#/definitions/text"
+                        },
+                        "mobileComposition": {
+                          "$ref": "#/definitions/text"
+                        }
+                      }
                     }
                   }
                 }
@@ -990,6 +1445,65 @@
               "audienceView": {
                 "$ref": "#/definitions/text",
                 "description": "The audience this page is the path for, when the site has a path per visitor type (Residential or Commercial, Student or Parent)."
+              }
+            }
+          }
+        },
+        "chrome": {
+          "description": "The navigation and footer, planned like sections.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "navigation",
+            "footer"
+          ],
+          "properties": {
+            "navigation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archetype",
+                "composition",
+                "mobile",
+                "behaviour"
+              ],
+              "properties": {
+                "archetype": {
+                  "$ref": "#/definitions/archetype"
+                },
+                "composition": {
+                  "$ref": "#/definitions/text"
+                },
+                "mobile": {
+                  "$ref": "#/definitions/text"
+                },
+                "behaviour": {
+                  "$ref": "#/definitions/text"
+                }
+              }
+            },
+            "footer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archetype",
+                "composition",
+                "mobile",
+                "behaviour"
+              ],
+              "properties": {
+                "archetype": {
+                  "$ref": "#/definitions/archetype"
+                },
+                "composition": {
+                  "$ref": "#/definitions/text"
+                },
+                "mobile": {
+                  "$ref": "#/definitions/text"
+                },
+                "behaviour": {
+                  "$ref": "#/definitions/text"
+                }
               }
             }
           }
@@ -1058,6 +1572,11 @@
               },
               "purpose": {
                 "$ref": "#/definitions/text"
+              },
+              "technique": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "description": "A technique id from design/reference/craft/techniques.json."
               }
             }
           }
@@ -1121,6 +1640,10 @@
               },
               "alt": {
                 "type": "string"
+              },
+              "treatment": {
+                "$ref": "#/definitions/text",
+                "description": "How a photo is art-directed: duotone, mask, crop, frame, grain. A stock photo needs a concept, not just a file."
               }
             }
           }
@@ -1408,7 +1931,7 @@
                   "$ref": "#/definitions/text"
                 }
               },
-              "description": "If the gradients and animations disappeared, would the design still work? no fails."
+              "description": "With the effects switched off (reduced motion, no WebGL), does the structure and hierarchy still stand? no fails. This does not ask for a site without effects."
             },
             "everySectionHasAReason": {
               "type": "object",
@@ -1469,6 +1992,26 @@
                 }
               },
               "description": "Does the page have rhythm, hierarchy and a memorable point of view? no fails."
+            },
+            "artDirected": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "answer",
+                "note"
+              ],
+              "properties": {
+                "answer": {
+                  "enum": [
+                    "yes",
+                    "no"
+                  ]
+                },
+                "note": {
+                  "$ref": "#/definitions/text"
+                }
+              },
+              "description": "Do depth, light, imagery and motion all come from one concept? no fails."
             }
           }
         }
@@ -1706,6 +2249,19 @@
           }
         }
       }
+    },
+    "cssColor": {
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|rgba?\\([0-9., %]+\\)|transparent)$"
+    },
+    "cssLength": {
+      "type": "string",
+      "pattern": "^(0|[0-9]+(\\.[0-9]+)?(px|rem|em|%))$"
+    },
+    "archetype": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "A pattern id from design/reference/craft/patterns.json, or \"custom\"."
     }
   }
 }

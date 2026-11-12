@@ -1,0 +1,173 @@
+{
+  "libraryVersion": "1.0.0",
+  "note": "Distilled from the reference research of 11 November 2026 (ScrollTide, Navbar Gallery, Refero, Footer Design, 21st.dev, Watermelon UI, Motion.dev, Spline, Paper Shaders, Manus). Patterns are described in our own words. Script sizes are approximate; Spline was not measured.",
+  "techniques": [
+    {
+      "id": "css-scroll-timeline",
+      "name": "CSS scroll-driven animations",
+      "use": "Scroll-linked reveals, progress bars and parallax with no script, where the browser supports animation-timeline.",
+      "jsKb": 0,
+      "needs": "CSS animation-timeline: scroll() / view()",
+      "fallback": "Elements show in their final state where it is not supported.",
+      "reducedMotion": "Wrapped in a prefers-reduced-motion: no-preference query.",
+      "approaches": [
+        "APP-01",
+        "APP-02",
+        "APP-03",
+        "APP-04",
+        "APP-05",
+        "APP-06",
+        "APP-07",
+        "APP-08"
+      ]
+    },
+    {
+      "id": "view-transitions",
+      "name": "View Transitions",
+      "use": "Shared-element and crossfade changes between pages and states.",
+      "jsKb": 0,
+      "needs": "CSS view-transition-name and document.startViewTransition",
+      "fallback": "A plain page change.",
+      "reducedMotion": "Turned off.",
+      "approaches": [
+        "APP-01",
+        "APP-02",
+        "APP-03",
+        "APP-04",
+        "APP-05",
+        "APP-06",
+        "APP-07",
+        "APP-08"
+      ]
+    },
+    {
+      "id": "svg-draw",
+      "name": "SVG drawing and animated SVG",
+      "use": "Lines that draw themselves, drifting paths, authored illustrations that move.",
+      "jsKb": 1,
+      "needs": "Inline SVG with stroke-dasharray",
+      "fallback": "The finished drawing, still.",
+      "reducedMotion": "The finished drawing, still.",
+      "approaches": [
+        "APP-01",
+        "APP-02",
+        "APP-03",
+        "APP-04",
+        "APP-05",
+        "APP-06",
+        "APP-07",
+        "APP-08"
+      ]
+    },
+    {
+      "id": "motion-dev",
+      "name": "Motion (vanilla, motion.dev)",
+      "use": "UI animation: in-view staggers, springs, scroll-linked transforms and timed sequences, without React.",
+      "jsKb": 18,
+      "needs": "the motion package (animate, scroll, inView, stagger); motion/mini is about 3 KB for animate only",
+      "fallback": "Elements in their final state.",
+      "reducedMotion": "Check prefers-reduced-motion and skip the animation.",
+      "approaches": [
+        "APP-01",
+        "APP-02",
+        "APP-03",
+        "APP-04",
+        "APP-05",
+        "APP-06",
+        "APP-07",
+        "APP-08"
+      ]
+    },
+    {
+      "id": "gsap-scrolltrigger",
+      "name": "GSAP with ScrollTrigger",
+      "use": "Pinned scroll stories and scrubbed timelines across several elements.",
+      "jsKb": 40,
+      "needs": "gsap and ScrollTrigger (own licence: confirm it allows the client site)",
+      "fallback": "The sections in normal flow with no pinning.",
+      "reducedMotion": "No pinning or scrubbing; the content shows in order.",
+      "approaches": [
+        "APP-02",
+        "APP-07"
+      ]
+    },
+    {
+      "id": "glsl-shader",
+      "name": "Own GLSL shader",
+      "use": "A noise, liquid, distortion or grain background drawn by the graphics card, behind a few sections.",
+      "jsKb": 4,
+      "needs": "Plain WebGL with the harness's own shader code",
+      "fallback": "A CSS gradient in the same colours, painted first.",
+      "reducedMotion": "Speed 0: one still frame.",
+      "approaches": [
+        "APP-05",
+        "APP-07"
+      ]
+    },
+    {
+      "id": "paper-shaders",
+      "name": "Paper Shaders",
+      "use": "Ready shader effects and image filters: mesh gradient, grain gradient, fluted glass, halftone, liquid metal.",
+      "jsKb": 12,
+      "needs": "@paper-design/shaders pinned to an exact version (breaking changes ship in patch versions)",
+      "fallback": "A CSS gradient or a pre-rendered image.",
+      "reducedMotion": "Speed 0: still.",
+      "approaches": [
+        "APP-05",
+        "APP-07"
+      ]
+    },
+    {
+      "id": "three-scene",
+      "name": "Three.js scene",
+      "use": "A custom 3D object or scene the visitor can turn or explore, loaded after the page.",
+      "jsKb": 150,
+      "needs": "three, plus GLTFLoader for models",
+      "fallback": "A poster image or short video.",
+      "reducedMotion": "The poster image.",
+      "approaches": [
+        "APP-03",
+        "APP-07",
+        "APP-08"
+      ]
+    },
+    {
+      "id": "spline-embed",
+      "name": "Spline scene",
+      "use": "A designed 3D scene from the operator's own Spline file, with events wired to the page.",
+      "jsKb": 600,
+      "needs": "@splinetool/runtime (size not measured; treat it as heavy and opt-in)",
+      "fallback": "A poster image or video.",
+      "reducedMotion": "The poster image.",
+      "approaches": [
+        "APP-04"
+      ]
+    },
+    {
+      "id": "react-three-fiber",
+      "name": "React Three Fiber",
+      "use": "Declarative Three.js in React. Not in this starter: it needs a React integration, so use three-scene instead.",
+      "jsKb": 200,
+      "needs": "React, @react-three/fiber",
+      "fallback": "three-scene.",
+      "reducedMotion": "The poster image.",
+      "approaches": [
+        "APP-03"
+      ],
+      "inStarter": false
+    },
+    {
+      "id": "framer-motion",
+      "name": "Framer Motion (React)",
+      "use": "React animation. Not in this starter: it needs a React integration, so use motion-dev, the same library without React.",
+      "jsKb": 35,
+      "needs": "React, framer-motion",
+      "fallback": "motion-dev.",
+      "reducedMotion": "Skip the animation.",
+      "approaches": [
+        "APP-01"
+      ],
+      "inStarter": false
+    }
+  ]
+}

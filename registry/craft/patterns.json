@@ -1,0 +1,656 @@
+{
+  "libraryVersion": "1.0.0",
+  "note": "Distilled from the reference research of 11 November 2026 (ScrollTide, Navbar Gallery, Refero, Footer Design, 21st.dev, Watermelon UI, Motion.dev, Spline, Paper Shaders, Manus). Patterns are described in our own words. Script sizes are approximate; Spline was not measured.",
+  "patterns": [
+    {
+      "id": "split-headline-photo",
+      "category": "hero",
+      "name": "Headline left, photo right",
+      "looks": "A headline, a paragraph and two buttons on the left half, and one photograph filling the right half. The layout every generated site already has.",
+      "build": "A two-column grid with the text column first and an image in the second.",
+      "when": "Never as a hero; it is listed so the checks can refuse it.",
+      "avoid": "Always: it says nothing about the brand.",
+      "cost": "css-only",
+      "mobile": "Stacks to text then photo.",
+      "source": "Forge audit (Harbor, Cold Cafe)",
+      "banned": true
+    },
+    {
+      "id": "centred-over-photo",
+      "category": "hero",
+      "name": "Centred headline over a photo",
+      "looks": "A centred headline and two buttons laid over a full-width stock photo or gradient, with a dark scrim.",
+      "build": "A background image, a scrim and centred text.",
+      "when": "Never as a hero; it is listed so the checks can refuse it.",
+      "avoid": "Always: it is the most common template hero.",
+      "cost": "css-only",
+      "mobile": "The same, smaller.",
+      "source": "Forge craft guide",
+      "banned": true
+    },
+    {
+      "id": "type-behind-subject",
+      "category": "hero",
+      "name": "Type behind the subject",
+      "looks": "A giant condensed wordmark split in two across the full width, with a cut-out subject standing in the gap and overlapping the inner letters; small navigation and meta text sit in the corners.",
+      "build": "Two spans at clamp(6rem, 24vw, 22rem) with line-height .8 and a transparent cut-out image absolutely centred above them; optionally a scroll scrub moves the halves apart and scales the subject slightly.",
+      "when": "Fashion, portfolios and brands with a strong cut-out subject.",
+      "avoid": "When there is no clean subject to cut out.",
+      "cost": "css-only",
+      "techniques": [
+        "gsap-scrolltrigger",
+        "motion-dev"
+      ],
+      "mobile": "The halves stack above and below the subject, which stays under 60% of the screen height.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "floating-objects-wordmark",
+      "category": "hero",
+      "name": "Objects floating around a wordmark",
+      "looks": "An oversized wordmark centred on a calm ground, with five to eight product cut-outs scattered around it at different scales and angles, some overlapping the letters.",
+      "build": "Absolutely positioned images driven by custom properties for position, rotation and depth; a scroll-linked translate moves each by its depth, and an optional pointer parallax nudges them a few pixels.",
+      "when": "Food, consumer products and playful brands with good product cut-outs.",
+      "avoid": "On content-heavy pages, or without real product images.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "Three objects only, no pointer parallax.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "outlined-type-3d-object",
+      "category": "hero",
+      "name": "3D object over outlined type",
+      "looks": "A dark field with giant outline-only type behind a lit 3D object or wireframe figure, and small monospace labels in the four corners like an instrument display.",
+      "build": "Text with a 1px text-stroke and transparent fill, a Three.js or Spline canvas (or a looping video) layered above it, and 10-11px uppercase monospace corner labels.",
+      "when": "Technology, 3D products and games.",
+      "avoid": "On a light editorial brand.",
+      "cost": "webgl",
+      "techniques": [
+        "three-scene",
+        "spline-embed"
+      ],
+      "mobile": "A poster image or a short video replaces the live scene.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "scroll-media-expansion",
+      "category": "hero",
+      "name": "Media that grows to full bleed",
+      "looks": "The hero media starts as a framed card about a third of the width, with the title split either side; scrolling grows it to full bleed while the title halves slide apart.",
+      "build": "A section about 250vh tall with a sticky full-height stage; scroll scrubs a clip-path inset with a radius down to zero and the title halves apart. Sticky positioning, never wheel hijacking.",
+      "when": "A product film or a signature photograph worth revealing.",
+      "avoid": "Without a strong image or video.",
+      "cost": "small-js",
+      "techniques": [
+        "gsap-scrolltrigger",
+        "motion-dev",
+        "css-scroll-timeline"
+      ],
+      "mobile": "A shorter section, and the media starts at 80% width.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "tilting-product-card",
+      "category": "hero",
+      "name": "Headline over a product that tilts flat",
+      "looks": "A headline above a large product screenshot or device that starts tipped back in perspective and flattens to face the visitor as it scrolls into view.",
+      "build": "A perspective on the parent and a scroll-linked transform from rotateX(20deg) scale(1.05) to flat.",
+      "when": "Software and products with a strong interface or object.",
+      "avoid": "Without a product image worth showing large.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev",
+        "css-scroll-timeline"
+      ],
+      "mobile": "A smaller tilt and scale.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "composer-hero",
+      "category": "hero",
+      "name": "The product as the hero",
+      "looks": "A question set in a serif above a large input card, with a row of pill chips for common tasks under it: the visitor starts using the product on the first screen.",
+      "build": "An auto-growing textarea in a card with a large radius and a hairline border, and a wrapping row of pill chips with icons.",
+      "when": "Tools whose product starts with an input: search, booking, quoting, calculating.",
+      "avoid": "Pure brand sites.",
+      "cost": "css-only",
+      "mobile": "The chips scroll sideways with scroll snap.",
+      "source": "Manus"
+    },
+    {
+      "id": "fluted-glass-field",
+      "category": "hero",
+      "name": "Type over fluted glass light",
+      "looks": "A dark field seen through vertical fluted-glass ribs that refract a warm glow, a bold two-line headline on the left, and the client logos stacked in a vertical rail on the right.",
+      "build": "A blurred radial glow under a repeating linear gradient of thin bright ribs, each with a dark-to-light gradient; or a fluted-glass shader filter over an image.",
+      "when": "Premium business and B2B brands.",
+      "avoid": "Bright, casual brands.",
+      "cost": "css-only",
+      "techniques": [
+        "paper-shaders"
+      ],
+      "mobile": "Wider ribs, and the logos in a row.",
+      "source": "Watermelon UI"
+    },
+    {
+      "id": "inset-illustration-card",
+      "category": "hero",
+      "name": "Illustration in an inset card",
+      "looks": "A full illustration or photograph inside a rounded card inset from the screen edges, a headline that mixes italic and upright serif, and a frosted pill button beside a round play button.",
+      "build": "A card with a 12px margin and a 24px radius, an emphasised word in a display serif italic, and a button with a backdrop blur over a translucent fill.",
+      "when": "Wellness, lifestyle and hospitality.",
+      "avoid": "Dense technical products.",
+      "cost": "css-only",
+      "mobile": "The image is positioned on its subject.",
+      "source": "Watermelon UI"
+    },
+    {
+      "id": "pinned-archive-strip",
+      "category": "hero",
+      "name": "A pinned strip of the archive",
+      "looks": "A horizontal shelf of the brand's objects or work above a year or timeline ruler, with one item pulled forward; scrolling slides the shelf sideways under a pinned stage.",
+      "build": "A section about 300vh tall with a sticky stage whose inner track is translated by a scroll scrub; the ruler ticks are a repeating linear gradient.",
+      "when": "Catalogues, histories and portfolios with six or more items.",
+      "avoid": "With few items.",
+      "cost": "library",
+      "techniques": [
+        "gsap-scrolltrigger",
+        "css-scroll-timeline"
+      ],
+      "mobile": "No pinning: a native horizontal scroller with scroll snap.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "live-logo-metal",
+      "category": "hero",
+      "name": "A living logo mark",
+      "looks": "The brand mark rendered large as flowing chrome or liquid, on a quiet ground, with the headline set small and exact beside it.",
+      "build": "A logo shader (liquid metal or smoke) mounted after first paint, with a static render first.",
+      "when": "Launches with a strong mark.",
+      "avoid": "Brands without a mark.",
+      "cost": "webgl",
+      "techniques": [
+        "paper-shaders",
+        "glsl-shader"
+      ],
+      "mobile": "The static render.",
+      "source": "Paper Shaders"
+    },
+    {
+      "id": "floating-glass-pill",
+      "category": "navigation",
+      "name": "Floating glass pill",
+      "looks": "A compact pill floating near the top centre: the logo, three or four links and a dark pill button, over the page with a frosted fill.",
+      "build": "position: sticky at top 12px, width: fit-content, a 999px radius and a backdrop blur with saturation over a translucent fill.",
+      "when": "Product and brand sites with a short menu.",
+      "avoid": "Long menus.",
+      "cost": "css-only",
+      "mobile": "The links fold into one menu button inside the pill.",
+      "source": "Navbar Gallery"
+    },
+    {
+      "id": "split-rail-scroll-state",
+      "category": "navigation",
+      "name": "Transparent over the hero, solid after",
+      "looks": "Logo left, links centre, call to action right; transparent over the hero, then solid with a hairline once past it, and it can hide while scrolling down.",
+      "build": "An observer on a sentinel at the hero's end toggles a data attribute that transitions the background.",
+      "when": "Dark or photographic heroes.",
+      "avoid": "Light heroes, where it never changes.",
+      "cost": "small-js",
+      "mobile": "The same behaviour, with a menu button.",
+      "source": "Navbar Gallery"
+    },
+    {
+      "id": "numbered-mega-panel",
+      "category": "navigation",
+      "name": "Numbered panel with a live preview",
+      "looks": "A full-width panel opens under the bar: a numbered uppercase list on the left and a large image on the right that changes as each item is hovered.",
+      "build": "A button with aria-expanded toggles the panel; hovering an item swaps the preview; the panel opens with a clip-path reveal.",
+      "when": "Catalogues with five or more categories.",
+      "avoid": "Short menus.",
+      "cost": "small-js",
+      "mobile": "A full-screen accordion with no preview.",
+      "source": "Navbar Gallery"
+    },
+    {
+      "id": "fullscreen-type-menu",
+      "category": "navigation",
+      "name": "Full-screen menu in giant type",
+      "looks": "A menu that covers the screen with links at 8-12vw and one graphic element, revealed from the corner button.",
+      "build": "A fixed overlay revealed with a growing circular clip-path, the links staggered in; focus is trapped and the page stops scrolling.",
+      "when": "Agencies, portfolios and brands with few pages.",
+      "avoid": "Sites where visitors need the menu constantly.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "This is the phone menu.",
+      "source": "Navbar Gallery"
+    },
+    {
+      "id": "announcement-stack",
+      "category": "navigation",
+      "name": "Announcement strip over the bar",
+      "looks": "A 32-40px strip above the navigation with one line of news, a link or a countdown, and the bar beneath it.",
+      "build": "A centred row at 13px, dismissible with the choice remembered; an optional CSS marquee.",
+      "when": "Launches and limited offers.",
+      "avoid": "As permanent decoration.",
+      "cost": "css-only",
+      "mobile": "One line with an ellipsis.",
+      "source": "Navbar Gallery"
+    },
+    {
+      "id": "corner-hud",
+      "category": "navigation",
+      "name": "Corner instrument navigation",
+      "looks": "The logo top left, the menu button top right, and small monospace labels in the bottom corners, framing the hero like an instrument display.",
+      "build": "Fixed corner elements with a small uppercase monospace face and wide tracking.",
+      "when": "Technology, 3D and editorial brands with few pages.",
+      "avoid": "Sites with many top-level pages.",
+      "cost": "css-only",
+      "mobile": "The bottom labels hide; the menu button stays.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "quiet-text-bar",
+      "category": "navigation",
+      "name": "Quiet text bar",
+      "looks": "A plain bar with centred 14px links and, on the right, a solid dark button beside an outlined one.",
+      "build": "A three-part flex row; the two buttons differ by fill only.",
+      "when": "Product tools where the hero does the talking.",
+      "avoid": "Brands that need the bar to carry identity.",
+      "cost": "css-only",
+      "mobile": "A menu button and the primary button.",
+      "source": "Manus"
+    },
+    {
+      "id": "cropped-wordmark-footer",
+      "category": "footer",
+      "name": "Oversized cropped wordmark",
+      "looks": "The brand name set across the full width at about 20vw, its baseline cut by the bottom edge, with a thin row of links above it.",
+      "build": "A 20vw wordmark with line-height .75, a negative bottom margin and overflow hidden; optionally it rises into place as it scrolls in.",
+      "when": "Brand-led sites with a short name.",
+      "avoid": "Long names (use an SVG with textLength instead).",
+      "cost": "css-only",
+      "mobile": "Keep it, with no sideways scroll.",
+      "source": "Footer Design"
+    },
+    {
+      "id": "colour-block-grid-footer",
+      "category": "footer",
+      "name": "Hairline colour-block grid",
+      "looks": "Hairline-bordered cells: a pale newsletter cell with a serif headline, a saturated brand panel with grain and the logo, and a thin accent strip.",
+      "build": "A grid with 1px borders, cells at least 220px tall, and an SVG grain overlay on the brand panel.",
+      "when": "Editorial and research brands.",
+      "avoid": "Very small sites.",
+      "cost": "css-only",
+      "mobile": "The cells stack.",
+      "source": "Footer Design"
+    },
+    {
+      "id": "cards-footer",
+      "category": "footer",
+      "name": "Link groups as cards",
+      "looks": "Each link group sits in its own rounded card on a tinted ground.",
+      "build": "An auto-fit grid of cards with a 16px radius and a hairline border.",
+      "when": "Footers with many link groups.",
+      "avoid": "Two or three links.",
+      "cost": "css-only",
+      "mobile": "The cards fall into two columns.",
+      "source": "Footer Design"
+    },
+    {
+      "id": "curtain-reveal-footer",
+      "category": "footer",
+      "name": "Curtain reveal",
+      "looks": "The last section slides up like a curtain to uncover a footer that seems to sit still underneath.",
+      "build": "A sticky footer at bottom 0 under an opaque main; optionally a slight upward slide as it is uncovered.",
+      "when": "Short footers.",
+      "avoid": "Footers taller than the screen.",
+      "cost": "css-only",
+      "mobile": "Off when the footer is taller than the screen.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "statement-sitemap-footer",
+      "category": "footer",
+      "name": "Statement and full sitemap",
+      "looks": "A dark footer that opens with a two-line italic serif statement, then a wide grid of small grey links in six or seven columns.",
+      "build": "A large italic serif line above a multi-column grid of small links.",
+      "when": "Product and company sites with many pages.",
+      "avoid": "Small sites.",
+      "cost": "css-only",
+      "mobile": "The links fall into two columns.",
+      "source": "Manus"
+    },
+    {
+      "id": "scene-footer",
+      "category": "footer",
+      "name": "Footer in a landscape",
+      "looks": "The footer is a scene: dithered ridges, hills or a horizon drawn from the brand's world, with the links set over it.",
+      "build": "An authored SVG or dithered image behind the link grid, with enough contrast under the text.",
+      "when": "Travel, outdoor and story-led brands.",
+      "avoid": "When the scene has nothing to do with the brand.",
+      "cost": "css-only",
+      "mobile": "The scene crops to its centre.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "asymmetric-feature-gallery",
+      "category": "gallery",
+      "name": "Asymmetric gallery with a featured item",
+      "looks": "One large featured item fills about two-thirds of the width, with smaller supporting items stacked beside it; specifications float over the featured image on a glass chip, and hovering lifts an image and shifts its light.",
+      "build": "A grid with a 2fr/1fr split, the featured item spanning two rows; chips use the glass surface; hover uses a transform and an elevation change; items crossfade on change.",
+      "when": "Products, rooms, dishes, projects: anything with one hero item and supporting ones.",
+      "avoid": "Sets where every item matters equally.",
+      "cost": "css-only",
+      "mobile": "A swipeable row with the featured item first.",
+      "source": "Forge craft guide (operator brief)"
+    },
+    {
+      "id": "centre-ripple-grid",
+      "category": "gallery",
+      "name": "Grid that ripples from the centre",
+      "looks": "Tiles of the gallery appear in a ripple that starts at the centre and spreads to the edges.",
+      "build": "A staggered reveal with the delay computed from each tile's distance to the centre.",
+      "when": "Image-rich galleries and bento sections.",
+      "avoid": "Small sets.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "The ripple starts from the first tile.",
+      "source": "Motion.dev"
+    },
+    {
+      "id": "halftone-media",
+      "category": "gallery",
+      "name": "Photos in brand halftone",
+      "looks": "Photographs rendered as one-bit dither or halftone dots in the brand's two colours, so stock images become part of the identity.",
+      "build": "A dithering or halftone image filter, with a pre-rendered PNG or a CSS filter as the fallback.",
+      "when": "Technology, zine and editorial moods.",
+      "avoid": "Food and hospitality, where photos must look appetising.",
+      "cost": "webgl",
+      "techniques": [
+        "paper-shaders"
+      ],
+      "mobile": "Pre-rendered images.",
+      "source": "Paper Shaders"
+    },
+    {
+      "id": "asymmetric-featured-product",
+      "category": "product",
+      "name": "Featured product with floating specs",
+      "looks": "One product shown large on a lit surface, with three or four specifications floating around it on small glass chips joined by hairlines, and the call to action anchored under it.",
+      "build": "An absolutely positioned set of chips around a centred image, each with the glass surface and a hairline connector; a hover brightens the connected chip.",
+      "when": "Single hero products.",
+      "avoid": "Large catalogues.",
+      "cost": "css-only",
+      "mobile": "The chips become a list under the image.",
+      "source": "Forge craft guide (operator brief)"
+    },
+    {
+      "id": "tilt-product-showcase",
+      "category": "product",
+      "name": "Product that turns as it scrolls",
+      "looks": "A product image or screenshot that tips from perspective to flat and lifts as the visitor scrolls to it.",
+      "build": "A scroll-linked transform on a perspective parent.",
+      "when": "Interfaces and devices.",
+      "avoid": "Small images.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev",
+        "css-scroll-timeline"
+      ],
+      "mobile": "A smaller tilt.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "bento-features",
+      "category": "section-layout",
+      "name": "Bento of features",
+      "looks": "Five to seven feature tiles of mixed size on one grid, one hero tile spanning two by two, each tile with its own small visual.",
+      "build": "A six-column grid with tiles spanning two, three or four columns, a 20-24px radius and 24-32px padding.",
+      "when": "Feature overviews with five or more items.",
+      "avoid": "Two or three items.",
+      "cost": "css-only",
+      "mobile": "One column, ordered by importance.",
+      "source": "Refero"
+    },
+    {
+      "id": "hairline-grid-editorial",
+      "category": "section-layout",
+      "name": "Editorial hairline grid",
+      "looks": "The section sits on a visible hairline grid, with content in bordered cells and small uppercase labels in the cell corners.",
+      "build": "A grid with a 1px gap over a line-coloured background; lines at about 8% opacity.",
+      "when": "Technical and editorial brands.",
+      "avoid": "Playful brands.",
+      "cost": "css-only",
+      "mobile": "One column with horizontal rules.",
+      "source": "Refero"
+    },
+    {
+      "id": "sticky-stack",
+      "category": "section-layout",
+      "name": "Panels that stack as you scroll",
+      "looks": "Full-width panels each stick to the top in turn and the next slides over it, slightly scaling the one beneath, so a process or story reads one step at a time.",
+      "build": "Each panel position: sticky at top with increasing offsets; a scroll-linked scale on the covered panel.",
+      "when": "Processes, steps and timelines of three to six parts.",
+      "avoid": "Long text sections.",
+      "cost": "css-only",
+      "techniques": [
+        "css-scroll-timeline",
+        "motion-dev"
+      ],
+      "mobile": "No sticking: the panels simply follow each other.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "editorial-split-overlap",
+      "category": "section-layout",
+      "name": "Offset editorial split",
+      "looks": "A large image bleeding off one edge with the text column overlapping its inner edge on a raised surface, at different scales.",
+      "build": "A 12-column grid with the image spanning 7 columns to the edge and the text card spanning 5 with a negative margin over the image.",
+      "when": "Story and proof sections.",
+      "avoid": "Two in a row.",
+      "cost": "css-only",
+      "mobile": "The image first, the card overlapping its bottom edge.",
+      "source": "Refero"
+    },
+    {
+      "id": "marquee-voices",
+      "category": "testimonial",
+      "name": "Moving wall of voices",
+      "looks": "Short quotes on raised cards move slowly in two rows going opposite ways; hovering pauses the row.",
+      "build": "A CSS keyframe marquee on a duplicated track, paused on hover and under reduced motion.",
+      "when": "Many short, real quotes.",
+      "avoid": "One or two quotes.",
+      "cost": "css-only",
+      "mobile": "One slower row of quotes.",
+      "source": "Forge craft guide"
+    },
+    {
+      "id": "pull-quote-portrait",
+      "category": "testimonial",
+      "name": "One voice, set large",
+      "looks": "One real quote set at display size in the serif, with a small portrait and the person's name and role, on its own quiet section.",
+      "build": "A large blockquote with a hanging opening mark and a small image beside the citation.",
+      "when": "One strong, real, attributable quote.",
+      "avoid": "Invented or anonymous quotes.",
+      "cost": "css-only",
+      "mobile": "The portrait above the quote.",
+      "source": "Forge craft guide"
+    },
+    {
+      "id": "light-beam-cta",
+      "category": "cta",
+      "name": "Call to action crossed by light",
+      "looks": "A dark rounded panel crossed by a diagonal beam of light in the brand colours, a small dot eyebrow, a large light-weight question and a text link with an arrow.",
+      "build": "A blurred radial gradient rotated across the panel, the headline at weight 300 with tight tracking.",
+      "when": "The last call to action before the footer.",
+      "avoid": "Light, playful brands.",
+      "cost": "css-only",
+      "mobile": "The beam at double width.",
+      "source": "Watermelon UI"
+    },
+    {
+      "id": "split-faq-index",
+      "category": "faq",
+      "name": "FAQ with a sticky question index",
+      "looks": "The questions listed on the left, sticking as the answers scroll on the right; the current question lights up, and the answers end on the call to action.",
+      "build": "A two-column grid with a sticky list and an observer that marks the question in view; details elements on a phone.",
+      "when": "Deep decision FAQs with five or more questions.",
+      "avoid": "Two or three questions.",
+      "cost": "small-js",
+      "mobile": "An accordion of the same questions.",
+      "source": "Forge craft guide"
+    },
+    {
+      "id": "dual-glow-grain",
+      "category": "background",
+      "name": "Two glows and grain",
+      "looks": "A near-black field with a warm radial wash from one side, a cool wash from the other, fine grain over both, and one accent word in gradient text.",
+      "build": "Two layered radial gradients at 25-40% opacity, an SVG noise overlay at 4-10% opacity, and background-clip: text on one word.",
+      "when": "Software, studios and night-time brands.",
+      "avoid": "Photo-led brands.",
+      "cost": "css-only",
+      "mobile": "One glow, keep the grain.",
+      "source": "ScrollTide"
+    },
+    {
+      "id": "frosted-layers",
+      "category": "background",
+      "name": "Frosted layers over colour",
+      "looks": "Translucent panels over a colourful field, each with a bright 1px top edge.",
+      "build": "A backdrop blur with saturation over a translucent fill, an inset top highlight, and a solid fallback where blur is not supported.",
+      "when": "Over gradients or shaders.",
+      "avoid": "Over flat colour, where glass shows nothing.",
+      "cost": "css-only",
+      "mobile": "Half the blur, for phones.",
+      "source": "Refero"
+    },
+    {
+      "id": "drifting-paths",
+      "category": "background",
+      "name": "Drifting line paths",
+      "looks": "Thirty-odd thin curves drift slowly behind a headline, like contour lines or wind.",
+      "build": "Generated cubic SVG paths with low stroke opacity and a slow dash-offset loop.",
+      "when": "Minimal heroes and maps.",
+      "avoid": "Busy sections.",
+      "cost": "small-js",
+      "techniques": [
+        "svg-draw"
+      ],
+      "mobile": "Half the paths.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "mesh-gradient-field",
+      "category": "background",
+      "name": "Living mesh gradient",
+      "looks": "A soft three-to-five colour mesh that slowly morphs behind the hero.",
+      "build": "A mesh-gradient shader mounted after first paint over a CSS gradient of the same colours, paused off screen.",
+      "when": "Soft software and wellness brands.",
+      "avoid": "Strict editorial brands.",
+      "cost": "webgl",
+      "techniques": [
+        "paper-shaders",
+        "glsl-shader"
+      ],
+      "mobile": "The CSS gradient, still.",
+      "source": "Paper Shaders"
+    },
+    {
+      "id": "inview-stagger-reveal",
+      "category": "transition",
+      "name": "Staggered reveal",
+      "looks": "A section's parts rise and fade in one after another as it comes into view, once.",
+      "build": "An in-view trigger running a staggered opacity and translate on marked children, with a cleanup on leave.",
+      "when": "Every section, with restraint.",
+      "avoid": "Every element on the page.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "Shorter travel; nothing moves under reduced motion.",
+      "source": "Motion.dev"
+    },
+    {
+      "id": "scroll-linked-parallax",
+      "category": "transition",
+      "name": "Scroll-linked depth",
+      "looks": "Layers move at different speeds as the page scrolls, so the background sits further away than the type.",
+      "build": "A scroll-linked transform per layer, using the native scroll timeline where supported; pinning by sticky positioning.",
+      "when": "Layered heroes and stories.",
+      "avoid": "Text-heavy sections.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev",
+        "css-scroll-timeline"
+      ],
+      "mobile": "Half the travel.",
+      "source": "Motion.dev"
+    },
+    {
+      "id": "page-view-transition",
+      "category": "transition",
+      "name": "Shared element page change",
+      "looks": "Moving from a list to a detail page, the clicked image grows into the new page's hero instead of the page blinking.",
+      "build": "The View Transitions API with matching view-transition-name on the two elements.",
+      "when": "Galleries and catalogues.",
+      "avoid": "Single-page sites.",
+      "cost": "css-only",
+      "techniques": [
+        "view-transitions"
+      ],
+      "mobile": "The same, or a plain crossfade.",
+      "source": "Motion.dev"
+    },
+    {
+      "id": "spotlight-card",
+      "category": "interaction",
+      "name": "Cursor spotlight",
+      "looks": "A soft light follows the pointer inside a card and brightens the border under it.",
+      "build": "Pointer position written to custom properties drives a radial gradient on the card and a masked ::before on its border.",
+      "when": "Dark feature sections and cards.",
+      "avoid": "Light, photo-led sections.",
+      "cost": "small-js",
+      "mobile": "No pointer: a still glow at the top.",
+      "source": "21st.dev"
+    },
+    {
+      "id": "spring-press",
+      "category": "interaction",
+      "name": "Spring on press",
+      "looks": "Buttons and cards answer a press or hover with a slight physical overshoot.",
+      "build": "A spring animation on scale, or a CSS linear() easing generated from a spring.",
+      "when": "Calls to action and toggles.",
+      "avoid": "Everything on the page.",
+      "cost": "small-js",
+      "techniques": [
+        "motion-dev"
+      ],
+      "mobile": "On press, not hover.",
+      "source": "Motion.dev"
+    },
+    {
+      "id": "scroll-drives-scene",
+      "category": "interaction",
+      "name": "Scroll turns the 3D scene",
+      "looks": "The 3D object turns or changes state as the visitor scrolls, telling the product's story in steps.",
+      "build": "Scroll progress written to a scene variable or an object's rotation; the scene pauses off screen.",
+      "when": "One 3D product story.",
+      "avoid": "Phones and slow devices.",
+      "cost": "webgl",
+      "techniques": [
+        "spline-embed",
+        "three-scene"
+      ],
+      "mobile": "Off: a poster or a short video.",
+      "source": "Spline"
+    }
+  ]
+}

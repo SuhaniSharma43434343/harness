@@ -356,3 +356,27 @@ test('interactions: a styled button with no focus or hover state, clipped text a
   assert.ok(found('control-covered').some((m) => /Hidden \(under div\.cover\)/.test(m)), JSON.stringify(r.findings));
   assert.equal(r.status, 'fail', 'invisible focus, clipped text and covered controls block');
 });
+
+test('interactions: a heading or paragraph with a box laid over it is caught; text in a closed details is not', { skip }, async () => {
+  const { mkdirSync, mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const siteDir = join(mkdtempSync(join(tmpdir(), 'forge-covered-')), 'site');
+  mkdirSync(join(siteDir, 'dist'), { recursive: true });
+  writeFileSync(join(siteDir, 'dist', 'index.html'), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Covered</title><style>
+  body { margin: 0; font: 18px/1.5 Georgia }
+  h1 { font-size: 64px; margin: 40px 20px 0 }
+  .panel { position: relative; margin: -40px 20px 0; height: 200px; background: #eee }
+</style></head>
+<body><main>
+  <h1>Nothing ships until you stamp it.</h1>
+  <div class="panel"></div>
+  <p style="margin:20px">A paragraph nothing covers.</p>
+  <details><summary>More</summary><p>Hidden until opened.</p></details>
+</main></body></html>`);
+  const r = await runGate('interactions', siteDir, { browser });
+  const covered = r.findings.filter((f) => f.id === 'text-covered').map((f) => f.message);
+  assert.ok(covered.some((m) => /"Nothing ships until you stamp it\.? ?\(under div\.panel\)"/.test(m)), JSON.stringify(r.findings));
+  assert.ok(!covered.some((m) => /nothing covers|Hidden until opened/.test(m)), 'uncovered and hidden text are not flagged');
+  assert.equal(r.status, 'fail');
+});
