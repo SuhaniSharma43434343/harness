@@ -518,7 +518,7 @@ const PLANS = {
     const siteFile = join(dir, 'site', 'src', 'site.json');
     const siteForms = Object.entries((existsSync(siteFile) ? readJson(siteFile) : null)?.forms ?? {});
     const never = ['content/**', 'design/**', 'intake/**', 'research/**', 'site/src/content/**', 'site/dist/**', 'site/node_modules/**'];
-    return [
+    return rebuildStale(project, [
       {
         ...base(project, 'build-foundation'),
         id: 'build-foundation',
@@ -573,9 +573,33 @@ const PLANS = {
           verify: `${verify('site-build')} --page ${q(pagePlan.slug)}`,
         };
       }),
-    ];
+    ], opts);
   },
 };
+
+// A build task finished before the specification last changed (a stage sent back, a new approach,
+// a new B2 or B3) built an older design, so it is planned again as a rebuild: a fix task of the same
+// task, told to replace the earlier work. Without this the board's finished tasks keep their ids and
+// the new design is never built. Page rebuilds wait for the foundation's rebuild.
+function rebuildStale(project, tasks, opts) {
+  const events = ledger.read(project, opts);
+  const changes = events.filter((e) => (e.type === 'note' && ['design_returned', 'approach_chosen'].includes(e.data?.event)) || (e.type === 'approval' && ['B2', 'B3'].includes(e.data?.approval))).map((e) => e.seq);
+  if (!changes.length) return tasks;
+  const lastChange = Math.max(...changes);
+  const board = listTasks(project, opts);
+  const family = (id) => board.filter((t) => t.id === id || t.id.startsWith(`${id}-fix-`));
+  const doneAt = (id) => Math.max(-1, ...events.filter((e) => e.type === 'task_status' && e.data?.to === 'done' && (e.data.task === id || e.data.task.startsWith(`${id}-fix-`))).map((e) => e.seq));
+  const renamed = new Map();
+  const out = tasks.map((t) => {
+    const at = doneAt(t.id);
+    if (at < 0 || at > lastChange) return t;
+    const n = Math.max(0, ...family(t.id).map((x) => Number(/-fix-(\d+)$/.exec(x.id)?.[1] ?? 0))) + 1;
+    const id = `${t.id}-fix-${n}`;
+    renamed.set(t.id, id);
+    return { ...t, id, idempotency_key: `${project}:${id}:v1`, acceptance: ['Rebuild: the specification changed after this was built (a new direction, plans or copy). Build it again from the current files, replacing the earlier work; nothing from the earlier build is approved', ...t.acceptance] };
+  });
+  return out.map((t) => ({ ...t, depends_on: t.depends_on.map((d) => renamed.get(d) ?? d) }));
+}
 
 // How to build a form, for every page of a site that has forms. The page a form sits on is the
 // section plan's call (site.json's page is only the starter's first guess), so each page task
