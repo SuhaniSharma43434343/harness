@@ -1088,13 +1088,13 @@ function v2Spec() {
   home.sections.push({ ...structuredClone(home.sections[4]), id: 'decide', pattern: 'list-editorial', assets: [], funnel: 'action', hierarchyStep: 6, contentBucket: 'reachUs', media: 'x-factor-tool' });
   home.flow = 'primary';
   for (const sec of home.sections) sec.visual = visual(VISUALS[sec.id]);
-  s['design/section-plan.json'].chrome = CHROME;
+  s['design/section-plan.json'].chrome = structuredClone(CHROME);
   const copy = s['content/copy.json'];
   copy.pages[0].sections.push({ id: 'decide', headline: 'What people ask before they book', items: FAQ_ITEMS.map(([title, text]) => ({ title, text })), cta: { label: 'Book a visit', href: 'tel:2075550142' } });
   return {
     ...s,
-    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY, artDirection: ART },
-    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS, atmosphere: ATMOSPHERE },
+    'design/direction.json': { ...s['design/direction.json'], identity: IDENTITY, artDirection: structuredClone(ART) },
+    'design/design-system.json': { ...s['design/design-system.json'], components: COMPONENTS, atmosphere: structuredClone(ATMOSPHERE) },
     'design/reference/workflow.json': { version: 2 },
   };
 }
@@ -1195,7 +1195,7 @@ const PROMPT = { section: 'quote-rule', asset: 'workshop', format: 'photo', aspe
 const STYLE_LOCK = 'Warm paper and forest green, soft morning window light, 35mm documentary framing, fine film grain, calm and exact';
 function mediaProject(change = (x) => x) {
   return v2Project((s) => {
-    s['design/asset-plan.json'].assets.push(PHOTO);
+    s['design/asset-plan.json'].assets.push(structuredClone(PHOTO));
     Object.assign(s['design/section-plan.json'].pages[0].sections.find((x) => x.id === 'quote-rule'), { media: 'photo', assets: ['kitchen', 'workshop'] });
     s['design/media-prompts.json'] = { styleLock: STYLE_LOCK, prompts: [PROMPT] };
     s['assets/public/photos/workshop.jpg'] = 'jpeg bytes';
@@ -1563,4 +1563,32 @@ test('the operator can ask for a fresh rewrite on a retry', () => {
   retryStage(project, 'section-plan', { note: 'A small wording fix', ...opts });
   const fixes = listTasks(project, opts).filter((t) => t.id.startsWith('section-plan-fix'));
   assert.match(fixes.at(-1).acceptance.join('\n'), /Keep what is already right/, 'without --fresh a retry patches');
+});
+
+test('build tasks finished before the specification changed are planned again as rebuilds, pages after the foundation', () => {
+  const { project, opts, dir } = mediaProject((s) => {
+    const p = s['research/positioning.json'];
+    s['research/positioning.json'] = { ...p, ...TRUTH, competitors: p.competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' })) };
+    s['research/crux.json'] = { ...s['research/crux.json'], buyerQuestions: BUYER_QUESTIONS };
+    s['design/review.json'] = { ...s['design/review.json'], litmus: { ...LITMUS } };
+    return s;
+  });
+  write(dir, 'site/package.json', { name: 'site' });
+  setPhase(dir, 'BUILD');
+  const first = planPhase(project, opts).map((t) => t.id);
+  assert.deepEqual(first, ['build-foundation', 'build-page-home']);
+  // Nothing changed since they finished: nothing to rebuild.
+  for (const id of first) ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: id, from: 'verifying', to: 'done' } }, opts);
+  for (const id of first) saveTask(project, { ...listTasks(project, opts).find((t) => t.id === id), status: 'done', evidence: ['x'] }, opts);
+  assert.deepEqual(planPhase(project, opts), []);
+  // The section plan is sent back and fixed: the finished build is of an older design.
+  ledger.append(project, { actor: 'design-manager', type: 'note', data: { event: 'design_returned', stage: 'section-plan', attempt: 1, problems: ['x'] } }, opts);
+  const again = planPhase(project, opts);
+  assert.deepEqual(again.map((t) => t.id), ['build-foundation-fix-1', 'build-page-home-fix-1']);
+  assert.match(again[0].acceptance[0], /^Rebuild: the specification changed after this was built/);
+  assert.deepEqual(again[1].depends_on, ['build-foundation-fix-1'], 'the page waits for the rebuilt foundation');
+  // Once the rebuilds finish, the plan is settled.
+  for (const t of again) ledger.append(project, { actor: 'builder', type: 'task_status', data: { task: t.id, from: 'verifying', to: 'done' } }, opts);
+  for (const t of again) saveTask(project, { ...listTasks(project, opts).find((x) => x.id === t.id), status: 'done', evidence: ['x'] }, opts);
+  assert.deepEqual(planPhase(project, opts), []);
 });
