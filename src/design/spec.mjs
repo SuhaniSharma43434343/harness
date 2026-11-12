@@ -34,7 +34,19 @@ export const FILES = {
   copy: 'content/copy.json',
   review: 'design/review.json',
   brief: 'intake/brief.json',
+  sources: 'research/sources.json',
+  truthDoc: 'research/truth-doc.md',
+  workflow: 'design/reference/workflow.json',
 };
+
+// The workflow version a project was planned under. The planner writes design/reference/workflow.json
+// when it plans research, so a project started before a rule existed keeps the rules it was built
+// with: readiness() re-runs every check before the build, and a new rule must not fail old work.
+export const WORKFLOW_VERSION = 2;
+export function workflowVersion(dir) {
+  const w = read(dir, FILES.workflow);
+  return Number.isInteger(w?.version) ? w.version : 1;
+}
 
 export function loadMethodology(id) {
   return JSON.parse(readFileSync(join(ROOT, 'registry', 'methodologies', `${id}.json`), 'utf8'));
@@ -165,6 +177,37 @@ function cruxProblems(dir) {
   return problems;
 }
 
+// The Truth Doc (workflow 2): what only this business can claim, what it is and is not, who it
+// serves, and the questions buyers ask before they buy. Everything is sourced or stated as a gap,
+// so no later stage can invent a profile, an offer or a claim.
+export const BIG_FIVE = { pricing: 'pricing and costs', problems: 'problems and risks', comparisons: 'comparisons', reviews: 'reviews', best: 'best-in-class guides' };
+function truthProblems(dir, p) {
+  const problems = [];
+  const sources = new Set((read(dir, FILES.sources)?.sources ?? []).map((x) => x.id));
+  const cite = (where, source) => {
+    if (source && source !== 'assumption' && !sources.has(source)) problems.push(`${where} cites ${source}, which is not in research/sources.json`);
+  };
+  if (!p.onliness) problems.push('research/positioning.json: give the onliness statement (the one thing only this business can claim) with its source, or a gap saying what to ask the client');
+  else cite('research/positioning.json: the onliness statement', p.onliness.source);
+  if (!p.boundaries?.whatItIs?.length) problems.push('research/positioning.json: say what the product or service is (boundaries.whatItIs), each line with its source');
+  if (!p.boundaries?.whatItIsNot?.length) problems.push('research/positioning.json: say what it is not (boundaries.whatItIsNot), so no page promises what the business does not do');
+  for (const b of [...(p.boundaries?.whatItIs ?? []), ...(p.boundaries?.whatItIsNot ?? [])]) cite(`research/positioning.json: "${b.text.slice(0, 50)}"`, b.source);
+  const brief = read(dir, FILES.brief);
+  const personas = new Set((p.personas ?? []).map((x) => x.segment.trim().toLowerCase()));
+  for (const a of brief?.audience ?? []) {
+    if (!personas.has(a.segment.trim().toLowerCase())) problems.push(`research/positioning.json: no persona for "${a.segment}"; give its wants, needs and desired action`);
+  }
+  for (const x of p.personas ?? []) cite(`research/positioning.json: the persona "${x.segment}"`, x.source);
+  for (const c of p.competitors) if (!c.learn && !c.avoid) problems.push(`research/positioning.json: say what to learn from ${c.name}, or what to avoid`);
+  const crux = read(dir, FILES.crux);
+  const questions = crux?.buyerQuestions ?? [];
+  for (const [key, label] of Object.entries(BIG_FIVE)) {
+    if (!questions.some((q) => q.category === key)) problems.push(`research/crux.json: no buyer question about ${label}; add the real questions buyers ask, or one with a gap for the client`);
+  }
+  for (const q of questions) cite(`research/crux.json: the question "${q.question.slice(0, 50)}"`, q.source);
+  return problems;
+}
+
 // The visitor journey on a page: awareness, interest, desire, action. A stage may only step back after
 // an action (a mid-page call to action starts the next loop), and a page that has a journey ends on an
 // action. Sections marked "none" are utility (legal text) and sit outside it.
@@ -200,6 +243,7 @@ export const CHECKS = {
     for (const r of p.references) if (!/^https?:\/\//.test(r.url)) problems.push(`research/positioning.json: reference "${r.name}" needs a full URL`);
     if (GENERIC_COPY.some((g) => g.test(p.positioning))) problems.push('research/positioning.json: the positioning uses stock phrases; say what is actually different about this business');
     problems.push(...cruxProblems(dir));
+    if (workflowVersion(dir) >= 2) problems.push(...truthProblems(dir, p));
     return problems;
   },
 

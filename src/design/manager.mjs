@@ -14,7 +14,8 @@ import { loadApproaches } from '../registry/load.mjs';
 import { proposeDirections } from './propose.mjs';
 import { renderDirections } from './render.mjs';
 import { runGates } from '../gates/index.mjs';
-import { CHECKS, FILES, isSuperseded, readiness, stageById, STAGES } from './spec.mjs';
+import { CHECKS, FILES, isSuperseded, readiness, stageById, STAGES, workflowVersion } from './spec.mjs';
+import { writeTruthDoc } from './truth.mjs';
 
 // The Design Manager's process: it runs the workflow phase by phase without being asked at each
 // step, keeps the specification complete, and sends failed work back to the stage that owns it.
@@ -270,6 +271,8 @@ export async function runDesignWorkflow(project, { worker, stopBefore = 'QUALITY
       }
     }
 
+    // Research that passes its checks becomes the Truth Doc the operator confirms before visual work.
+    if (phase === 'RESEARCH' && workflowVersion(assertProjectExists(project, opts).dir) >= 2) writeTruthDoc(assertProjectExists(project, opts).dir);
     const blockers = exitBlockers(project, opts);
     if (phase === 'INTEGRATION_TESTS' && blockers.some((b) => b.startsWith('gate ')) && returnToBuild(project, opts)) continue;
     if (blockers.length) return stop('needs', { blockers });

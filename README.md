@@ -82,6 +82,7 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 | `forge validate <schema> <file>` | Validates a JSON file against a schema. A `.jsonl` file is validated line by line |
 | `forge new <project> [--brief <file>]` | Creates `workspace/<project>/` with its state file and ledger |
 | `forge approve <project> <code>` | Records an operator approval (A0 to A3, B1 to B7) in the ledger |
+| `forge facts <project> [confirm --note <text>]` | Writes the Truth Doc after research (`research/truth-doc.md`), or records that the operator checked its facts are real |
 | `forge status <project> [--json]` | Shows the phase, the approval it needs to exit, recorded approvals and tasks |
 | `forge run <project> [--replay <dir>] [--model <m>]` | Runs every task that can start through Claude Code, or plays back recorded attempts with `--replay` |
 | `forge agents [list\|generate\|check]` | Lists the agents for each phase, or generates and checks `.claude/agents/` and `.cursor/rules/` from `agents/` |

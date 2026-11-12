@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { advanceProject, exitBlockers } from '../../src/core/advance.mjs';
 import { listTasks, saveTask, transitionTask } from '../../src/core/board.mjs';
@@ -851,4 +852,168 @@ test('the licence register is written alongside the copy, so the asset phase has
   assert.ok(!register.owns_files.some((f) => planned.find((t) => t.agent === 'content-ux').owns_files.includes(f)), 'no shared files, so they run at the same time');
   setPhase(dir, 'ASSETS_LICENSING');
   assert.deepEqual(planPhase(project, opts), [], 'nothing new to do after B3');
+});
+
+// Workflow 2, Stage 1: the Truth Doc. A project planned before it keeps the old research rules.
+const TRUTH = {
+  onliness: { statement: 'The only renovation firm in Portland run by a ship carpenter', source: 'brief' },
+  boundaries: {
+    whatItIs: [{ text: 'Renovation of old houses in Portland, to a fixed itemised quote', source: 'brief' }],
+    whatItIsNot: [{ text: 'Not a new-build contractor, and no work outside Portland', source: 'assumption' }],
+  },
+  personas: [{ segment: 'Homeowners', wants: ['A kitchen that fits a crooked room'], needs: ['A fair, fixed price'], desiredAction: 'Book a home visit', source: 'brief' }],
+};
+const BUYER_QUESTIONS = [
+  { question: 'How much does a kitchen renovation cost in an old house?', category: 'pricing', gap: 'What is the usual price range for a kitchen?' },
+  { question: 'What goes wrong when a house is not square?', category: 'problems', source: 'brief' },
+  { question: 'Is a fixed quote better than time and materials?', category: 'comparisons', source: 'assumption' },
+  { question: 'What do past clients say?', category: 'reviews', gap: 'Which past clients would share a review?' },
+  { question: 'What are the best renovation firms for old Portland houses?', category: 'best', gap: 'Which local awards or listings name the firm?' },
+  { question: 'Can you work around a listed facade?', category: 'edge', gap: 'Has the firm worked on listed buildings?' },
+];
+function truthProject(extra = {}) {
+  const s = spec();
+  const competitors = s['research/positioning.json'].competitors.map((c) => ({ ...c, learn: 'How it shows prices', avoid: 'Stock dream-home photos' }));
+  const positioning = { ...s['research/positioning.json'], competitors, ...TRUTH, ...(extra.positioning ?? {}) };
+  const crux = { ...s['research/crux.json'], buyerQuestions: extra.buyerQuestions ?? BUYER_QUESTIONS };
+  return fullProject({ 'research/positioning.json': positioning, 'research/crux.json': crux, 'design/reference/workflow.json': { version: 2 } });
+}
+
+test('the crux schema keeps the five buckets and needs a source or a gap for every buyer question', () => {
+  const crux = spec()['research/crux.json'];
+  assert.deepEqual(check('crux', crux).errors, [], 'an older crux without buyer questions is still valid');
+  assert.deepEqual(check('crux', { ...crux, buyerQuestions: BUYER_QUESTIONS }).errors, []);
+  assert.ok(!check('crux', { ...crux, buyerQuestions: [{ question: 'How much does it cost?', category: 'pricing' }] }).valid, 'neither a source nor a gap');
+  assert.ok(!check('crux', { ...crux, buyerQuestions: [{ question: 'How much does it cost?', category: 'price', source: 'brief' }] }).valid, 'not a Big 5 category');
+  const { about: _about, ...four } = crux.buckets;
+  assert.ok(!check('crux', { buckets: four }).valid, 'all five buckets are required');
+  assert.deepEqual(check('positioning', { ...spec()['research/positioning.json'], ...TRUTH }).errors, []);
+  assert.ok(!check('positioning', { ...spec()['research/positioning.json'], onliness: { statement: 'Only us' } }).valid, 'an onliness statement needs its source');
+});
+
+test('a project planned before workflow 2 keeps the old research rules', () => {
+  const { dir } = fullProject();
+  assert.ok(!existsSync(join(dir, 'design/reference/workflow.json')));
+  assert.deepEqual(CHECKS.research(dir), []);
+});
+
+test('workflow 2 research needs the Truth Doc: onliness, what it is and is not, personas, Big 5 buyer questions', () => {
+  const { dir } = fullProject({ 'design/reference/workflow.json': { version: 2 } });
+  const problems = CHECKS.research(dir).join('\n');
+  assert.match(problems, /give the onliness statement/);
+  assert.match(problems, /say what the product or service is/);
+  assert.match(problems, /say what it is not/);
+  assert.match(problems, /no persona for "Homeowners"/);
+  assert.match(problems, /say what to learn from Casco Build, or what to avoid/);
+  for (const label of ['pricing and costs', 'problems and risks', 'comparisons', 'reviews', 'best-in-class guides']) assert.match(problems, new RegExp(`no buyer question about ${label}`));
+
+  assert.deepEqual(CHECKS.research(truthProject().dir), [], 'a complete Truth Doc passes');
+  // An onliness the client has not given is a gap, not an invention.
+  assert.deepEqual(CHECKS.research(truthProject({ positioning: { onliness: { gap: 'What can only Harbor Home claim?' } } }).dir), []);
+  const bad = truthProject({
+    positioning: { personas: [{ ...TRUTH.personas[0], source: 'website' }] },
+    buyerQuestions: [...BUYER_QUESTIONS.slice(1), { question: 'What does it cost per square foot?', category: 'pricing', source: 'price-list' }],
+  });
+  const b = CHECKS.research(bad.dir).join('\n');
+  assert.match(b, /the persona "Homeowners" cites website, which is not in research\/sources.json/);
+  assert.match(b, /the question "What does it cost per square foot\?" cites price-list/);
+});
+
+test('planning research starts workflow 2: the marker, the crux schema for the agent, and the Truth Doc contract', () => {
+  const { project, opts, dir } = fullProject();
+  for (const f of ['research/positioning.json', 'research/crux.json']) rmSync(join(dir, f));
+  setPhase(dir, 'RESEARCH');
+  const added = planPhase(project, opts);
+  assert.deepEqual(added.map((t) => t.id), ['research']);
+  assert.equal(JSON.parse(readFileSync(join(dir, 'design/reference/workflow.json'), 'utf8')).version, 2);
+  assert.ok(existsSync(join(dir, 'design/reference/crux.schema.json')));
+  const t = added[0];
+  assert.ok(t.inputs.includes('design/reference/crux.schema.json'));
+  const acceptance = t.acceptance.join('\n');
+  for (const word of ['"onliness"', '"boundaries"', '"whatItIsNot"', '"personas"', '"desiredAction"', '"buyerQuestions"', 'Big 5', '"learn"', '"avoid"', 'research/screenshots/']) assert.ok(acceptance.includes(word), word);
+  // A project past research is never moved to workflow 2.
+  const later = fullProject();
+  setPhase(later.dir, 'UX_DESIGN_SYSTEM');
+  planPhase(later.project, later.opts);
+  assert.ok(!existsSync(join(later.dir, 'design/reference/workflow.json')));
+});
+
+test('research ends only when the operator confirms the Truth Doc, and a changed fact needs a new confirmation', async () => {
+  const { factsBlockers, confirmFacts, writeTruthDoc } = await import('../../src/design/truth.mjs');
+  const { project, opts, dir } = truthProject();
+  setPhase(dir, 'RESEARCH');
+  const { file } = writeTruthDoc(dir);
+  const doc = readFileSync(join(dir, file), 'utf8');
+  assert.match(doc, /## What only this business can claim\n\nThe only renovation firm in Portland run by a ship carpenter \[brief\]/);
+  assert.match(doc, /\*\*Is not:\*\* Not a new-build contractor, and no work outside Portland \*\(assumption: confirm with the client\)\*/);
+  assert.match(doc, /### Homeowners \[brief\][\s\S]*The one action: Book a home visit/);
+  assert.match(doc, /### Our Work\n\n- \*\*Ask the client:\*\* Which finished jobs can we show/);
+  assert.match(doc, /### Pricing and costs\n\n- How much does a kitchen renovation cost in an old house\? \*\*Ask the client:\*\* What is the usual price range/);
+  assert.match(doc, /Casco Build[^\n]*Learn: How it shows prices Avoid: Stock dream-home photos/);
+
+  assert.match(exitBlockers(project, opts).join('\n'), /facts confirmation: read research\/truth-doc.md, then run forge facts demo confirm/);
+  assert.throws(() => confirmFacts(project, opts), /needs your note/);
+  const entry = confirmFacts(project, { note: 'Checked every fact against the client email of 10 Nov', ...opts });
+  assert.equal(entry.actor, 'operator');
+  assert.equal(entry.data.event, 'facts_confirmed');
+  assert.deepEqual(check('ledgerEntry', entry).errors, []);
+  assert.deepEqual(factsBlockers(project, dir, opts), []);
+  assert.ok(!exitBlockers(project, opts).some((b) => b.startsWith('facts confirmation')));
+
+  // A fact changes after the confirmation: the operator must look again.
+  const p = JSON.parse(readFileSync(join(dir, 'research/positioning.json'), 'utf8'));
+  p.onliness.statement = 'The only renovation firm in Maine with its own slipway';
+  write(dir, 'research/positioning.json', p);
+  assert.equal(factsBlockers(project, dir, opts).length, 1);
+});
+
+test('research that is not finished cannot be confirmed, and an older project never waits for a confirmation', async () => {
+  const { factsBlockers, confirmFacts } = await import('../../src/design/truth.mjs');
+  const v2 = fullProject({ 'design/reference/workflow.json': { version: 2 } });
+  assert.throws(() => confirmFacts(v2.project, { note: 'Looked', ...v2.opts }), /Research is not finished/);
+  assert.deepEqual(factsBlockers(v2.project, v2.dir, v2.opts), [], 'unfinished research reports its own problems, not a confirmation');
+  const v1 = fullProject();
+  setPhase(v1.dir, 'RESEARCH');
+  assert.deepEqual(factsBlockers(v1.project, v1.dir, v1.opts), []);
+  assert.ok(!exitBlockers(v1.project, v1.opts).some((b) => b.startsWith('facts confirmation')));
+});
+
+test('forge go treats the facts confirmation as a decision for the operator', async () => {
+  const { classifyBlockers } = await import('../../src/cli/go.mjs');
+  const blocker = 'facts confirmation: read research/truth-doc.md, then run forge facts demo confirm --note "<what you checked>"';
+  const { decisions, other } = classifyBlockers([blocker]);
+  assert.deepEqual(decisions, [{ kind: 'facts', detail: blocker }]);
+  assert.deepEqual(other, []);
+});
+
+test('forge facts writes the Truth Doc, then records the confirmation with the operator note', async () => {
+  const { cmdFacts } = await import('../../src/cli/facts.mjs');
+  const { project, dir } = truthProject();
+  const root = mkdtempSync(join(tmpdir(), 'forge-root-'));
+  writeFileSync(join(root, 'forge.config.json'), JSON.stringify({ concurrency: 1, plugins: {}, workspaceDir: dirname(dir) }));
+  const out = [];
+  const { log, error } = console;
+  console.log = (s) => out.push(String(s));
+  console.error = (s) => out.push(String(s));
+  try {
+    assert.equal(cmdFacts(root, []), 2, 'no project: usage');
+    assert.equal(cmdFacts(root, [project]), 0);
+    assert.ok(existsSync(join(dir, 'research/truth-doc.md')));
+    assert.match(out.join('\n'), /Then: forge facts demo confirm --note/);
+    assert.equal(cmdFacts(root, [project, 'confirm', '--note', 'Checked against the client email']), 0);
+    assert.match(out.at(-1), /Recorded the facts confirmation for demo/);
+    assert.equal(cmdFacts(root, [project]), 0);
+    assert.match(out.at(-1), /The facts are confirmed for this version of the Truth Doc/);
+  } finally {
+    console.log = log;
+    console.error = error;
+  }
+  const unfinished = fullProject({ 'design/reference/workflow.json': { version: 2 } });
+  writeFileSync(join(root, 'forge.config.json'), JSON.stringify({ concurrency: 1, plugins: {}, workspaceDir: dirname(unfinished.dir) }));
+  console.log = () => {};
+  try {
+    assert.equal(cmdFacts(root, [unfinished.project]), 1, 'research with problems: nothing to confirm');
+  } finally {
+    console.log = log;
+  }
 });

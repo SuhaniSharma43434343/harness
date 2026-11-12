@@ -12,13 +12,13 @@ forge design accept-licence <project> <package> --note <decision>   # the operat
 forge design retry <project> <stage or build task> --note <decision>   # the operator's answer to an escalation, recorded in the ledger
 ```
 
-`forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), a missing client file, a stage that has failed too often, or the spend limit.
+`forge design run` moves on by itself. It stops only for an operator approval (B1, B2, B3), the facts confirmation after research (workflow 2), a missing client file, a stage that has failed too often, or the spend limit.
 
 ## Stages
 
 | Phase | Output | Agent | What its check refuses |
 | --- | --- | --- | --- |
-| P2 Research | `research/positioning.json`, `research/crux.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning; a content bucket with neither facts nor a stated gap; a fact whose source is not in `research/sources.json` |
+| P2 Research | `research/positioning.json`, `research/crux.json` | Research & Strategy (with web tools) | Fewer than 3 references or 2 competitors, unless it says why; stock-phrase positioning; a content bucket with neither facts nor a stated gap; a fact whose source is not in `research/sources.json`. Under workflow 2 also: no onliness statement (or gap), nothing on what the product is or is not, an audience with no persona, a competitor with nothing to learn or avoid, a Big 5 buyer-question category with no question |
 | P3 Approach | `design/direction.json`, `direction.md` | Design Manager | An approach the brief did not select; any of the 8 not analysed; a combination the methodology forbids; a philosophy copied word for word |
 | P4 Directions | `design/directions.json` | `forge directions`, operator at B2 | The existing design rules |
 | P5 Design system | `design/design-system.json` | Creative Director | Fonts or colours that differ from B2; fewer than 5 type levels; no separate mobile rules |
@@ -33,6 +33,18 @@ forge design retry <project> <stage or build task> --note <decision>   # the ope
 Each stage's rules live in `src/design/spec.mjs`, and its contract, which is the agent's brief, in `src/core/planner.mjs`.
 
 **The content buckets.** Research sorts every fact about the client into five buckets in `research/crux.json`: About (story, team, mission, values, promise, with what nobody else can claim first), What We Do, Our Work (case studies, proof, metrics), Resource Hub (tools, FAQs, guides) and Reach Us (calls to action and contact points). Each fact names a source from `research/sources.json` or says `assumption`. An empty bucket lists its gap as a question for the client, so the plan and copy stages work around it instead of inventing proof.
+
+**The Truth Doc (workflow 2).** Research also writes what every later stage is held to. In `research/positioning.json`:
+- the onliness statement: the one thing only this business can claim, with its source, or a gap saying what to ask;
+- the boundaries: what the product or service is, and what it is not;
+- one persona per brief audience: wants, needs and the one desired action;
+- for each competitor, what to learn and what to avoid, with what the site looks like where a browser was available. Screenshots stay local in `research/screenshots/`.
+
+In `research/crux.json`, against `schemas/crux.schema.json`, it lists the questions buyers ask before they buy: at least one for each They Ask, You Answer Big 5 category (pricing, problems, comparisons, reviews, best of), plus edge cases. Each question has the source that answers it, or a gap for the client.
+
+Once research passes, the harness writes `research/truth-doc.md` and the workflow stops. The operator reads it and confirms the facts are real with `forge facts <project> confirm --note "<what you checked>"`. That records a ledger note naming the document's hash, so a fact changed afterwards needs a new confirmation. A wrong or invented fact goes back with `forge design retry <project> research --note "<what is wrong>"`. B1 still approves the brief and the estimate at the end of intake, before research spends anything.
+
+**Workflow versions.** When the planner plans research, it writes `design/reference/workflow.json` (`{ "version": 2 }`). Rules added for workflow 2 apply only to projects that have it. A project planned earlier keeps the rules it was built with, because `readiness()` re-runs every check before the build, and a new rule must not fail work that was already approved.
 
 **The visitor journey.** Every section in the plan has a funnel stage: awareness (the hook), interest (how it works, the benefits), desire (proof) or action (a low-friction call to action), or `none` for utility sections such as legal text. The home page opens with awareness, every page with a journey ends on an action, and a stage steps back only after a call to action, so a mid-page call to action can start the next loop.
 
