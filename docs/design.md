@@ -20,6 +20,7 @@ At P4 the Creative Director offers three to five creative directions, the operat
 `proposeDirections` is deterministic. It turns the brief's tone words (with a few synonyms, such as "friendly" for warm and "luxury" for premium) and the project type into weighted tags. It then ranks the palettes, the font pairs and the six layouts against those tags. Each direction takes the next palette, a display face not used yet and the next layout, so no two directions share a palette, a display face or a layout. The last direction is one motion step calmer than the brief, as a quieter alternative.
 
 - **Client colours.** When the brief has `brand.existingAssets.colours`, the first direction uses them as primary and accent on the best light palette's neutrals. Each colour is darkened only as far as contrast needs.
+- **Client fonts.** When `brand.existingAssets.fonts` names fonts in the catalog (any case), the first direction uses them: the first is the display face, and the next body face named is the body, or else the best body face for that display face. The other directions keep different display faces. A font outside the catalog is never used: it needs the client's licence and files, and the B1 plan asks for them.
 - **Avoid list.** Anything on `brand.avoid` that names a font, a palette or "dark" is left out.
 - **Rule check.** The result is checked against the schema and the rules before it is returned, so a proposal never fails its own gate.
 

@@ -1,3 +1,5 @@
+import { loadDesignCatalog } from '../design/catalog.mjs';
+
 // What the site is built to make happen for this kind of business, in the operator's words.
 function businessLines(brief) {
   const b = brief.business;
@@ -25,6 +27,23 @@ function truthLines(brief) {
   if (truths.length) lines.push(...truths.map((t) => `- ${t.text}${t.kind ? ` (${t.kind})` : ''}`), '');
   if (truths.length < 3) lines.push(`**${truths.length ? `Only ${truths.length}` : 'None'} given.** The design rests on one of these facts, so with fewer than three the first deliverable is questions for the client, not a design.`, '');
   return lines;
+}
+
+// The client's own colours and fonts. An open font in the catalog leads the first direction; any
+// other font needs the client's licence and files before it can be used, so the plan asks for them.
+function brandLines(brief, catalog = loadDesignCatalog()) {
+  const { colours = [], fonts = [] } = brief.brand?.existingAssets ?? {};
+  if (!colours.length && !fonts.length) return [];
+  const open = new Map(catalog.fonts.map((f) => [f.family.toLowerCase(), f]));
+  const lines = ['## Brand', ''];
+  if (colours.length) lines.push(`- Colours: ${colours.map((c) => `\`${c}\``).join(', ')}. The first direction is built from them, darkened only as far as contrast needs.`);
+  if (fonts.length) {
+    const known = fonts.filter((f) => open.has(f.toLowerCase()));
+    const other = fonts.filter((f) => !open.has(f.toLowerCase()));
+    lines.push(`- Fonts: ${fonts.join(', ')}.${known.length ? ` ${known.join(' and ')} ${known.length > 1 ? 'are' : 'is'} open, so the first direction uses ${known.length > 1 ? 'them' : 'it'}.` : ''}`);
+    if (other.length) lines.push('', `**Ask the client for, now:** the licence and font files for ${other.join(' and ')}, or approval to use the closest open font instead.`);
+  }
+  return [...lines, ''];
 }
 
 // Day-one access: what is in hand, and what to ask the client for now.
@@ -66,6 +85,7 @@ export function renderPlan(brief, decision, estimate) {
     ...truthLines(brief),
     ...(brief.jobs?.length ? ['## One-tap jobs', '', 'Every page gives a visitor these in one tap:', '', ...brief.jobs.map((j) => `- ${j}`), ''] : []),
     ...(brief.contentRules?.length ? ['## Content rules', '', 'The copy check refuses copy that breaks these.', '', ...brief.contentRules.map((r) => `- ${r.rule === 'never' ? 'Never' : 'Always'} on ${r.pages.map((x) => (x === '*' ? (r.rule === 'never' ? 'any page' : 'every page') : `\`${x}\``)).join(', ')}: "${r.text}"${r.note ? ` (${r.note})` : ''}`), ''] : []),
+    ...brandLines(brief),
     ...accessLines(brief),
     '## Pages',
     '',
