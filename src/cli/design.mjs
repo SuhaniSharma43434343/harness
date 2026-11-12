@@ -17,7 +17,7 @@ function workspaceFor(root) {
 }
 
 const flag = (args, name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design approach <project> [<APP-0N> --note <why>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage or build task> --note <the decision>';
+const USAGE = 'Usage: forge design status|run|qa|release <project> [--model <m>] [--max-usd <n>] | forge design approach <project> [<APP-0N> --note <why>] | forge design choose <project> <direction id> [--note <text>] | forge design accept-licence <project> <package> --note <the decision> | forge design retry <project> <stage or build task> --note <the decision> [--fresh]';
 
 // The gates visual QA repairs against. The others (SEO, forms, licences, dependencies) can need
 // something only the operator has, and are reported by forge design release.
@@ -115,7 +115,7 @@ export async function cmdDesign(root, args) {
       console.log(`Recorded the retry of ${stage} for ${project}: ${out.task}. Run the workflow again to do the work.`);
       return 0;
     }
-    const out = retryStage(project, stage, { note, workspace });
+    const out = retryStage(project, stage, { note, fresh: args.includes('--fresh'), workspace });
     console.log(`Recorded the retry of ${stage} for ${project}: fix attempt ${out.attempt}. Run the workflow again to do the work.`);
     return 0;
   }

@@ -353,7 +353,11 @@ function truthsLine(brief) {
 
 // specTask(project, stage, brief, { fix?, problems? }) => the contract for one specification stage,
 // or its fix task: the same contract with the Design Manager's findings to resolve.
-export function specTask(project, stageId, brief, { fix, problems = [] } = {}) {
+// A fix keeps what is right in the file. A fresh fix rewrites it: the file was written for an earlier
+// direction (the approach changed, or the operator asked), so patching it keeps the wrong plan.
+const KEEP = 'Keep what is already right in the file, and change only what these findings need';
+const FRESH = 'Rewrite this file from scratch for the current design/direction.json and its approach. The file on disk was written for an earlier direction: keep nothing from it unless a finding above says so, and check every line against the current direction, section plan and approach';
+export function specTask(project, stageId, brief, { fix, problems = [], fresh = false } = {}) {
   const stage = stageById(stageId);
   const id = fix ? `${stage.task}-fix-${fix}` : stage.task;
   const t = (STAGE_TASKS[stageId] ?? MEDIA_STAGES[stageId])(brief);
@@ -362,7 +366,7 @@ export function specTask(project, stageId, brief, { fix, problems = [] } = {}) {
     id,
     agent: stage.agent,
     ...t,
-    acceptance: fix ? [...problems.map((p) => `Fix: ${p}`), 'Keep what is already right in the file, and change only what these findings need', ...t.acceptance] : t.acceptance,
+    acceptance: fix ? [...problems.map((p) => `Fix: ${p}`), fresh ? FRESH : KEEP, ...t.acceptance] : t.acceptance,
     verify: verify(stageId),
   };
 }

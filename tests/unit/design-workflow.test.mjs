@@ -1527,3 +1527,40 @@ test('the contracts carry the art direction to every stage and to the builder', 
   assert.match(lines('asset-plan'), /Every photo has a "treatment"/);
   assert.match(lines('motion-plan'), /"technique": a technique id from design\/reference\/craft\/techniques.json/);
 });
+
+test('when the approach changes, the plans written for the old one are rewritten, not patched', async () => {
+  const { chooseApproach } = await import('../../src/design/approach-guide.mjs');
+  const { project, opts, dir } = await approachProject();
+  write(dir, 'design/direction.json', spec()['design/direction.json']);
+  chooseApproach(project, 'APP-02', { note: 'A cinematic story suits the launch', ...opts });
+  const stale = JSON.parse(readFileSync(join(dir, 'design/reference/stale.json'), 'utf8'));
+  assert.deepEqual([stale.from, stale.to], ['APP-01', 'APP-02']);
+  assert.deepEqual(stale.stages, ['design-system', 'section-plan', 'motion-plan', 'asset-plan'], 'only the plans that exist');
+  setPhase(dir, 'TECHNICAL_PLAN');
+  sendBack(project, 'motion-plan', ['motion-plan.json still describes the old approach'], opts);
+  const fix = listTasks(project, opts).find((t) => t.id === 'motion-plan-fix-1');
+  assert.match(fix.acceptance.join('\n'), /Rewrite this file from scratch for the current design\/direction.json/);
+  assert.doesNotMatch(fix.acceptance.join('\n'), /Keep what is already right/);
+  assert.ok(ledger.read(project, opts).some((e) => e.data?.event === 'design_rewrite' && e.data.stage === 'motion-plan'));
+  // Taken once: the next return of the same stage patches again.
+  setPhase(dir, 'TECHNICAL_PLAN');
+  sendBack(project, 'motion-plan', ['one small thing'], opts);
+  assert.match(listTasks(project, opts).find((t) => t.id === 'motion-plan-fix-2').acceptance.join('\n'), /Keep what is already right/);
+  // Choosing the same approach again marks nothing.
+  const again = await approachProject();
+  write(again.dir, 'design/direction.json', spec()['design/direction.json']);
+  chooseApproach(again.project, 'APP-01', { note: 'Same as before', ...again.opts });
+  assert.ok(!existsSync(join(again.dir, 'design/reference/stale.json')));
+});
+
+test('the operator can ask for a fresh rewrite on a retry', () => {
+  const { project, opts, dir } = fullProject();
+  setPhase(dir, 'TECHNICAL_PLAN');
+  retryStage(project, 'section-plan', { note: 'The plan still uses the railway vocabulary; rewrite it as the film reel', fresh: true, ...opts });
+  const fix = listTasks(project, opts).find((t) => t.id.startsWith('section-plan-fix'));
+  assert.match(fix.acceptance[0], /^Fix: The plan still uses the railway vocabulary/);
+  assert.match(fix.acceptance.join('\n'), /Rewrite this file from scratch/);
+  retryStage(project, 'section-plan', { note: 'A small wording fix', ...opts });
+  const fixes = listTasks(project, opts).filter((t) => t.id.startsWith('section-plan-fix'));
+  assert.match(fixes.at(-1).acceptance.join('\n'), /Keep what is already right/, 'without --fresh a retry patches');
+});
