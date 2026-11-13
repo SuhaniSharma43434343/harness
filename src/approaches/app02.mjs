@@ -3,11 +3,13 @@ import { applyApproach } from './apply.mjs';
 // APP-02 Cinematic Scroll (T19): pinned sections, scroll-scrubbed reveals and synced smooth
 // scroll with GSAP, ScrollTrigger and Lenis, loaded on demand. Fallback: the same sections as a
 // static stacked layout with CSS reveals (data-app02="fallback" on <html>).
+// ScrollVideo (the scroll video engine, docs/scroll-video/) needs neither GSAP nor Lenis: it pins
+// with position: sticky and seeks a video from scroll; a page that uses only it ships no GSAP.
 export default {
   id: 'APP-02',
   name: 'Cinematic Scroll',
   recipes: 'skills/app02/recipes',
-  sections: ['ScrollStory', 'Chapter'],
+  sections: ['ScrollStory', 'Chapter', 'ScrollVideo'],
   packages: [
     { name: 'gsap', version: '3.15.0', licence: "GSAP Standard 'no charge' licence", licenceVerified: false, note: 'Not open source: confirm the terms allow this client site before release (plan: verify terms).' },
     { name: 'lenis', version: '1.3.27', licence: 'MIT', licenceVerified: true, note: 'MIT as listed on npm.' },

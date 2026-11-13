@@ -17,6 +17,7 @@ You give the site its look and feel, within rules that keep it accessible, licen
 - Use only open-licensed, system or client-licensed fonts, and meet the contrast rules: 4.5:1 for body text, 3:1 for large text and UI.
 - After B2, write the design system, section plan, motion plan and asset plan to the Design Manager's direction, in `design/`. Every section gets an exact composition; nothing is left for the builder to invent.
 - Follow the one approach the direction names, as a complete method.
+- When the section plan has a scroll-controlled video (APP-02 ScrollVideo), own its config in `design/scroll-video/<id>.json`: start it with `forge scroll-video new`, write the storyboard as one continuous take, pick the layout (`forge scroll-video layouts`), run `forge scroll-video prompts` for the operator's video generator, and retime the scenes against the real clip with `forge scroll-video stills`. See `docs/scroll-video/`.
 
 ## Never
 

@@ -1,9 +1,13 @@
+import { checkScrollVideos } from '../scroll-video/qa.mjs';
 import { location, withSite } from './browser.mjs';
 
 // Interactions: the controls a visitor can operate actually do something. Forms have their own
 // gate; this one drives what a page declares interactive - disclosure toggles, <details>, tabs,
 // dialog openers and carousels (up to 8 of each kind per page) - and checks the page works by
 // touch: at phone width the navigation is reachable and touch controls are big enough to hit.
+// A page with a scroll video (APP-02 ScrollVideo) is also scrolled through it, down and back up,
+// with motion allowed: the stage must stay pinned, the picture follow the scroll, and the scene
+// text match the picture (src/scroll-video/qa.mjs).
 // A page with none of these widgets passes with nothing tested. A control that changes nothing
 // when operated is a defect, because a visitor cannot tell a broken control from a slow one.
 //
@@ -270,7 +274,7 @@ async function phoneChecks(context, base, route, add, metrics, t) {
 
 export default {
   name: 'interactions',
-  version: '0.1.0',
+  version: '0.2.0',
   thresholds: { minTapPx: 24 },
   run(ctx, t) {
     return withSite(ctx, async ({ browser, base }) => {
@@ -283,6 +287,7 @@ export default {
         for (const route of ctx.routes()) {
           await driveWidgets(desktop, base, route, add, metrics);
           await phoneChecks(phone, base, route, add, metrics, t);
+          if (ctx.html(route).includes('data-scroll-video')) await checkScrollVideos(browser, base, route, add, metrics, { at: location(route, DESKTOP) });
         }
       } finally {
         await desktop.close();

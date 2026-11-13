@@ -10,7 +10,11 @@
       "skills/app02/recipes/sections/ScrollStory.astro",
       "skills/app02/recipes/sections/Chapter.astro",
       "skills/app02/recipes/lib/cinematic.js",
-      "skills/app02/recipes/lib/app02.css"
+      "skills/app02/recipes/lib/app02.css",
+      "skills/app02/recipes/sections/ScrollVideo.astro",
+      "skills/app02/recipes/lib/scroll-video.js",
+      "skills/app02/recipes/lib/scroll-video-core.js",
+      "skills/app02/recipes/lib/scroll-video.css"
     ]
   },
   "selectWhen": {

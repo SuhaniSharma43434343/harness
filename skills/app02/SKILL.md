@@ -32,6 +32,24 @@ Pinned sections, scroll-scrubbed reveals and section transitions, built on GSAP,
 3. Style the sections only with token custom properties. Motion distances and durations come from `--motion-*`, which drop to zero under reduced motion.
 4. Build with `cd site && npm run build`, then run `forge gates <project>`.
 
+## ScrollVideo: the scroll video engine
+
+A continuous video scrubbed by scroll, pinned while its scenes play, from a config alone. It does not use GSAP or Lenis: it pins with `position: sticky` and seeks the video itself, so a page with only `ScrollVideo` ships about 5 KB of engine and no GSAP. The full design, schema, workflow and acceptance criteria are in `docs/scroll-video/`.
+
+1. The Creative Director starts the config and storyboard: `forge scroll-video new <project> <id> --beats 5 --layout cinematic`, then `forge scroll-video prompts <project> <id>` for the operator's video generator.
+2. Asset Rights adds the generated clip: `forge scroll-video add-video <project> <id> --video <file> [--video <phone cut> --media "(max-width: 47.99em)"] --licence "..."`. It reads the file (no ffprobe needed), refuses one that cannot work, makes a poster and prints compression advice (a keyframe every 0.2 s matters most).
+3. Check the scene markers by eye with `forge scroll-video stills <project> <id>`, then `forge scroll-video check <project> <id>`.
+4. Place it:
+   ```yaml
+   - use: "APP-02/ScrollVideo"
+     config: "<id>"               # design/scroll-video/<id>.json, pulled in by the prebuild
+     scenes:                       # optional: locked words by scene id; timing stays in the config
+       - { id: "...", title: "...", description: "..." }
+   ```
+5. Layouts: `cinematic`, `sticky-text`, `split`, `product`, `background`, `labels` (`forge scroll-video layouts`). Never edit `scroll-video*.js`, `scroll-video.css` or `ScrollVideo.astro` for a project; everything project-specific is config.
+
+Its fallback is the same contract as the other sections, recorded per section on `data-sv-mode` and `data-sv-reason`: the poster and every scene stacked, no video downloaded. A load that fails or stalls past `loadTimeoutMs` is `load-failed`; a config with no video yet is `no-source`. With a frame sequence (`forge scroll-video frames`), slow seeking switches to frames instead (`data-sv-render="frames"`).
+
 ## Fallback
 
 The page starts as a static stacked layout, so it works without JavaScript. The runtime (`cinematic.js`) upgrades it only when `capability()` allows. Otherwise the steps stay stacked and fade in with CSS. `<html data-app02>` records the outcome, `full` or `fallback`, and `data-app02-reason` says why:
@@ -56,6 +74,8 @@ The page starts as a static stacked layout, so it works without JavaScript. The 
 - **GSAP:** its own "Standard 'no charge'" licence, which is not open source. Its register row starts as `uncertain`, and the dependencies gate blocks until Asset Rights confirms that the terms allow this client site and records the evidence.
 
 ## Done when
+
+- For ScrollVideo: `tests/build/scroll-video.test.mjs` passes (three concepts frame-accurate both ways, seven industry scenarios, phone touch, resize, fallbacks, slow network, frames switch, the gates).
 
 - `tests/build/app02.test.mjs` passes. It covers the build, the routes, accessibility and responsive gates, all four fallbacks, and the budget.
 - The real-device rows for the project are filled in `docs/device-log.md`.

@@ -1,0 +1,106 @@
+---
+// APP-02 ScrollVideo: a continuous video scrubbed by scroll, pinned while its scenes play.
+// Props: config ("<id>" of design/scroll-video/<id>.json, pulled into src/data/scroll-video/ by
+// the prebuild), or the config inline (video, layout, scroll, animation, foreground, label,
+// scenes). With a config id, `scenes` only overrides the words of scenes by id. The markup is
+// the static layout (poster and every scene stacked), which works without JavaScript; the
+// runtime upgrades it when capability() allows. Nothing here is specific to any project.
+// See skills/app02/SKILL.md and docs/scroll-video/.
+import '../../lib/app02/scroll-video.css';
+import { resolveConfig } from '../../lib/app02/scroll-video-core.js';
+
+const files = import.meta.glob('../../data/scroll-video/*.json', { eager: true, import: 'default' });
+const { config: configId, video, layout, scroll, animation, foreground, label, scenes, index = 0 } = Astro.props;
+let base = {};
+if (configId) {
+  const key = Object.keys(files).find((k) => k.endsWith(`/${configId}.json`));
+  if (!key) throw new Error(`ScrollVideo: no config "${configId}". Expected design/scroll-video/${configId}.json in the project (or src/data/scroll-video/${configId}.json in the site). Found: ${Object.keys(files).map((k) => k.split('/').pop()).join(', ') || 'none'}.`);
+  base = files[key];
+}
+const cfg = resolveConfig(base, { video, layout, scroll, animation, foreground, label, scenes }, { overrides: Boolean(configId) });
+const v = cfg.video;
+const fit = cfg.layout.fit;
+const heading = cfg.foreground ? 'h3' : 'h2';
+const Heading = heading;
+const aspect = v ? `${v.width} / ${v.height}` : '16 / 9';
+const style = [
+  `--sv-length:${cfg.scroll.length}`,
+  `--sv-length-mobile:${cfg.scroll.lengthMobile}`,
+  `--sv-scrim:${cfg.layout.scrim}`,
+  `--sv-focus:${cfg.layout.focus}`,
+  `--sv-fit:${fit}`,
+  `--sv-aspect:${aspect}`,
+  `--sv-count:${cfg.scenes.length}`,
+].join(';');
+const callouts = cfg.scenes.filter((s) => s.overlay?.type === 'callout');
+const json = JSON.stringify(cfg).replace(/</g, '\\u003c');
+const sectionLabel = cfg.label ?? cfg.foreground?.heading ?? cfg.scenes[0].title;
+---
+<section
+  class="sv"
+  data-scroll-video={cfg.id}
+  data-layout={cfg.layout.type}
+  data-fit={fit}
+  data-theme={cfg.layout.theme}
+  data-side={cfg.layout.side}
+  data-frame={cfg.layout.frame ? 'true' : 'false'}
+  data-progress={cfg.animation.progress}
+  data-sv-nosrc={v ? undefined : ''}
+  aria-label={sectionLabel}
+  style={style}
+>
+  <script is:inline>(function(s){try{var n=navigator,c=n.connection,r=new URLSearchParams(location.search).get('forge-fallback');if(!r&&s.hasAttribute('data-sv-nosrc'))r='no-source';if(!r&&matchMedia('(prefers-reduced-motion: reduce)').matches)r='reduced-motion';if(!r&&((n.deviceMemory&&n.deviceMemory<4)||(n.hardwareConcurrency&&n.hardwareConcurrency<4)))r='low-end-device';if(!r&&c&&(c.saveData||/^(slow-2g|2g|3g)$/.test(c.effectiveType)))r='slow-network';s.setAttribute('data-sv-mode',r?'fallback':'full');if(r)s.setAttribute('data-sv-reason',r);}catch(e){}})(document.currentScript.parentElement);</script>
+  <script is:inline type="application/json" data-sv-config set:html={json}></script>
+  <div class="sv__track" data-sv-track>
+    <div class="sv__stage" data-sv-stage>
+      {v && (
+        <div class="sv__media" data-sv-media>
+          <img class="sv__poster" data-sv-poster src={v.poster.src} alt={v.poster.alt} width={v.poster.width ?? v.width} height={v.poster.height ?? v.height} decoding="async" loading={index > 1 ? 'lazy' : 'eager'} />
+          <video class="sv__video" data-sv-video muted playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video>
+          {v.frames && <canvas class="sv__canvas" data-sv-canvas aria-hidden="true"></canvas>}
+          <div class="sv__scrim" aria-hidden="true"></div>
+          {callouts.map((s) => (
+            <span class="sv__callout" data-sv-point data-scene={s.id} data-x={s.overlay.point.x} data-y={s.overlay.point.y} aria-hidden="true">{s.overlay.text}</span>
+          ))}
+          <div class="sv__loader" aria-hidden="true"><span></span></div>
+        </div>
+      )}
+      {cfg.foreground && (
+        <div class="sv__foreground">
+          {cfg.foreground.eyebrow && <p class="sv__eyebrow">{cfg.foreground.eyebrow}</p>}
+          <h2 class="sv__heading">{cfg.foreground.heading}</h2>
+          {cfg.foreground.text && <p class="sv__text">{cfg.foreground.text}</p>}
+          {cfg.foreground.cta && <a class="button" href={cfg.foreground.cta.href}>{cfg.foreground.cta.label}</a>}
+        </div>
+      )}
+      <ol class="sv__scenes">
+        {cfg.scenes.map((s, i) => (
+          <li class="sv__scene" data-sv-scene={s.id} data-pos={s.position} data-anim={s.animation} data-index={i}>
+            {s.overlay?.type === 'image' && <img class="sv__overlay-image" src={s.overlay.src} alt={s.overlay.alt} width={s.overlay.width} height={s.overlay.height} loading="lazy" decoding="async" />}
+            {s.overlay?.type === 'label' && <p class="sv__overlay-label">{s.overlay.text}</p>}
+            {s.overlay?.type === 'stat' && <p class="sv__stat"><strong>{s.overlay.value}</strong> <span>{s.overlay.text}</span></p>}
+            {s.eyebrow && <p class="sv__eyebrow">{s.eyebrow}</p>}
+            <Heading class="sv__title">{s.title}</Heading>
+            {s.description && <p class="sv__text">{s.description}</p>}
+            {s.overlay?.type === 'callout' && <p class="sv__note">{s.overlay.text}</p>}
+            {s.cta && <a class="button sv__cta" href={s.cta.href}>{s.cta.label}</a>}
+          </li>
+        ))}
+      </ol>
+      {cfg.animation.progress !== 'none' && (
+        <div class="sv__chapters" role="group" aria-label={`${sectionLabel}: chapters`}>
+          <ol>
+            {cfg.scenes.map((s, i) => (
+              <li><button type="button" data-sv-chapter={i}><span class="sv__chapter-label">{s.label}</span></button></li>
+            ))}
+          </ol>
+          <span class="sv__bar" aria-hidden="true"><span></span></span>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+<script>
+  import { startScrollVideos } from '../../lib/app02/scroll-video.js';
+  startScrollVideos();
+</script>

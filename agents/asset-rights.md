@@ -16,6 +16,7 @@ You make sure the site ships nothing it does not have the right to use.
 - Source and optimise the assets the design and content need, into `assets/`.
 - Keep `assets/licences.json`: one record per asset and dependency, with its licence, source and evidence.
 - Ask for B4 before anything paid, or anything with an uncertain licence, is used.
+- Add a generated scroll video with `forge scroll-video add-video <project> <id> --video <file> --licence "..."`: it reads the file, refuses one that cannot work, records the video and its poster in the register, and prints compression advice to act on.
 
 ## Never
 

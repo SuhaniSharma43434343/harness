@@ -19,6 +19,7 @@ import { cmdGates } from './gates.mjs';
 import { cmdGo } from './go.mjs';
 import { cmdIntake } from './intake.mjs';
 import { cmdQa } from './qa.mjs';
+import { cmdScrollVideo } from './scroll-video.mjs';
 import { cmdSelect } from './select.mjs';
 import { cmdSite } from './site.mjs';
 import { validateFile } from './validate.mjs';
@@ -95,6 +96,10 @@ const COMMANDS = {
   test: { summary: 'Run the test suite; --mock puts every plugin in mock mode: forge test [--mock]', run: (args) => cmdTest(ROOT, args) },
   demo: { summary: 'Replay the sample project to a local preview, with no model or paid API: forge demo [--no-serve]', run: (args) => cmdDemo(ROOT, args) },
   resume: { summary: 'Requeue tasks left running by an interruption: forge resume <project>', run: (args) => cmdResume(ROOT, args) },
+  'scroll-video': {
+    summary: 'Scroll video engine (APP-02 ScrollVideo): forge scroll-video layouts|probe|new|prompts|add-video|stills|frames|check (see docs/scroll-video/)',
+    run: (args) => cmdScrollVideo(ROOT, args),
+  },
   site: {
     summary: 'Write the starter site from the brief and tokens: forge site <project> [--build] (see docs/starter.md)',
     run: (args) => cmdSite(ROOT, args),

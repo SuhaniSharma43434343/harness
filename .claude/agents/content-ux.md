@@ -16,6 +16,7 @@ You decide what each page is for and what it says. Every page has a purpose and 
 - Write the wireframe spec: sections per page, in order, with their purpose.
 - Write the real copy for every planned section, the brand story, navigation and footer in `content/copy.json`, using only sourced claims. Write like a copywriter who knows this business: specific, in its own voice, with no stock phrases.
 - Ask for B3 when content is complete. After B3 the content is locked.
+- Write the words of each scroll video scene (title, description, call to action). After B3 they live in the locked page, as `scenes` entries matched by scene id under the `APP-02/ScrollVideo` section; the scene timing stays in the design file.
 
 ## Never
 

@@ -1,0 +1,306 @@
+/* APP-02 ScrollVideo. Styled only with the site's token custom properties, so a token change
+   restyles every layout. Two modes on the section: no data-sv-mode or "fallback" is the static
+   layout (poster, then every scene stacked); "full" pins a stage over a tall track.
+   Text over video uses a token pair: theme "site" puts --color-fg on a --color-bg wash,
+   "invert" swaps them. Their contrast is already checked by the token rules. */
+
+.sv {
+  --sv-ink: var(--color-fg);
+  --sv-wash: var(--color-bg);
+  --sv-gap: calc(var(--space) * 1.5);
+  --sv-pad: clamp(var(--space), 4vw, calc(var(--space) * 3));
+  position: relative;
+}
+.sv[data-theme='invert'] {
+  --sv-ink: var(--color-bg);
+  --sv-wash: var(--color-fg);
+}
+
+/* ---------- static layout (no JavaScript, reduced motion, fallback) ---------- */
+.sv__stage {
+  display: grid;
+  gap: calc(var(--space) * 2);
+  width: min(100% - 2 * var(--space), 72rem);
+  margin-inline: auto;
+  padding-block: calc(var(--space) * 4);
+}
+.sv__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--sv-aspect);
+  max-height: 75vh;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.sv__poster,
+.sv__video,
+.sv__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--sv-fit, cover);
+  object-position: var(--sv-focus, 50% 50%);
+}
+.sv__video,
+.sv__canvas,
+.sv__scrim,
+.sv__callout,
+.sv__loader,
+.sv__chapters { display: none; }
+.sv__scenes {
+  display: grid;
+  gap: calc(var(--space) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sv__scene { max-width: var(--measure, 65ch); }
+.sv__scene > :last-child { margin-bottom: 0; }
+.sv__title { font-size: var(--step-2); margin-bottom: 0.35em; }
+.sv__heading { font-size: var(--step-3); }
+.sv__eyebrow {
+  margin-bottom: 0.4em;
+  font-size: var(--step-n1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.sv__text { color: inherit; }
+.sv__cta { margin-top: calc(var(--space) * 0.5); }
+.sv__overlay-image { display: block; max-width: min(100%, 18rem); height: auto; margin-bottom: var(--space); border-radius: var(--radius); }
+.sv__overlay-label {
+  display: inline-block;
+  margin-bottom: 0.6em;
+  padding: 0.25em 0.7em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: var(--step-n1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sv__stat { display: flex; align-items: baseline; gap: 0.5em; margin-bottom: 0.4em; }
+.sv__stat strong { font-family: var(--font-display); font-size: var(--step-4); line-height: 1; color: var(--color-primary); }
+.sv__note { font-size: var(--step-n1); color: var(--color-muted); }
+.sv__foreground > :last-child { margin-bottom: 0; }
+
+/* ---------- full mode: a pinned stage over a tall track ---------- */
+.sv[data-sv-mode='full'] .sv__track { height: calc(var(--sv-length) * 100svh); }
+.sv[data-sv-mode='full'] .sv__stage {
+  position: sticky;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100svh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--sv-ink);
+}
+.sv[data-sv-mode='full'] .sv__media {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  max-height: none;
+  border-radius: 0;
+  background: var(--color-surface);
+}
+.sv[data-sv-mode='full'] .sv__video,
+.sv[data-sv-mode='full'] .sv__canvas { display: block; opacity: 0; transition: opacity calc(var(--motion-duration) * 1.5) ease-out, object-position 700ms ease-in-out; }
+.sv[data-sv-mode='full'] .sv__poster { transition: object-position 700ms ease-in-out; }
+.sv[data-sv-mode='full'][data-sv-render='video']:is([data-sv-state='ready'], [data-sv-state='buffering']) .sv__video,
+.sv[data-sv-mode='full'][data-sv-render='frames']:is([data-sv-state='ready'], [data-sv-state='buffering']) .sv__canvas { opacity: 1; }
+
+/* Loading: a thin bar from the stage edge, filled by --sv-load; buffering: the same bar pulses. */
+.sv[data-sv-mode='full'] .sv__loader {
+  display: block;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity var(--motion-duration) ease-out;
+}
+.sv__loader span { display: block; height: 100%; width: calc(var(--sv-load, 0) * 100%); background: var(--color-primary); transition: width 200ms linear; }
+.sv[data-sv-mode='full']:is([data-sv-state='loading'], [data-sv-state='buffering']) .sv__loader { opacity: 1; }
+.sv[data-sv-mode='full'][data-sv-state='buffering'] .sv__loader span { width: 100%; animation: sv-pulse 900ms ease-in-out infinite alternate; }
+@keyframes sv-pulse { from { opacity: 0.25; } to { opacity: 1; } }
+
+/* The wash behind text, from the side the active scene's text sits on. */
+.sv[data-sv-mode='full'] .sv__scrim {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --sv-wash-c: color-mix(in srgb, var(--sv-wash) calc(var(--sv-scrim) * 100%), transparent);
+  background: linear-gradient(to top, var(--sv-wash-c), transparent 65%);
+  transition: background 400ms ease-out;
+}
+.sv[data-sv-pos^='top'] .sv__scrim { background: linear-gradient(to bottom, var(--sv-wash-c), transparent 65%); }
+.sv[data-sv-pos='start'] .sv__scrim { background: linear-gradient(to right, var(--sv-wash-c), transparent 70%); }
+.sv[data-sv-pos='end'] .sv__scrim { background: linear-gradient(to left, var(--sv-wash-c), transparent 70%); }
+.sv[data-sv-pos='center'] .sv__scrim { background: radial-gradient(ellipse at center, var(--sv-wash-c), transparent 75%); }
+.sv:dir(rtl)[data-sv-pos='start'] .sv__scrim { background: linear-gradient(to left, var(--sv-wash-c), transparent 70%); }
+.sv:dir(rtl)[data-sv-pos='end'] .sv__scrim { background: linear-gradient(to right, var(--sv-wash-c), transparent 70%); }
+
+/* Scenes: all in the DOM, one shown at a time. --sv-v (0 to 1) is set from the scroll, so every
+   animation runs backwards when the visitor scrolls up. */
+.sv[data-sv-mode='full'] .sv__scenes { position: absolute; inset: 0; display: block; pointer-events: none; }
+.sv[data-sv-mode='full'] .sv__scene {
+  position: absolute;
+  max-width: min(34rem, 100% - 2 * var(--sv-pad));
+  opacity: var(--sv-v, 0);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.sv[data-sv-mode='full'] .sv__scene[data-active] { pointer-events: auto; }
+.sv[data-sv-mode='full'] .sv__note { display: none; }
+.sv[data-sv-mode='full'] .sv__eyebrow { color: inherit; opacity: 0.85; }
+.sv[data-sv-mode='full'] .sv__title { font-size: clamp(var(--step-2), 3.2vw, var(--step-4)); }
+
+.sv[data-sv-mode='full'] .sv__scene[data-anim='rise'] { transform: translateY(calc((1 - var(--sv-v, 0)) * var(--motion-distance) * 2)); }
+.sv[data-sv-mode='full'] .sv__scene[data-anim='slide'] { transform: translateX(calc((var(--sv-v, 0) - 1) * var(--motion-distance) * 3)); }
+.sv[data-sv-mode='full'] .sv__scene[data-anim='scale'] { transform: scale(calc(0.9 + 0.1 * var(--sv-v, 0))); transform-origin: left bottom; }
+.sv[data-sv-mode='full'] .sv__scene[data-anim='blur'] { filter: blur(calc((1 - var(--sv-v, 0)) * 14px)); }
+.sv[data-sv-mode='full'] .sv__scene[data-anim='mask'] { opacity: min(1, calc(var(--sv-v, 0) * 4)); clip-path: inset(0 calc((1 - var(--sv-v, 0)) * 100%) 0 0); }
+
+/* The nine positions (logical, so a right-to-left site mirrors). */
+.sv[data-sv-mode='full'] .sv__scene[data-pos^='top'] { top: var(--sv-pad); }
+.sv[data-sv-mode='full'] .sv__scene[data-pos^='bottom'] { bottom: calc(var(--sv-pad) + 2.5rem); }
+.sv[data-sv-mode='full'] .sv__scene:is([data-pos='start'], [data-pos='center'], [data-pos='end']) { top: 50%; translate: 0 -50%; }
+.sv[data-sv-mode='full'] .sv__scene:is([data-pos$='start'], [data-pos='start']) { inset-inline-start: var(--sv-pad); }
+.sv[data-sv-mode='full'] .sv__scene:is([data-pos$='end'], [data-pos='end']) { inset-inline-end: var(--sv-pad); text-align: end; }
+.sv[data-sv-mode='full'] .sv__scene:is([data-pos='top'], [data-pos='bottom'], [data-pos='center']) { left: 50%; translate: -50% 0; text-align: center; }
+.sv[data-sv-mode='full'] .sv__scene[data-pos='center'] { translate: -50% -50%; }
+.sv[data-sv-mode='full'] .sv__scene:is([data-pos='top'], [data-pos='bottom'], [data-pos='center']) .sv__text { margin-inline: auto; }
+
+/* Callouts: placed in video coordinates by the runtime. */
+.sv[data-sv-mode='full'] .sv__callout {
+  display: block;
+  position: absolute;
+  translate: -50% calc(-100% - 0.9rem);
+  padding: 0.35em 0.75em;
+  border-radius: var(--radius);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-size: var(--step-n1);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--motion-duration) ease-out;
+  pointer-events: none;
+}
+.sv[data-sv-mode='full'] .sv__callout::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 0.9rem;
+  background: var(--color-fg);
+}
+.sv[data-sv-mode='full'] .sv__callout[data-active] { opacity: 1; }
+
+/* Chapters: a rail of buttons that jump to a scene; the bar fills with --sv-progress. */
+.sv[data-sv-mode='full'] .sv__chapters {
+  display: flex;
+  align-items: center;
+  gap: var(--space);
+  position: absolute;
+  inset: auto var(--sv-pad) var(--sv-pad) var(--sv-pad);
+  z-index: 2;
+}
+.sv__chapters ol { display: flex; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.sv__chapters button {
+  display: grid;
+  place-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sv-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.sv__chapters button::before {
+  content: '';
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  transition: background var(--motion-duration) ease-out, transform var(--motion-duration) ease-out;
+}
+.sv__chapters button[aria-current]::before { background: currentColor; transform: scale(1.25); }
+.sv__chapter-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sv__bar { flex: 1; height: 2px; background: color-mix(in srgb, var(--sv-ink) 25%, transparent); }
+.sv__bar span { display: block; height: 100%; width: calc(var(--sv-progress, 0) * 100%); background: var(--sv-ink); }
+.sv[data-progress='bar'] .sv__chapters ol { display: none; }
+
+/* ---------- layouts ---------- */
+
+/* sticky-text: a framed video and a caption panel; text sits on the page colours. */
+.sv[data-sv-mode='full'][data-layout='sticky-text'] .sv__stage { color: var(--color-fg); background: var(--color-bg); }
+.sv[data-sv-mode='full'][data-layout='sticky-text'] .sv__media { inset: var(--sv-pad) 40% var(--sv-pad) var(--sv-pad); }
+.sv[data-sv-mode='full'][data-layout='sticky-text'][data-frame='true'] .sv__media { border-radius: var(--radius); }
+.sv[data-sv-mode='full'][data-layout='sticky-text'] .sv__scenes { inset: 0 var(--sv-pad) 0 calc(60% + var(--sv-pad)); }
+.sv[data-sv-mode='full'][data-layout='sticky-text'] .sv__scene { inset: 50% auto auto 0 !important; translate: 0 -50% !important; text-align: start !important; max-width: 100%; }
+.sv[data-sv-mode='full'][data-layout='sticky-text'] .sv__chapters { inset-inline-start: calc(60% + var(--sv-pad)); color: var(--color-fg); }
+
+/* split: the video takes one half edge to edge; the text column the other. */
+.sv[data-sv-mode='full'][data-layout='split'] .sv__stage { color: var(--color-fg); background: var(--color-bg); }
+.sv[data-sv-mode='full'][data-layout='split'] .sv__media { inset: 0 50% 0 0; }
+.sv[data-sv-mode='full'][data-layout='split'][data-side='end'] .sv__media { inset: 0 0 0 50%; }
+.sv[data-sv-mode='full'][data-layout='split'] .sv__scenes { inset: 0 0 0 50%; }
+.sv[data-sv-mode='full'][data-layout='split'][data-side='end'] .sv__scenes { inset: 0 50% 0 0; }
+.sv[data-sv-mode='full'][data-layout='split'] .sv__scene { inset: 50% auto auto var(--sv-pad) !important; translate: 0 -50% !important; text-align: start !important; max-width: calc(100% - 2 * var(--sv-pad)); }
+.sv[data-sv-mode='full'][data-layout='split'] .sv__chapters { inset-inline-start: calc(50% + var(--sv-pad)); }
+.sv[data-sv-mode='full'][data-layout='split'][data-side='end'] .sv__chapters { inset-inline: var(--sv-pad) calc(50% + var(--sv-pad)); }
+.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__chapters button { color: var(--color-fg); }
+.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__bar span { background: var(--color-fg); }
+
+/* product: the whole frame on the surface colour, callouts pointing at the product. */
+.sv[data-sv-mode='full'][data-layout='product'] .sv__stage { color: var(--color-fg); background: var(--color-surface); }
+.sv[data-sv-mode='full'][data-layout='product'] .sv__media { inset: var(--sv-pad) var(--sv-pad) calc(var(--sv-pad) + 3rem); background: transparent; }
+.sv[data-sv-mode='full'][data-layout='product'] .sv__chapters button { color: var(--color-fg); }
+.sv[data-sv-mode='full'][data-layout='product'] .sv__bar span { background: var(--color-fg); }
+
+/* background: a dimmed video behind content that stays; scenes are captions. */
+.sv[data-sv-mode='full'][data-layout='background'] .sv__scrim { background: color-mix(in srgb, var(--sv-wash) calc(var(--sv-scrim) * 100%), transparent); }
+.sv[data-sv-mode='full'][data-layout='background'] .sv__foreground {
+  position: absolute;
+  inset-inline-start: var(--sv-pad);
+  top: 50%;
+  translate: 0 -50%;
+  max-width: min(40rem, 100% - 2 * var(--sv-pad));
+  z-index: 1;
+}
+.sv[data-sv-mode='full'][data-layout='background'] .sv__scene { max-width: min(24rem, 100% - 2 * var(--sv-pad)); }
+.sv[data-sv-mode='full'][data-layout='background'] .sv__scene .sv__title { font-size: var(--step-1); }
+.sv[data-sv-mode='full'] .sv__foreground { position: absolute; inset-inline-start: var(--sv-pad); top: var(--sv-pad); z-index: 1; max-width: min(40rem, 100% - 2 * var(--sv-pad)); }
+
+/* labels: the chapter rail is the navigation, with every label shown. */
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__chapters { inset: auto var(--sv-pad) var(--sv-pad); flex-direction: column; align-items: stretch; }
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__chapters ol { flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__chapters button { display: flex; gap: 0.5em; min-width: 0; padding-inline: 0.15rem; opacity: 0.7; }
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__chapters button[aria-current] { opacity: 1; }
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__chapter-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font-size: var(--step-n1); }
+.sv[data-sv-mode='full'][data-layout='labels'] .sv__scene[data-pos^='bottom'] { bottom: calc(var(--sv-pad) + 6rem); }
+
+/* ---------- phones ----------
+   .sv.sv out-ranks the desktop [data-side] rules, so split always stacks on a phone. */
+@media (max-width: 47.99em) {
+  .sv[data-sv-mode='full'] .sv__track { height: calc(var(--sv-length-mobile, var(--sv-length)) * 100svh); }
+  .sv[data-sv-mode='full'] .sv__scene { max-width: calc(100% - 2 * var(--sv-pad)); }
+  .sv[data-sv-mode='full'] .sv__scene:is([data-pos='top'], [data-pos='bottom'], [data-pos='center']) { width: calc(100% - 2 * var(--sv-pad)); }
+  .sv.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__media { inset: 0 0 45% 0; border-radius: 0; }
+  .sv.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__scenes { inset: 55% 0 0 0; }
+  .sv.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__scene { inset: var(--sv-pad) var(--sv-pad) auto var(--sv-pad) !important; translate: none !important; }
+  .sv.sv[data-sv-mode='full']:is([data-layout='split'], [data-layout='sticky-text']) .sv__chapters { inset-inline: var(--sv-pad); }
+  .sv[data-sv-mode='full'] .sv__chapters ol { display: none; }
+  .sv[data-sv-mode='full'][data-layout='labels'] .sv__chapters ol { display: flex; flex-wrap: nowrap; overflow-x: auto; }
+  .sv[data-sv-mode='full'][data-layout='background'] .sv__foreground { top: var(--sv-pad); translate: none; }
+}
+
+/* Reduced motion never reaches full mode (capability.js), but if a site forces it, nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .sv .sv__scene { transform: none !important; filter: none !important; clip-path: none !important; }
+}

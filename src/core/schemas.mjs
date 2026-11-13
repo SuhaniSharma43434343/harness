@@ -44,6 +44,8 @@ export const SCHEMAS = {
   siteCopy: 'design-spec.schema.json#/definitions/siteCopy',
   designReview: 'design-spec.schema.json#/definitions/designReview',
   visualReview: 'design-spec.schema.json#/definitions/visualReview',
+  // Scroll video engine (APP-02 ScrollVideo): one config per scroll-controlled video.
+  scrollVideo: 'scroll-video.schema.json',
 };
 
 let ajv;

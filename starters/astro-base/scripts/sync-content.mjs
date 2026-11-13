@@ -24,6 +24,18 @@ if (existsSync(pages)) {
 const copy = join(project, 'content', 'copy.json');
 if (existsSync(copy)) cpSync(copy, join(site, 'src', 'copy.json'));
 
+// Scroll video configs (APP-02 ScrollVideo) live in the project's design/scroll-video/; pull them
+// fresh too, so the scene timing a build ships is always the approved file. Reports are left out.
+const scrollVideo = join(project, 'design', 'scroll-video');
+if (existsSync(scrollVideo)) {
+  const target = join(site, 'src', 'data', 'scroll-video');
+  rmSync(target, { recursive: true, force: true });
+  mkdirSync(target, { recursive: true });
+  for (const f of readdirSync(scrollVideo)) {
+    if (/^[a-z0-9]+(-[a-z0-9]+)*\.json$/.test(f) && !f.endsWith('.report.json')) cpSync(join(scrollVideo, f), join(target, f));
+  }
+}
+
 writeRoutes(site);
 
 // writeRoutes(site) => ids: a route file for each page in src/content/pages, and
