@@ -1,6 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { encodeArgs } from '../scroll-video/assess.mjs';
+import { probeFile } from '../scroll-video/probe.mjs';
 
 // Video the site will use: a clip the client supplies, or a free clip from Pexels. Both go through
 // the same careful step: look at the clip, decide where on the site it belongs and why, make a
@@ -14,11 +16,21 @@ export function toolAvailable(cmd) {
   return !r.error && r.status === 0;
 }
 
-// probeVideo(file) => { durationS, width, height, fps, hasAudio, codec, bytes }
+// probeVideo(file) => { durationS, width, height, fps, hasAudio, codec, bytes, keyframeIntervalS? }
+// Without ffprobe, MP4 and WebM are read by the scroll video container reader, which needs no
+// tools; other formats still need ffprobe.
 export function probeVideo(file, { ffprobe = 'ffprobe' } = {}) {
   if (!existsSync(file)) throw new Error(`There is no video at ${file}`);
   const r = run(ffprobe, ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', file]);
-  if (r.error || r.status !== 0) throw new Error('ffprobe is needed to read the video. Install ffmpeg (winget install Gyan.FFmpeg) and try again.');
+  if (r.error || r.status !== 0) {
+    let p;
+    try {
+      p = probeFile(file);
+    } catch (err) {
+      throw new Error(`${err.message} ffprobe reads more formats: install ffmpeg (winget install Gyan.FFmpeg) and try again.`);
+    }
+    return { durationS: Math.round(p.durationS * 10) / 10, width: p.width, height: p.height, fps: p.fps ? Math.round(p.fps * 10) / 10 : null, hasAudio: p.hasAudio, codec: p.codec, bytes: p.bytes, keyframeIntervalS: p.keyframeIntervalS };
+  }
   const info = JSON.parse(r.stdout);
   const v = info.streams.find((s) => s.codec_type === 'video');
   if (!v) throw new Error('That file has no video stream.');
@@ -44,6 +56,8 @@ export function probeVideo(file, { ffprobe = 'ffprobe' } = {}) {
 //  - A medium clip (15 to 60 s) is a story: it sits mid-page, plays only when the visitor taps,
 //    and is never the hero (a long clip behind a headline distracts and costs data).
 //  - A long clip (over 60 s) is trimmed into a short one for the page and the full one is linked.
+//  - Only when asked (--video-role scroll-scrub): a continuous clip the visitor scrubs by scrolling,
+//    in an APP-02 ScrollVideo section, encoded with a keyframe every 0.2 s so scrubbing is smooth.
 export function placeVideo(info, brief = {}, { role: forced, sound = false } = {}) {
   const reasons = [];
   const warnings = [];
@@ -76,7 +90,13 @@ export function placeVideo(info, brief = {}, { role: forced, sound = false } = {
     reasons.push(`At ${info.durationS} seconds it is too long for a page. The harness uses the first 20 seconds and links the rest.`);
     warnings.push('Trim a 10 to 20 second highlight yourself for the best result.');
   }
-  if (forced) {
+  if (forced === 'scroll-scrub') {
+    role = forced;
+    section = 'an APP-02 ScrollVideo section: pinned while the visitor scrolls, the clip following the scroll forwards and backwards, with the scenes set in design/scroll-video/';
+    reasons.splice(0, reasons.length, 'You asked for a scroll-controlled video: the visitor scrubs through it by scrolling, so it is never played on its own.');
+    if (info.durationS > 30) warnings.push(`At ${info.durationS} seconds the scroll is long; 6 to 15 seconds suits most stories.`);
+    if (portrait) reasons.push('It is upright, so the split layout fits it best on wide screens.');
+  } else if (forced) {
     reasons.unshift(`You asked for it to be the ${forced}.`);
     role = forced;
     if (forced === 'hero-loop' && info.durationS > 15) warnings.push('A hero loop over 15 seconds costs data and distracts. It will be cut to the first 12 seconds.');
@@ -93,6 +113,17 @@ export function placeVideo(info, brief = {}, { role: forced, sound = false } = {
 export function prepareVideo(file, destDir, id, { role = 'hero-loop', ffmpeg = 'ffmpeg', keepAudio = false } = {}) {
   const out = join(destDir, 'video');
   mkdirSync(out, { recursive: true });
+  if (role === 'scroll-scrub') {
+    // Scroll video: the whole clip, short keyframe gaps for smooth seeking (src/scroll-video/assess.mjs).
+    const mp4 = join(out, `${id}.mp4`);
+    const webm = join(out, `${id}.webm`);
+    const poster = join(out, `${id}-poster.webp`);
+    for (const args of [encodeArgs(file, webm, { format: 'webm', height: 1080 }), encodeArgs(file, mp4, { height: 1080 }), ['-y', '-i', file, '-frames:v', '1', '-vf', 'scale=1600:-2', '-quality', '80', poster]]) {
+      const r = run(ffmpeg, args);
+      if (r.error || r.status !== 0) throw new Error(`ffmpeg failed: ${(r.stderr ?? r.error?.message ?? '').slice(-300)}`);
+    }
+    return { mp4: `video/${id}.mp4`, webm: `video/${id}.webm`, poster: `video/${id}-poster.webp`, bytes: statSync(webm).size, warn: null };
+  }
   const limit = role === 'hero-loop' ? 12 : 60;
   const scale = role === 'hero-loop' ? 'scale=-2:720' : 'scale=-2:720';
   const base = ['-y', '-i', file, '-t', String(limit), ...(keepAudio ? [] : ['-an']), '-vf', scale];

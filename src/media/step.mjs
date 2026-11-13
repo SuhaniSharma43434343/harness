@@ -6,6 +6,7 @@ import * as ledger from '../core/ledger.mjs';
 import { writeJsonAtomic } from '../core/workspace.mjs';
 import { assessMedia } from './fit.mjs';
 import { checkOwnModel, downloadModel, searchModels } from './models.mjs';
+import { configFromPrepared } from '../scroll-video/project.mjs';
 import { downloadClip, placeVideo, prepareVideo, probeVideo, registerVideo, searchPexels } from './video.mjs';
 
 // The media step of forge go. After research (the business and its audience are understood) and
@@ -137,7 +138,7 @@ export async function runMediaStep(project, opts) {
       if (!flags.videoRole && decide) {
         const answer = await decide({ kind: 'media-place', info, placement });
         if (answer === 'skip') placement = null;
-        else if (answer === 'hero-loop' || answer === 'story-clip') placement = placeVideo(info, brief, { role: answer, sound });
+        else if (answer === 'hero-loop' || answer === 'story-clip' || answer === 'scroll-scrub') placement = placeVideo(info, brief, { role: answer, sound });
       }
       if (!placement) decision.video = { decision: 'skipped', reason: 'The operator chose not to use the clip.' };
       else {
@@ -146,6 +147,11 @@ export async function runMediaStep(project, opts) {
         const prep = prepareVideo(clipFile, pub, id, { role: placement.role, keepAudio });
         registerVideo(dir, { paths: [prep.mp4, prep.webm, prep.poster], role: placement.role, source: clipSource.source, licence: clipSource.licence, evidence: clipSource.evidence });
         decision.video = { decision: 'chosen', id, role: placement.role, sound: keepAudio, page: placement.page, section: placement.section, reasons: placement.reasons, warnings: [...placement.warnings, ...(prep.warn ? [prep.warn] : [])], source: clipSource.source, licence: clipSource.licence, creator: clipSource.creator, url: clipSource.url, mp4: prep.mp4, webm: prep.webm, poster: prep.poster, bytes: prep.bytes, input: { durationS: info.durationS, width: info.width, height: info.height } };
+        if (placement.role === 'scroll-scrub') {
+          // A scroll video gets its config now; the Creative Director writes the storyboard and scenes.
+          configFromPrepared(dir, id, { webm: prep.webm, mp4: prep.mp4, poster: prep.poster });
+          decision.video.config = `design/scroll-video/${id}.json`;
+        }
         say(`  Video: ${placement.role} on ${placement.page}: ${placement.section}.`);
         for (const r of placement.reasons) say(`    why: ${r}`);
         for (const w of decision.video.warnings) say(`    note: ${w}`);
@@ -191,7 +197,7 @@ function finish(project, ctx, dir, decision) {
   const v = decision.video;
   brief.media = {
     ...(t && { threeD: t.decision === 'chosen' ? pick(t, ['decision', 'id', 'title', 'creator', 'licence', 'source', 'url', 'file', 'poster', 'concept', 'page', 'position', 'forced']) : { decision: 'skipped', reason: t.reason } }),
-    ...(v && { video: v.decision === 'chosen' ? pick(v, ['decision', 'id', 'role', 'sound', 'page', 'section', 'reasons', 'source', 'licence', 'creator', 'url', 'mp4', 'webm', 'poster']) : { decision: 'skipped', reason: v.reason } }),
+    ...(v && { video: v.decision === 'chosen' ? pick(v, ['decision', 'id', 'role', 'sound', 'page', 'section', 'reasons', 'source', 'licence', 'creator', 'url', 'mp4', 'webm', 'poster', 'config']) : { decision: 'skipped', reason: v.reason } }),
   };
   writeJsonAtomic(briefFile, brief);
   note(project, ctx, { event: 'media_decision', threeD: t?.decision, threeDId: t?.id, video: v?.decision, videoRole: v?.role, forced: Boolean(t?.forced) });

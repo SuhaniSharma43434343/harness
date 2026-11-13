@@ -66,6 +66,29 @@ export function serveSite(dist) {
       return;
     }
     const ext = extname(target).toLowerCase();
+    // Byte ranges for files a static host never compresses, so a browser can seek a video it is
+    // streaming (scroll video) the way it does on a real host.
+    if (file && !COMPRESSIBLE.has(ext)) {
+      const size = statSync(target).size;
+      const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+      const headers = { 'Content-Type': TYPES[ext] ?? 'application/octet-stream', 'Cache-Control': 'no-store', 'Accept-Ranges': 'bytes' };
+      if (m && (m[1] || m[2])) {
+        const start = m[1] ? Number(m[1]) : Math.max(0, size - Number(m[2]));
+        const end = m[1] && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+        if (start >= size || start > end) {
+          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` }).end();
+          return;
+        }
+        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 });
+        if (req.method === 'HEAD') res.end();
+        else createReadStream(target, { start, end }).pipe(res);
+        return;
+      }
+      res.writeHead(200, { ...headers, 'Content-Length': size });
+      if (req.method === 'HEAD') res.end();
+      else createReadStream(target).pipe(res);
+      return;
+    }
     const gzip = COMPRESSIBLE.has(ext) && /(^|[\s,])gzip([\s,;]|$)/i.test(req.headers['accept-encoding'] ?? '');
     res.writeHead(file ? 200 : 404, {
       'Content-Type': TYPES[ext] ?? 'application/octet-stream',

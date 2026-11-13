@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/scroll-video.schema.json",
+  "title": "Scroll video config (design/scroll-video/<id>.json)",
+  "description": "One scroll-controlled video section: the storyboard and AI video prompts it came from, the video asset, the layout, the scroll and animation settings, and the scenes. Rendered by APP-02/ScrollVideo with no code change per project. Timing rules the schema cannot express (order, overlap, the clip's real duration) are checked by forge scroll-video check (src/scroll-video/config.mjs).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "id", "layout", "scenes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "id": { "$ref": "#/definitions/slug" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 120, "description": "Internal name, for the operator." },
+    "concept": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Where this video came from in the brief and the design direction.",
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "industry": { "type": "string" },
+        "direction": { "type": "string", "description": "The design direction id chosen at B2." },
+        "section": { "type": "string", "description": "The section-plan id this video serves." }
+      }
+    },
+    "storyboard": { "$ref": "#/definitions/storyboard" },
+    "prompts": { "$ref": "#/definitions/prompts" },
+    "video": { "$ref": "#/definitions/videoAsset" },
+    "layout": { "$ref": "#/definitions/layout" },
+    "scroll": { "$ref": "#/definitions/scroll" },
+    "animation": { "$ref": "#/definitions/animation" },
+    "foreground": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Content that stays on screen for the whole video (used by the background layout, optional elsewhere).",
+      "required": ["heading"],
+      "properties": {
+        "eyebrow": { "type": "string", "maxLength": 60 },
+        "heading": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "text": { "type": "string", "maxLength": 400 },
+        "cta": { "$ref": "#/definitions/cta" }
+      }
+    },
+    "label": { "type": "string", "minLength": 1, "maxLength": 120, "description": "Accessible name of the section." },
+    "scenes": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/scene" } }
+  },
+  "definitions": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 60 },
+    "seconds": { "type": "number", "minimum": 0, "maximum": 600 },
+    "fraction": { "type": "number", "minimum": 0, "maximum": 1 },
+    "focus": { "type": "string", "pattern": "^(100|[0-9]{1,2}(\\.[0-9]+)?)% (100|[0-9]{1,2}(\\.[0-9]+)?)%$", "description": "object-position as 'x% y%'." },
+    "href": { "type": "string", "pattern": "^(/|#|https://|mailto:|tel:)", "description": "A site path, an anchor, an https URL, mailto: or tel:. Never javascript:." },
+    "cta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "href"],
+      "properties": { "label": { "type": "string", "minLength": 1, "maxLength": 40 }, "href": { "$ref": "#/definitions/href" } }
+    },
+    "storyboard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["beats"],
+      "description": "Written by the Creative Director before any video exists. Beats become scenes.",
+      "properties": {
+        "durationS": { "type": "number", "minimum": 2, "maximum": 120 },
+        "aspectRatio": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" },
+        "style": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mood": { "type": "string" },
+            "lighting": { "type": "string" },
+            "camera": { "type": "string", "description": "One continuous camera move for the whole clip." },
+            "palette": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
+            "look": { "type": "string", "description": "Film stock, lens, render style." }
+          }
+        },
+        "subject": { "type": "string", "description": "What stays in frame for the whole take." },
+        "setting": { "type": "string" },
+        "beats": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "action"],
+            "properties": {
+              "id": { "$ref": "#/definitions/slug" },
+              "action": { "type": "string", "minLength": 1, "maxLength": 400, "description": "What visibly happens in this beat." },
+              "camera": { "type": "string" },
+              "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 60 },
+              "message": { "type": "string", "description": "What the scene's words will say, for Content & UX." }
+            }
+          }
+        }
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["master"],
+      "description": "AI video prompts generated from the storyboard by forge scroll-video prompts. Any generator; nothing here is tool-specific except the notes.",
+      "properties": {
+        "generatedAt": { "type": "string" },
+        "master": { "type": "string", "minLength": 20 },
+        "negative": { "type": "string" },
+        "shots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "prompt"],
+            "properties": { "from": { "type": "number" }, "to": { "type": "number" }, "prompt": { "type": "string" }, "beats": { "type": "array", "items": { "type": "string" } } }
+          }
+        },
+        "settings": { "type": "object" },
+        "checklist": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["src", "type"],
+      "properties": {
+        "src": { "type": "string", "pattern": "^/" },
+        "type": { "enum": ["video/mp4", "video/webm"] },
+        "codecs": { "type": "string", "description": "Optional RFC 6381 codecs string, e.g. vp09.00.10.08 or avc1.640028." },
+        "media": { "type": "string", "description": "A media query; the first matching playable source wins." },
+        "width": { "type": "integer", "minimum": 16 },
+        "height": { "type": "integer", "minimum": 16 },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern", "count", "fps"],
+      "description": "An optional image sequence of the same clip, for the frames renderer.",
+      "properties": {
+        "pattern": { "type": "string", "pattern": "^/.*\\{i\\}", "description": "URL with {i} for the zero-padded frame number, e.g. /video/x/frame-{i}.webp" },
+        "pad": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "count": { "type": "integer", "minimum": 2, "maximum": 1200 },
+        "fps": { "type": "number", "exclusiveMinimum": 0, "maximum": 60 },
+        "width": { "type": "integer", "minimum": 16 },
+        "height": { "type": "integer", "minimum": 16 },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "videoAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources", "poster", "durationS", "width", "height"],
+      "description": "Written by forge scroll-video add-video from the probed file. Absent until a video is uploaded.",
+      "properties": {
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/source" } },
+        "poster": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["src", "alt"],
+          "properties": { "src": { "type": "string", "pattern": "^/" }, "alt": { "type": "string", "description": "Empty only when the scenes say everything the poster shows." }, "width": { "type": "integer" }, "height": { "type": "integer" } }
+        },
+        "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
+        "width": { "type": "integer", "minimum": 16 },
+        "height": { "type": "integer", "minimum": 16 },
+        "aspectRatio": { "type": "string" },
+        "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "keyframeIntervalS": { "type": "number", "minimum": 0 },
+        "frames": { "$ref": "#/definitions/frames" },
+        "origin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "tool": { "type": "string" }, "generatedAt": { "type": "string" }, "file": { "type": "string" }, "notes": { "type": "string" } }
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["cinematic", "sticky-text", "split", "product", "background", "labels"] },
+        "fit": { "enum": ["cover", "contain"] },
+        "focus": { "$ref": "#/definitions/focus" },
+        "side": { "enum": ["start", "end"], "description": "split: which side the video takes." },
+        "scrim": { "type": "number", "minimum": 0, "maximum": 0.9, "description": "Strength of the colour wash behind text on video." },
+        "theme": { "enum": ["site", "invert"], "description": "site: text in --color-fg over --color-bg; invert swaps them over the video." },
+        "frame": { "type": "boolean", "description": "sticky-text and product: round the video with --radius." }
+      }
+    },
+    "scroll": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "length": { "type": "number", "minimum": 1.5, "maximum": 40, "description": "Track length in viewport heights." },
+        "lengthMobile": { "type": "number", "minimum": 1.5, "maximum": 40 },
+        "smoothingMs": { "type": "number", "minimum": 0, "maximum": 1000 },
+        "render": { "enum": ["auto", "video", "frames"] },
+        "preload": { "enum": ["auto", "blob", "stream"] },
+        "blobMaxBytes": { "type": "integer", "minimum": 0 },
+        "seekBudgetMs": { "type": "number", "minimum": 1, "maximum": 2000, "description": "Median seek time (last 8 seeks) above which the engine switches to the frame sequence, when there is one. Default 90." },
+        "loadTimeoutMs": { "type": "number", "minimum": 500, "maximum": 120000 }
+      }
+    },
+    "animation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "$ref": "#/definitions/textAnimation" },
+        "enter": { "type": "number", "minimum": 0, "maximum": 0.5, "description": "Share of each scene spent animating its text in." },
+        "exit": { "type": "number", "minimum": 0, "maximum": 0.5 },
+        "progress": { "enum": ["rail", "bar", "none"] }
+      }
+    },
+    "textAnimation": { "enum": ["fade", "rise", "slide", "scale", "blur", "mask", "none"] },
+    "position": { "enum": ["top-start", "top", "top-end", "start", "center", "end", "bottom-start", "bottom", "bottom-end"] },
+    "overlay": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "src", "alt", "width", "height"],
+          "properties": { "type": { "const": "image" }, "src": { "type": "string", "pattern": "^/" }, "alt": { "type": "string" }, "width": { "type": "integer" }, "height": { "type": "integer" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "text"],
+          "properties": { "type": { "const": "label" }, "text": { "type": "string", "minLength": 1, "maxLength": 40 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "value", "text"],
+          "properties": { "type": { "const": "stat" }, "value": { "type": "string", "minLength": 1, "maxLength": 16 }, "text": { "type": "string", "minLength": 1, "maxLength": 60 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "text", "point"],
+          "properties": {
+            "type": { "const": "callout" },
+            "text": { "type": "string", "minLength": 1, "maxLength": 60 },
+            "point": { "type": "object", "additionalProperties": false, "required": ["x", "y"], "properties": { "x": { "$ref": "#/definitions/fraction" }, "y": { "$ref": "#/definitions/fraction" } }, "description": "Where on the video frame (0 to 1 from the top left) the callout points." }
+          }
+        }
+      ]
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "start", "end", "title"],
+      "properties": {
+        "id": { "$ref": "#/definitions/slug" },
+        "start": { "$ref": "#/definitions/seconds" },
+        "end": { "$ref": "#/definitions/seconds" },
+        "eyebrow": { "type": "string", "maxLength": 60 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 400 },
+        "label": { "type": "string", "maxLength": 32, "description": "Short name on the chapter rail; defaults to the title." },
+        "position": { "$ref": "#/definitions/position" },
+        "animation": { "$ref": "#/definitions/textAnimation" },
+        "overlay": { "$ref": "#/definitions/overlay" },
+        "cta": { "$ref": "#/definitions/cta" },
+        "focus": { "$ref": "#/definitions/focus" },
+        "scroll": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["from", "to"],
+          "description": "The slice of the track (0 to 1) this scene owns. All scenes have one, or none do.",
+          "properties": { "from": { "$ref": "#/definitions/fraction" }, "to": { "$ref": "#/definitions/fraction" } }
+        }
+      }
+    }
+  }
+}

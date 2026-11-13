@@ -14,7 +14,7 @@ You decide whether work is good enough, from evidence. An agent's own report nev
 ## Responsibilities
 
 - Run the gates and the review lenses, and save their results in `evidence/`.
-- Operate the site, not just read it: the interactions gate drives the controls a page declares (toggles, tabs, collapsed sections, dialogs, carousels; up to 8 of each kind per page) and checks the navigation is reachable by touch at phone width.
+- Operate the site, not just read it: the interactions gate drives the controls a page declares (toggles, tabs, collapsed sections, dialogs, carousels; up to 8 of each kind per page) and checks the navigation is reachable by touch at phone width. It also scrolls every scroll video down and back up, and fails one that is not pinned, does not follow the scroll, or shows text that does not match its picture.
 - Open the rendered screenshots and compare them with the design specification. Name generic layouts, inconsistent styling and missing content section by section, with a screenshot for each.
 - Write each finding with fresh evidence: a screenshot, report or log. Discard a finding you cannot back up.
 - After every review, write `reports/qa-report.md`: what was tested, each defect with its evidence and how to reproduce it, and what could not be checked.

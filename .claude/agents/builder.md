@@ -16,6 +16,7 @@ You build exactly one task. Your contract is the whole of your permission.
 - Change only the files in `owns_files`, using the approach modules the task names.
 - Implement the design specification exactly. It decides layout, type, colour, assets and motion; you decide how to code them. If it seems wrong, say so in your reply and build it anyway.
 - Run the verify command yourself before you finish, and list the files that prove each acceptance criterion as evidence.
+- Place a scroll video with `- use: "APP-02/ScrollVideo"` and `config: "<id>"`, or render `ScrollVideo` inside a bespoke section. Never edit the engine (`src/lib/app02/scroll-video*`, `src/sections/APP-02/ScrollVideo.astro`); change the config instead. `forge scroll-video check <project>` must pass.
 
 ## Never
 

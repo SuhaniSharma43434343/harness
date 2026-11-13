@@ -54,6 +54,7 @@ Before every build, `scripts/sync-content.mjs` pulls in `content/pages/` and the
 - `src/generated-routes.json` lists the pages that got a route. The catch-all `src/pages/[...slug].astro` builds only the rest, through `Sections.astro`, which imports every section. After a normal `npm run build` that is no page.
 - A hand-written route of the same name wins: the prebuild leaves it alone and the page is not generated.
 - A page naming a section that does not exist fails the prebuild with the missing path, as before.
+- The prebuild also copies the project's scroll video configs, `design/scroll-video/<id>.json` (not the `.report.json` files), into `src/data/scroll-video/`, where `APP-02/ScrollVideo` reads them. The design file stays the only source of the scene timing.
 - `astro dev` does not run the prebuild, so in development pages come from the catch-all route. The pages look the same; only the CSS bundling differs.
 
 ### Tokens
